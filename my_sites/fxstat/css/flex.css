@@ -1,0 +1,24 @@
+.flex_parent_div /*для размещения внутри него элементов по горизонтали*/
+{
+	display: flex;	
+	justify-content: space-evenly;	/*для равномерного размещения элементов внутри */
+	height:max-height; 
+}
+.flex_parent_div > div /*внутренний элемент (ребенок), в коде html нужно каждому указать ширину в процентах при необходимости  */
+{
+	background-color: #AAFF;
+	border: 1px solid white;
+	width: 10%;
+	height: 98%;
+	margin-top: auto;
+	margin-bottom: auto;
+}
+.flex_hidden_child /*внутренний элемент (ребенок), который не будет виден на странице */
+{
+	visibility: hidden;
+}
+
+
+
+
+

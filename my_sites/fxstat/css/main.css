@@ -1,0 +1,175 @@
+
+/* основные параметры горизонтали страницы (для глобальных блоков), в коде html нужно указать высоту */
+.main_params_size 
+{
+	width:74%; 	
+	margin-left:auto;
+	margin-right:auto;
+}
+
+/* применяется к блоку-заголовку страницы */
+#header_div
+{
+	background-color:SaddleBrown; 
+	margin-top:20px;
+	height:80px; 
+	border-radius: 20px; 
+}
+
+#header_div > div 
+{
+	background-color:SaddleBrown; 
+	position: relative;
+}
+#header_div > div > p
+{
+	color: OrangeRed;
+	bottom: 10%;
+	font-size: 18px;
+	position: absolute;
+
+}
+#header_div a
+{
+	color: OrangeRed;
+}
+#header_div a[kursiv="1"]
+{
+	color: White;
+	font-style: italic;
+}
+#header_div a:hover 
+{
+  color: gray;
+}
+
+
+/* применяется к блоку-подвалу страницы */
+#footer_div
+{
+	background-color:DarkSlateGray; 
+	margin-bottom:20px;
+	height:70px; 
+	border-radius: 10px; 
+}
+#footer_div > div 
+{
+	background-color:DarkSlateGray; 
+}
+#footer_div > div > p
+{
+	color: white;
+	font-size: 12px;
+	margin-top: 2px;
+}
+#footer_div a
+{
+	color: White;
+	font-style: italic;
+}
+#footer_div a:hover 
+{
+  color: gray;
+}
+
+
+
+.space_div
+{
+	visibility: hidden;
+	height:5px; 
+}
+
+
+/* применяется к центральному блоку страницы */
+#center_div
+{
+	margin-top: 6px;
+	margin-bottom: 6px;
+	background-color: transparent;
+	//height:60vh;
+}
+#sidebar_div
+{
+	width: 20%;
+	background-color:Honeydew;
+}
+#content_div
+{
+	width: 80%;
+	background-color:transparent;	
+}
+
+
+
+/*
+
+.footerdiv
+{	
+	background-color: #800000; 
+	height: 45px; 
+	width:80%; 
+	margin-left:10%;
+	border: 2px solid blue;	
+	text-align: left;
+	font-size: 18px; 
+	padding-top: 10px;
+	float: bottom;
+}
+
+
+	text-align: center;
+
+header
+{
+	background-color:tan; 
+	height:90px; 
+	width:80%; 
+}
+
+.headerdiv
+{
+	text-align: center;
+	height: 100%;
+	width: 100%;
+}
+.headertable
+{
+	display: inline-block;
+	border: 2px solid grey;
+	height: 60%;
+	width: 90%;
+	margin-top: 20px;
+}
+.headercell
+{
+	color: blue;
+	width: 25%;
+	vertical-align: center;
+	height: 100%;
+	font-size: 18px; 
+	padding-top: 20px;
+}
+#sidebar
+{
+    background-color: #ddd;
+    //float: left;
+    width: 150px;
+	margin-left:10%;
+	height:400px;
+	margin-top:5px;
+	margin-bottom:5px;
+}
+.styletest
+{
+	display: flex;
+	background-color: #CCC;
+	height: 100px;
+	width: 60%;
+	//margin: 10px auto;
+	margin-left: 20%;
+	
+	//justify-content: stretch;
+}
+
+*/

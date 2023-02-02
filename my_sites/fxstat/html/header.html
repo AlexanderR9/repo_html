@@ -1,0 +1,39 @@
+
+<?php
+	$pages_path = "";	
+	$index_path = "../";		
+	if (isIndexPath(getcwd()))
+	{
+		$pages_path = "pages/";
+		$index_path = "";		
+	}	
+	
+	echo "
+	<div id=\"header_div\" class=\"main_params_size flex_parent_div\">
+		<div id=\"top_ref\"><p><a class=\"page_link\" href=\"{$pages_path}couples.php\">Title 1</a></p></div>
+		<div><p>Title 2</p></div>
+		<div><p>Title 3</p></div>
+		<div class=\"flex_hidden_child\">empty block</div>
+		<div class=\"flex_hidden_child\">empty block</div>
+		<div class=\"flex_hidden_child\">empty block</div>
+		<div><p right=\"1\"><a href=\"{$index_path}index.php\" kursiv=\"1\">Main page</a></p></div>	
+	</div>
+	";
+
+?>
+
+<!--
+		<div><p right=\"1\"><i><font color=\"white\"><a href=\"{$index_path}index.php\">Main page</a></font></i></p></div>	
+<header>
+    <div class="headerdiv">
+        <table class="headertable">
+            <tr>
+                <td class="headercell">Couples</a></td>
+                <td class="headercell">Stocks</td>
+                <td class="headercell">Bonds</td>
+            <tr>
+        </table>
+    </div>
+</header>
+-->
+

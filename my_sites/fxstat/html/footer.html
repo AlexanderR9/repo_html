@@ -1,0 +1,44 @@
+<?php
+	$pages_path = "";	
+	$index_path = "../";		
+	if (isIndexPath(getcwd()))
+	{
+		$pages_path = "pages/";
+		$index_path = "";		
+	}	
+	
+	$dt = str_datetime();
+	echo "
+		
+	<div id=\"footer_div\" class=\"main_params_size flex_parent_div\">
+		<div style=\"display: table\">
+			<p><a href=\"#top_ref\">follow to up</a></p>
+			<p>previos page</p>
+			<p><a href=\"{$index_path}index.php\">Main page</a></p>
+		</div>
+		<div class=\"flex_hidden_child\">empty block</div>
+		<div class=\"flex_hidden_child\">empty block</div>
+		<div class=\"flex_hidden_child\">empty block</div>
+		<div style=\"width:20%\"><em style=\"margin-top: 20px; color: black; font-size: 20px\">$dt</em></div>
+	</div>
+	
+	";
+
+?>
+
+
+<!--
+<div class="footerdiv">
+    <div style="float: left;">
+    <em><a href="/" style="color: #FFF5EE">Main page</a></em>
+    </div>   
+
+    <div style="float: right; padding-right: 22px; color:white; vertical-align: bottom;">
+    <?php echo str_datetime(); ?>
+    </div>   
+</div>
+
+
+-->
+
+

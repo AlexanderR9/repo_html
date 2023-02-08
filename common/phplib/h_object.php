@@ -1,16 +1,6 @@
 <?php	
 
-/*
-//main CSS settins for my project
-class AppSettings 
-{
-	public $host = 'localhost'; //имя хоста, на локальном компьютере это localhost
-	public $user = 'root'; //имя пользователя, по умолчанию это root
-	public $password = ''; //пароль, по умолчанию пустой
-	public $db_name = 'fxstat_db'; //имя базы данных
-}
-*/
-
+//align enum
 enum HAlign 
 {
     case haLeft;
@@ -20,6 +10,18 @@ enum HAlign
     case haCenter;
     case haNone;
 }
+
+//display mode
+enum HDisplayMode
+{
+	case hdmInline;
+	case hdmInlineBlock;
+	case hdmBlock;
+	case hdmFlex;
+	case hdmTable;
+}
+
+
 //class-struct for set MAGRIN/PADDING properties
 class HMarginSizes
 {	
@@ -47,15 +49,20 @@ class HMarginSizes
 		return $s;
 	}
 }
+
+//class-struct for set BORDER properties
 class HBorder
 {	
 	public $width = 0; //px
 	public $type = "solid"; //string value
 	public $color = "Silver"; //string value
+	public $radius = -1; //закругление углов, px
 	
-	public function setValues($w, $color, $type)
+	
+	public function setValues($w, $color, $r, $type)
 	{
 		if ($w >= 0) $this->width = $w;
+		if ($r > 0) $this->radius = $r;
 		if (!empty($color)) $this->color = $color;
 		if (!empty($type)) $this->type = $type;
 	}
@@ -67,10 +74,14 @@ class HBorder
 		{
 			$s = $s."$this->width"."px";
 			$s = $s." $this->type $this->color; ";
+			
+			if ($this->radius > 0)
+				$s = $s." border-radius: $this->radius"."px; ";
 		}			
 		return $s;
 	}	
 }
+
 //class-struct for set SIZES properties
 class HSize
 {
@@ -110,6 +121,7 @@ class HSize
 		return $s;
 	}	
 }
+
 //class-struct for set FONT params
 class HFont
 {
@@ -145,6 +157,7 @@ class HFont
 	}	
 	
 }
+
 //abstract class of base HTML-object
 abstract class HObject
 {
@@ -156,14 +169,22 @@ abstract class HObject
 		$this->m_padding = new HMarginSizes();
 		$this->m_font = new HFont();
 		$this->m_size = new HSize();
+		$this->m_classes = array();
 	}	
-	abstract public function placeObject(); //virtual func
 	
+	abstract protected function placeContent(); //virtual func
+	public function place() //main func for place to HTML page
+	{
+		$this->placeBegin();
+		$this->placeContent();
+		$this->placeEnd();		
+	}
+		
 	public function setMargin($l, $r, $t, $b) {$this->m_margin->setValues($l, $r, $t, $b);}
 	public function setMarginUnits($u) {$this->m_margin->units = $u;}
 	public function setPadding($l, $r, $t, $b) {$this->m_padding->setValues($l, $r, $t, $b);}
 	public function setPaddingUnits($u) {$this->m_padding->units = $u;}
-	public function setBorderParams($w, $color = '', $type = '') {$this->m_border->setValues($w, $color, $type);}
+	public function setBorder($w, $color = 'Silver', $r = -1, $type = '') {$this->m_border->setValues($w, $color, $r, $type);}
 	public function setWidth($w, $min_w = -1, $max_w = -1, $u='%') {$this->m_size->setWidth($w, $min_w, $max_w, $u);}
 	public function setHeight($h, $min_h = -1, $max_h = -1, $u='%') {$this->m_size->setHeight($h, $min_h, $max_h, $u);}
 	public function setFontTextColor($color) {$this->m_font->text_color = $color;}
@@ -171,77 +192,135 @@ abstract class HObject
 	public function setFontFamily($ff) {$this->m_font->family = $ff;}
 	public function setFontAlign($align) {$this->m_font->align = $align;}
 	public function setFontBoldItalic($b, $i) {$this->m_font->is_bold = $b; $this->m_font->is_italic = $i;}
+	public function setBackGround($color) {$this->m_bgColor = $color;}
+	public function addClass($class_name) {array_push($this->m_classes, $class_name);}
+	public function setID($id) {$this->m_id = $id;}
+	public function setTransparent($b) {$this->m_bgColor = ($b) ? 'transparent' : '';} //делает элемент прозрачным
+	public function setDisplayMode($mode) {$this->m_displayMode = $mode;}
 	
-	
-	
+		
 	//protected section
 	protected $m_tagName = ''; //
+	protected $m_bgColor = ''; //цвет заливки элемента
 	protected $m_border; //OBJ: type of HBorder
 	protected $m_margin; //OBJ: type of HMarginSizes
 	protected $m_padding; //OBJ: type of HMarginSizes
 	protected $m_font; //OBJ:  type of HFont
 	protected $m_size;  //OBJ:  type of HSize
+	protected $m_classes = null; //array of string (class names)
+	protected $m_id = ''; //string value of ID element
+	protected $m_displayMode = -1;
 	
 	
+	protected function displayValue()
+	{
+		switch ($this->m_displayMode)
+		{
+			case HDisplayMode::hdmInline: {return 'inline';}
+			case HDisplayMode::hdmInlineBlock: {return 'inline-block';}
+			case HDisplayMode::hdmBlock: {return 'block';}
+			case HDisplayMode::hdmFlex: {return 'flex';}
+			case HDisplayMode::hdmTable: {return 'table';}
+			default: break;
+		}
+		return 'inline';
+	}
 	protected function styleValue() //return style values of attrs OR ""
 	{
-		$s = $this->m_border->styles();	
+		$s = '';
+		$s = $s."display: ".$this->displayValue()."; ";	
+		$s = $s.$this->m_border->styles();	
+		
+		if (!empty($this->m_bgColor)) 
+			$s = $s."background-color: $this->m_bgColor; ";
+		
 		$s = $s.$this->m_margin->styles("margin");	
 		$s = $s.$this->m_padding->styles("padding");	
 		$s = $s.$this->m_size->styles();	
 		$s = $s.$this->m_font->styles();	
 		return trim($s);	
 	}
+	protected function classValue()
+	{
+		$s = '';
+		if (count($this->m_classes) > 0)
+		{
+			foreach($this->m_classes as $class_name)
+				$s = $s."$class_name ";
+		}
+		return trim($s);
+	}
+	protected function otherAttrs() {return "";} //дополнительные атрибуты тегов
 	protected function placeBegin()
 	{
-		print("\n");
-		$sv = $this->styleValue();
-		$s = "<".$this->m_tagName." style=\"$sv\">";
+		$s = "<$this->m_tagName";
+		$attr = $this->styleValue();
+		if (!empty($attr)) $s = $s." style=\"$attr\"";
+		$attr = $this->classValue();
+		if (!empty($attr)) $s = $s." class=\"$attr\"";
+		if (!empty($this->m_id)) $s = $s." id=\"$this->m_id\"";
+		
+		$attr = $this->otherAttrs();
+		if (!empty($attr)) $s = $s." $attr";
+		
+		$s = $s.">";
 		echo $s;
 		print("\n");
 	}
 	protected function placeEnd() 
 	{
-		print("\n");
 		echo "</$this->m_tagName>"; 
 		print("\n");
-	}
-	
-	
+	}		
 }
 
-//////////////// HDiv (block element) ///////////////////////
-class HDiv extends HObject 
+
+// class for bind link to element
+class HLink
 {
-	public function __construct() //constructor
+	public function __construct($ref_path) //constructor
 	{
-		parent::__construct();
-		//echo_br("HDiv constructor");
-		$this->m_tagName = 'div';
+		$this->m_refValue = $ref_path;
+	}			
+	public function placeTextContent($text)
+	{
+		$s = "<a ";
+		$attr = $this->styleValue();
+		if (!empty($attr)) $s = $s." style=\"$attr\"";
+		$s = $s." href=\"$this->m_refValue\"";
+		$s = $s.">".$text."</a>";
+		echo $s;
 	}	
-	public function placeObject() 
+	public function placeBegin()
 	{
-		//print("\n");
-		parent::placeBegin();
-		echo_br($this->styleValue());
-		parent::placeEnd();		
-	}		
+		print("<a  href=\"$this->m_refValue\">");
+	}
+	public function placeEnd()
+	{
+		print("</a>");		
+	}
+	public function setColors($color, $hover_color = '') 
+	{
+		$this->m_color = $color; 
+		$this->m_hoverColor = $hover_color;
+	}
+		
+	//protected section
+	protected $m_refValue = '';
+	protected $m_color = '';
+	protected $m_hoverColor = '';
+	
 	protected function styleValue() //return style values of attrs OR ""
 	{
-		$s = "display: block; ".parent::styleValue();
-		return trim($s);
-	} 
-}
-class HFlexParentDiv
-{
+		$s = '';
+		//$s = "outline: none; text-decoration: none; ";
+		if (!empty($this->m_color)) $s = $s."color: $this->m_color; ";
+		//if (!empty($this->m_hoverColor)) $s = $s."a:active: $this->m_hoverColor; ";
+		return trim($s);	
+	}
 	
 }
 
-
-class IndexContent
-{
-	
-}
 
 ?>
 

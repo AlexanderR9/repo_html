@@ -52,6 +52,7 @@
 
 	
 	//функция возвращает признак того что папка является корневой для сайта, т.е. здесь присутствует файл index.*
+	
 	function isIndexPath($dir_name)
 	{	
 		$f_arr = getFileListByDir($dir_name);
@@ -63,6 +64,7 @@
 		}
 		return false;
 	}
+	
 
 
 ?>

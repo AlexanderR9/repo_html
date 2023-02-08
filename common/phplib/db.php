@@ -18,13 +18,13 @@ class DBObject
 {
 //public section
 
-	public function __construct() //constructor
+	public function __construct($with_debug = false) //constructor
 	{
 		//echo_br("DBObject constructor");
 		$this->m_loginData = new DBLoginInfo();
 		$this->m_err = "";
 
-		$this->connectDB();
+		$this->connectDB($with_debug);
 		//echo_br("has err: ".boolToStr($this->hasErr()));
 		if ($this->hasErr()) $this->printErr();
 	}	
@@ -67,6 +67,14 @@ class DBObject
 		}
 		return $tables;		
 	}	
+	
+	//веррнет признак существование таблицы в БД с указанным именем
+	public function existTable($t_name) 
+	{
+		$t_list = $this->tableList();
+		if ($this->hasErr()) return false;
+		return in_array($t_name, $t_list);
+	}
 	
 	//возвращает количество строк в указанной таблице
 	public function tableRowCount($t_name)
@@ -142,6 +150,8 @@ class DBObject
 			else break;
 		}
 	}
+	
+	//возвращает массив названий столбцов указанной таблицы 
 	public function getTableFields($t_name)
 	{
 		$fields = array();
@@ -204,16 +214,9 @@ class DBObject
 	protected $sql_result = null;
 	
 	
-	//веррнет признак существование таблицы в БД с указанным именем
-	protected function existTable($t_name) 
-	{
-		$t_list = $this->tableList();
-		if ($this->hasErr()) return false;
-		return in_array($t_name, $t_list);
-	}
 	
 	//подключится к БД, ничего не возвращает
-	protected function connectDB()
+	protected function connectDB($with_debug = false)
 	{
 		if (!$this->m_loginData)
 		{
@@ -221,7 +224,7 @@ class DBObject
 			return;
 		}
 		
-		echo_br("try connect to DB: ".$this->dbName()." ............");		
+		if ($with_debug) echo_br("try connect to DB: ".$this->dbName()." ............");		
 		try
 		{			
 			$this->m_db = new mysqli($this->m_loginData->host, $this->m_loginData->user, $this->m_loginData->password, $this->m_loginData->db_name);
@@ -237,7 +240,7 @@ class DBObject
 			$this->m_err = "DB connection faled".$this->m_db->connect_error.")";
 			return;
 		}
-		echo_br("RESULT: <em style=\"color:green\">DB connection: OK</em>");	
+		if ($with_debug) echo_br("RESULT: <em style=\"color:green\">DB connection: OK</em>");	
 	}
 	
 	//выполнить запрос к БД, ничего не возвращает

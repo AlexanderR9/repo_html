@@ -1,39 +1,96 @@
 
 <?php
-	$pages_path = "";	
-	$index_path = "../";		
-	if (isIndexPath(getcwd()))
-	{
-		$pages_path = "pages/";
-		$index_path = "";		
-	}	
+	$proj_path = "/".AppSettings::projectName();	
 	
-	echo "
-	<div id=\"header_div\" class=\"main_params_size flex_parent_div\">
-		<div id=\"top_ref\"><p><a class=\"page_link\" href=\"{$pages_path}couples.php\">Title 1</a></p></div>
-		<div><p>Title 2</p></div>
-		<div><p>Title 3</p></div>
-		<div class=\"flex_hidden_child\">empty block</div>
-		<div class=\"flex_hidden_child\">empty block</div>
-		<div class=\"flex_hidden_child\">empty block</div>
-		<div><p right=\"1\"><a href=\"{$index_path}index.php\" kursiv=\"1\">Main page</a></p></div>	
-	</div>
-	";
+	//echo "root: ".root_path(); br();
+	//echo "SCRIPT_FILENAME: ".$_SERVER["SCRIPT_FILENAME"]; br();
+	//echo __FILE__; br();
+	//echo "getcwd(): ".pwd(); br();
+
+	
+	$header_div = new HFlexDiv();
+	$header_div->setID('header_div');
+	$header_div->setBackGround(AppSettings::headerBackground());
+	$header_div->addClass('main_params_size');
+	$header_div->setHeight(AppSettings::headerHeight(), -1, -1, 'px');
+	$header_div->setMargin(-1, -1, AppSettings::headerMarginTop(), -1);	
+	$header_div->setBorder(AppSettings::headerBorderWidth(), AppSettings::headerBorderColor(), AppSettings::headerBorderRadius());
+	
+	//load  instruments list
+    $arr_instruments = AppSettings::instruments();
+	$n = count($arr_instruments);
+	if ($n == 0) {echo_br("WARNING: instruments list is empty!", 'red');}
+	
+	for ($i=0; $i<($n+4); $i++)
+	{
+		$title_div = new HDiv();
+		$title_div->setHeight(70, -1, -1, '%');
+		$title_div->setMargin(-1, -1, 10, -1);
+		$title_div->setTransparent(true);
+		if ($i == $n || $i == ($n+1)) $title_div->addClass('hidden_child');
+		$header_div->addChild($title_div);		
+	}
+	
+	$header_div->setEvenlyChilds();
+	
+	//print_r($arr_instruments);
+	
+	//look to db
+	$i=0;
+	$db = new DBObject(false);	
+	if ($db->isConnected())
+	{
+	//	print_r($db->tableList());
+		foreach($arr_instruments as $key => $value)
+		{
+			$text = new HText($value);
+			$text->setFontSize(AppSettings::headerFontSize());
+			$text->setFontTextColor(AppSettings::headerMenuTitleColor());
+			$text->setFontAlign(HAlign::haCenter);
+			$header_div->addChildToItem($i, $text);		
+			
+			if ($db->existTable($key))
+			{
+				//bind link
+				$l_path = "$proj_path/$key.php";		
+				$t_link = new HLink($l_path);
+				$text->setLink($t_link);				
+			}
+			
+			$i++;
+		}	
+	}
+	
+	//create index-page link
+	$text = new HText("Main page");
+	$text->setFontSize(AppSettings::headerFontSize());
+	$text->setFontTextColor(AppSettings::indexLinkColor());
+	$text->setFontAlign(HAlign::haLeft);
+	$text->setFontBoldItalic(false, true);
+	$header_div->addChildToItem($n+2, $text);		
+	//bind link
+	$l_path = "$proj_path/index.php";		
+	$index_link = new HLink($l_path);
+	$index_link->setColors(AppSettings::indexLinkColor(), 'Gold');
+	$text->setLink($index_link);
+	
+	//create diag-page link
+	$text = new HText("Diagnostic");
+	$text->setFontSize(AppSettings::headerFontSize());
+	$text->setFontTextColor(AppSettings::indexLinkColor());
+	$text->setFontAlign(HAlign::haLeft);
+	$text->setFontBoldItalic(false, true);
+	$header_div->addChildToItem($n+3, $text);		
+	//bind link
+	$l_path = "$proj_path/pages/diag_page.php";		
+	$diag_link = new HLink($l_path);
+	$diag_link->setColors(AppSettings::indexLinkColor());
+	$text->setLink($diag_link);
+	
+
+	//place header to HTML	
+	$header_div->place();
+	
 
 ?>
-
-<!--
-		<div><p right=\"1\"><i><font color=\"white\"><a href=\"{$index_path}index.php\">Main page</a></font></i></p></div>	
-<header>
-    <div class="headerdiv">
-        <table class="headertable">
-            <tr>
-                <td class="headercell">Couples</a></td>
-                <td class="headercell">Stocks</td>
-                <td class="headercell">Bonds</td>
-            <tr>
-        </table>
-    </div>
-</header>
--->
 

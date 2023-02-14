@@ -2,11 +2,6 @@
 <?php
 	$proj_path = "/".AppSettings::projectName();	
 	
-	//echo "root: ".root_path(); br();
-	//echo "SCRIPT_FILENAME: ".$_SERVER["SCRIPT_FILENAME"]; br();
-	//echo __FILE__; br();
-	//echo "getcwd(): ".pwd(); br();
-
 	
 	$header_div = new HFlexDiv();
 	$header_div->setID('header_div');
@@ -16,12 +11,15 @@
 	$header_div->setMargin(-1, -1, AppSettings::headerMarginTop(), -1);	
 	$header_div->setBorder(AppSettings::headerBorderWidth(), AppSettings::headerBorderColor(), AppSettings::headerBorderRadius());
 	
+	
+	
+	
 	//load  instruments list
     $arr_instruments = AppSettings::instruments();
 	$n = count($arr_instruments);
 	if ($n == 0) {echo_br("WARNING: instruments list is empty!", 'red');}
 	
-	for ($i=0; $i<($n+4); $i++)
+	for ($i=0; $i<($n+3); $i++)
 	{
 		$title_div = new HDiv();
 		$title_div->setHeight(70, -1, -1, '%');
@@ -44,6 +42,7 @@
 		foreach($arr_instruments as $key => $value)
 		{
 			$text = new HText($value);
+			$text->addClass('instrument_p');
 			$text->setFontSize(AppSettings::headerFontSize());
 			$text->setFontTextColor(AppSettings::headerMenuTitleColor());
 			$text->setFontAlign(HAlign::haCenter);
@@ -61,6 +60,14 @@
 		}	
 	}
 	
+		//set link animation
+		$childs_style = "";
+		//$childs_style = $childs_style."#index_matrix_div a {display: block; width: auto; height: auto; 1px solid red;}";
+		$childs_style = $childs_style."\n"."#header_div a {transition: all 0.4s ease-out; color: red;}";		
+		//$childs_style = $childs_style."\n"."#header_div a:hover img { transform: scaleY(0.7) translate(0%, -20%);}";	
+		$header_div->setChildsStyle($childs_style);
+	
+	
 	//create index-page link
 	$text = new HText("Main page");
 	$text->setFontSize(AppSettings::headerFontSize());
@@ -73,19 +80,6 @@
 	$index_link = new HLink($l_path);
 	$index_link->setColors(AppSettings::indexLinkColor(), 'Gold');
 	$text->setLink($index_link);
-	
-	//create diag-page link
-	$text = new HText("Diagnostic");
-	$text->setFontSize(AppSettings::headerFontSize());
-	$text->setFontTextColor(AppSettings::indexLinkColor());
-	$text->setFontAlign(HAlign::haLeft);
-	$text->setFontBoldItalic(false, true);
-	$header_div->addChildToItem($n+3, $text);		
-	//bind link
-	$l_path = "$proj_path/pages/diag_page.php";		
-	$diag_link = new HLink($l_path);
-	$diag_link->setColors(AppSettings::indexLinkColor());
-	$text->setLink($diag_link);
 	
 
 	//place header to HTML	

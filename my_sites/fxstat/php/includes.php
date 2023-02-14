@@ -37,11 +37,19 @@
 	$css_path = "css";	
 	if ($root_path != "") $css_path = $root_path."/".$css_path;
 	$f_arr = array();
-	array_push($f_arr, "tag.css", "flex.css", "main.css");	
+	array_push($f_arr, "tag.css", "main.css");	
 	foreach ($f_arr as $fname) 
 	{
 		echo "<link rel=\"stylesheet\" href=\"$css_path/$fname\" type=\"text/css\"/>"; 
 		print("\n");
 	}
-		
+	
+
+	/////////////////////GLOBAL PROJECT FUNCTIONS///////////////////////////////////	
+	function project_path()
+	{
+		return "/".AppSettings::projectName();
+	}
+	
+	
 ?>

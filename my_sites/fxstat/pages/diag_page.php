@@ -21,8 +21,17 @@
 		
 
 		$t = new HTable(15, 3);
-		$t->setCaption("Path commands");
+		$t->setBackGround('lightgray');
+		$t->setCaption("PATH");
 		$t->setBorder(3, 'gray');
+		$caption_font = new HFont();
+		$caption_font->text_color = 'gray';
+		$caption_font->size = 22;
+		$caption_font->is_italic = true;
+		$caption_font->align = HAlign::haLeft;
+		$t->setCaptionFont($caption_font);
+		
+		
 		$h_arr = array("Command", "Result", "Description");
 		$t->setHeaderLabels($h_arr);		
 		$w_cols = array(7, 8, 25, 30, 30);
@@ -92,16 +101,56 @@
 		$t->setCellData($row, 2, "Имя сервера, на котором выполняется текущий скрипт. ");
 		$row++;
 		
-		$t->setCellData($row, 0, "\$_SERVER['REQUEST_URI']");
-		$t->setCellData($row, 1, $_SERVER['REQUEST_URI']);
-		$t->setCellData($row, 2, "URI, который был передан для того, чтобы получить доступ к этой странице. ");
+		
+		///////////////TABLE 2//////////////////	
+		$t2 = new HTable(15, 3);
+		$t2->setBorder(3, 'gray');
+		$t2->setMargin(-1, -1, 20, -1, 'px');
+		$t2->setBackGround('lightgray');
+		$t2->setCaption("REQUEST DATA");
+		$caption_font = new HFont();
+		$caption_font->text_color = 'gray';
+		$caption_font->size = 22;
+		$caption_font->is_italic = true;
+		$caption_font->align = HAlign::haLeft;
+		$t2->setCaptionFont($caption_font);
+		
+		$row = 0;
+		//1 row
+		$t2->setCellData($row, 0, "\$_SERVER['REQUEST_URI']");
+		$t2->setCellData($row, 1, $_SERVER['REQUEST_URI']);
+		$t2->setCellData($row, 2, "URI, который был передан для того, чтобы получить доступ к этой странице. ");
+		$row++;
+		//2 row
+		$t2->setCellData($row, 0, "\$_SERVER['REQUEST_METHOD']");
+		$t2->setCellData($row, 1, $_SERVER['REQUEST_METHOD']);
+		$t2->setCellData($row, 2, "тип запроса, который был отправлен к этому скрипту. ");
+		$row++;
+		//3 row
+		$t2->setCellData($row, 0, "count(\$_POST)");
+		$t2->setCellData($row, 1, count($_POST));
+		$t2->setCellData($row, 2, "количетсво параметров переданных в POST запросе. ");
+		$row++;
+		//4 row
+		$t2->setCellData($row, 0, "count(\$_GET)");
+		$t2->setCellData($row, 1, count($_GET));
+		$t2->setCellData($row, 2, "количетсво параметров переданных в GET запросе. ");
+		$row++;
+		//5 row
+		$t2->setCellData($row, 0, "count(\$_REQUEST)");
+		$t2->setCellData($row, 1, count($_REQUEST));
+		$t2->setCellData($row, 2, "общее количетсво параметров переданных в запросе. ");
+		$row++;
+		//6 row
+		$t2->setCellData($row, 0, "\$_POST['param_name']");
+		$t2->setCellData($row, 1, "undefined");
+		$t2->setCellData($row, 2, "получить значение конкретного параметра (если такого параметра нет, то сервер выдаст ошибку).");
 		$row++;
 		
-		
-		
-		$t->setBackGround('lightgray');
-		$main_div->addChild($t);
+
 			
+		$main_div->addChild($t);
+		$main_div->addChild($t2);
 		$main_div->place();
 
 		

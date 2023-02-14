@@ -17,7 +17,6 @@ class DBLoginInfo
 class DBObject
 {
 //public section
-
 	public function __construct($with_debug = false) //constructor
 	{
 		//echo_br("DBObject constructor");
@@ -25,7 +24,6 @@ class DBObject
 		$this->m_err = "";
 
 		$this->connectDB($with_debug);
-		//echo_br("has err: ".boolToStr($this->hasErr()));
 		if ($this->hasErr()) $this->printErr();
 	}	
 	public function __destruct() //distructor
@@ -76,7 +74,7 @@ class DBObject
 		return in_array($t_name, $t_list);
 	}
 	
-	//возвращает количество строк в указанной таблице
+	//возвращает количество строк (записей) в указанной таблице
 	public function tableRowCount($t_name)
 	{
 		if (!$this->existTable($t_name))
@@ -174,7 +172,38 @@ class DBObject
 		return $fields;		
 	}
 	
+	//возвращает двумерный массив с информацией о столбцах таблицы.
+	//вид массива: key - имя столбца, value - array(тип данных, is_primary_key, is_unique)
+	public function getTableDataTypes($t_name)
+	{
+		$cols_data = array();
+		if (!$this->existTable($t_name))
+		{
+			$this->m_err = "the table [".$t_name."] not found in ".$this->dbName();
+			return $fields;
+		}				
+		
+		$req = "SHOW COLUMNS FROM $t_name;"; 		
+		$this->trySqlRequest($req);
+		if ($this->hasErr()) return $cols_data;
+				
+		while (true) 
+		{
+			$row = $this->sql_result->fetch_row();
+			if ($row) 
+			{
+				$col_data = array();
+				$col_data[0] = $row[1];
+				$col_data[1] = (bool)($row[3] == 'PRI');
+				$col_data[2] = (bool)($row[3] == 'UNI');
+				$cols_data[$row[0]] = $col_data;
+			}
+			else break;
+		}		
+		return $cols_data;
+	}
 	
+		
 	//добавляет 1 запись таблицу с указанным именем, ничего не возвращает
 	//row_data - массив вида: (key1=>value1, key2=>value2  .....), где key  это название поля(столбца) 
 	public function addRecord($t_name, $row_data)
@@ -207,13 +236,12 @@ class DBObject
 	}
 		
 
-//protected members
+//protected section
 	protected $m_loginData;
 	protected $m_err = "";
 	protected $m_db;
 	protected $sql_result = null;
-	
-	
+		
 	
 	//подключится к БД, ничего не возвращает
 	protected function connectDB($with_debug = false)

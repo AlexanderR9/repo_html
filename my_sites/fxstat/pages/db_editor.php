@@ -1,13 +1,83 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-	<meta charset="utf-8" />
+	<?php include('../php/includes.php'); ?>
 	<title>Database editor</title>
 	
-	<link rel="shortcut icon" href="images/calc.ico" type="image/x-icon">
-	<link rel="stylesheet" href="css/main.css" type="text/css">	
+	<?php include('../php/db_editor_leftbar.php'); ?>
+	<?php include('../php/db_editor_centerdiv.php'); ?>
+	
+	<script type="text/javascript" src="../js/lajax.js"></script>
+	
 </head>
 <body>
-	Контент
+
+    <?php 
+		include('../html/header.html'); 
+
+		//create page title
+		$title = new HText("Database:   ".$db->dbName());
+		$title->setMargin(-1, -1, 20, -1);
+		$title->setDisplayMode(HDisplayMode::hdmBlock);
+		$title->setBorder(1);
+		$title->setFontTextColor('SteelBlue');
+		$title->setFontSize(22);
+		$title->setFontBoldItalic(true, true);
+		$title->addClass('main_params_size');
+		$title->place();
+		
+		//create main_div
+		$main_div = new HFlexDiv();
+		$main_div->setID("db_main_div");
+		$main_div->setBorder(1, 'green');
+		$main_div->setMargin(-1, -1, 10, -1);
+		$main_div->addClass('main_params_size');
+		$main_div->setTransparent(true);
+		$main_div->addChild(new DBEditorLeftbar(20));			
+//		$main_div->addChild(new DBEditorCenterDiv(78));			
+
+		
+		//place content    $center_div->place();   HText("HText element");
+		$main_div->place();
+		
+	?> <!-- END PHP -->
+ 
+ 
+	<script>
+		let div = document.getElementById("db_main_div");	
+		if (div)
+		{
+			//if (div.childElementCount > 1) return;
+			console.log("childElementCount ", div.childElementCount);
+			if (div.childElementCount == 1)
+			{
+				try 
+				{
+					let c_div = `<?php $el = new DBEditorCenterDiv(78); $el->place(); ?>`;
+					
+					// beforebegin, afterbegin, beforeend, afterend
+					div.insertAdjacentHTML('beforeend', c_div);
+				} 
+				catch (err) 
+				{
+					var h2 = document.createElement("h4");
+					h2.appendChild(document.createTextNode(err));
+					h2.setAttribute('style', 'color:red');
+					document.body.appendChild(h2);
+				}
+			}
+			console.log("childElementCount ", div.childElementCount);
+		}
+		else 
+		{
+			var h2 = document.createElement("h2");
+			h2.appendChild(document.createTextNode("ERROR: main_div not found"));
+			h2.setAttribute('style', 'color:red');
+			document.body.appendChild(h2);
+		}			
+	</script>
+	
 </body>
 </html>
+
+

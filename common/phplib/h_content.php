@@ -63,6 +63,8 @@ class HDiv extends HObject
 	public function addChild($child_obj) {array_push($this->m_childs, $child_obj);}
 	public function setScroll($b) {$this->m_scroll = $b;}
 	public function setChildsStyle($styles) {$this->m_childsStyle = $styles;}
+	public function hasChilds() {return (count($this->m_childs) > 0);}
+	public function childsCount() {return count($this->m_childs);}		
 	
 		
 	//protected section	
@@ -83,8 +85,6 @@ class HDiv extends HObject
 		foreach($this->m_childs as $child)
 			$child->place();			
 	}	
-	protected function hasChilds() {return (count($this->m_childs) > 0);}
-	protected function childsCount() {return count($this->m_childs);}		
 	protected function styleValue() //return style values of attrs OR ""
 	{
 		$s = '';
@@ -166,6 +166,16 @@ class HMatrixDiv extends HDiv
 		}
 		$item->addChild($hobj);		
 	}
+	public function setCellPosition($t)
+	{
+		$item = $this->getElement($i, $j);
+		if (!$item) 
+		{
+			echo_br("setCellPosition: invalid item by (i=$i, j=$j)", 'red'); 
+			return;
+		}
+		$item->setPosition($t);		
+	}
 	public function setTransparentRows() 
 	{
 		for ($i=0; $i<$this->m_rows; $i++)
@@ -219,8 +229,7 @@ class HMatrixDiv extends HDiv
 				if ($item) 
 				{
 					$item->setWidth($w_col);				
-					$item->setMargin($this->m_magrinItems, $this->m_magrinItems, $this->m_magrinItems, $this->m_magrinItems);
-					$item->setMarginUnits('%');				
+					$item->setMargin($this->m_magrinItems, $this->m_magrinItems, $this->m_magrinItems, $this->m_magrinItems, '%');
 				}
 			}
 		}			
@@ -246,6 +255,8 @@ class HImage extends HObject
 	
 	public function setLink($link) {$this->m_link = $link;}	
 	public function setAltText($text) {$this->m_altText = $text;}	
+	public function setOverText($text) {$this->m_overText = $text;}	
+	public function getOverText() {return $this->m_overText;}
 	public function place() //overload func
 	{
 		if ($this->m_link) $this->m_link->placeBegin();
@@ -256,6 +267,7 @@ class HImage extends HObject
 	//protected section	
 	protected $m_path = '';
 	protected $m_altText = '';
+	protected $m_overText = '';
 	protected $m_link = null;
 	
 	
@@ -269,9 +281,80 @@ class HImage extends HObject
 	{
 		$s = "src=\"$this->m_path\"";
 		if (!empty($this->m_altText)) $s = $s." alt=\"$this->m_altText\"";		
-		return "src=\"$this->m_path\"";
+		return $s;
 	}
+}
 
+
+
+//////////////// HButton (button element) ///////////////////////
+class HButton extends HFlexDiv 
+{
+	public function __construct($caption, $icon_path = '') //constructor
+	{
+		parent::__construct();
+		$this->m_tagName = 'button';	
+		$this->m_caption = $caption;	
+		$this->m_icon = $icon_path;	
+	}	
+	public function setJSScript($js) 
+	{
+		$this->m_jsScript = trim($js);
+		if (!empty($this->m_jsScript))
+		{
+			$js_id = basename($this->m_jsScript, '.js');
+			$this->setID($js_id);
+		}			
+	}
+	public function setJSFunc($js) {$this->m_jsFunc = trim($js);}
+			
+	//protected section	
+	protected $m_caption = '';
+	protected $m_icon = '';
+	protected $m_jsScript = '';
+	protected $m_jsFunc = '';
+	
+	
+	
+	protected function placeContent() 
+	{
+		if (!empty($this->m_icon)) 
+		{
+			$icon = new HImage($this->m_icon);
+			$icon->setHeight(90, -1, -1, '%');
+			//$icon->setMargin(10, -1, -1, -1, '%');
+			//$icon->setBorder(1);
+			$this->addChild($icon);
+		}
+		if (!empty($this->m_caption)) 
+		{
+			$text = new HText($this->m_caption);
+			//$text->setHeight(60);
+			//$text->setBorder(1);
+			$this->addChild($text);
+		}
+		if (!empty($this->m_jsScript)) 
+		{
+			echo "<script>", "\n";	
+			echo "document.getElementById(\"$this->m_id\").onclick = function() {import('$this->m_jsScript');}", "\n";	
+			echo "</script>", "\n";	
+		}
+		$this->setFontAlign(HAlign::haCenter);
+		
+		parent::placeContent();		
+	}		
+	protected function otherAttrs() 
+	{
+		$s = "type=\"button\"";
+		if (!empty($this->m_jsFunc))  $s = $s." onclick=\"$this->m_jsFunc\"";
+		return $s;
+	}
+	protected function styleValue() //return style values of attrs OR ""
+	{
+		$s = "justify-content: center; align-items: center; ";
+		$s = $s.parent::styleValue();
+		return trim($s);
+	} 
 
 }
 

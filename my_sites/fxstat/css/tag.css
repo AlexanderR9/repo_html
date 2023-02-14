@@ -2,18 +2,20 @@
 {
 	padding: 0;
 	margin: 0;
+	border: none;
 }
 body 
 {
 	height:100%;
 	background-color: LightYellow;
-	//align: vertical-align;
 }
 div
 {
 	display: block;
 	background-color: #CCC;
 	border: 1px solid DeepSkyBlue;
+	height: auto;
+	min-height: 10px;
 }
 p
 {
@@ -21,26 +23,27 @@ p
 	height: auto;
 	width: 100%;	
 }
-p[right="1"]
-{
-	text-align:right;
-}
-p[center="1"]
-{
-	text-align:center;
-}
-em
-{
-	border: 1px solid green;
-	color: #DDDDDD;
-	display: block;
-	height: auto;
-	width: 100%;
-}
 a 
 {
   outline: none;
   text-decoration: none;
-  color: Aqua;
+  color: DarkBlue;
 }
+table
+{
+	width: 100%;
+	height: auto;
+}
+img
+{
+	max-width: 95%;
+}
+button
+{
+	width: 100%;
+	height: auto;
+}
+
+
+
 

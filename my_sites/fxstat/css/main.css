@@ -2,12 +2,24 @@
 /* основные параметры горизонтали страницы (для глобальных блоков), в коде html нужно указать высоту */
 .main_params_size 
 {
-	width:74%; 	
+	width:80%; 	
 	margin-left:auto;
 	margin-right:auto;
 }
+.hidden_child /*внутренний элемент (ребенок), который не будет виден на странице, но при этом занимает место  */
+{
+	visibility: hidden;
+}
+
+
+
+
+
+
 
 /* применяется к блоку-заголовку страницы */
+
+/*
 #header_div
 {
 	background-color:SaddleBrown; 
@@ -42,9 +54,10 @@
 {
   color: gray;
 }
-
+*/
 
 /* применяется к блоку-подвалу страницы */
+/*
 #footer_div
 {
 	background-color:DarkSlateGray; 
@@ -72,104 +85,38 @@
   color: gray;
 }
 
-
-
-.space_div
+#sidebar_div a
 {
-	visibility: hidden;
-	height:5px; 
+  color: Olive;  
 }
-
-
-/* применяется к центральному блоку страницы */
-#center_div
+#sidebar_div a:hover 
 {
-	margin-top: 6px;
-	margin-bottom: 6px;
-	background-color: transparent;
-	//height:60vh;
+  color: red;
+  font-weight: bold;
 }
-#sidebar_div
-{
-	width: 20%;
-	background-color:Honeydew;
-}
-#content_div
-{
-	width: 80%;
-	background-color:transparent;	
-}
-
-
-
-/*
-
-.footerdiv
-{	
-	background-color: #800000; 
-	height: 45px; 
-	width:80%; 
-	margin-left:10%;
-	border: 2px solid blue;	
-	text-align: left;
-	font-size: 18px; 
-	padding-top: 10px;
-	float: bottom;
-}
-
-
-	text-align: center;
-
-header
-{
-	background-color:tan; 
-	height:90px; 
-	width:80%; 
-}
-
-.headerdiv
-{
-	text-align: center;
-	height: 100%;
-	width: 100%;
-}
-.headertable
-{
-	display: inline-block;
-	border: 2px solid grey;
-	height: 60%;
-	width: 90%;
-	margin-top: 20px;
-}
-.headercell
-{
-	color: blue;
-	width: 25%;
-	vertical-align: center;
-	height: 100%;
-	font-size: 18px; 
-	padding-top: 20px;
-}
-#sidebar
-{
-    background-color: #ddd;
-    //float: left;
-    width: 150px;
-	margin-left:10%;
-	height:400px;
-	margin-top:5px;
-	margin-bottom:5px;
-}
-.styletest
-{
-	display: flex;
-	background-color: #CCC;
-	height: 100px;
-	width: 60%;
-	//margin: 10px auto;
-	margin-left: 20%;
-	
-	//justify-content: stretch;
-}
-
 */
+
+/* применяется к db_left_div */
+#db_left_div button
+{
+	transition: all 0.2s;
+    cursor: pointer;
+    box-shadow: 2px 5px 1px 0px rgb(72, 61, 139);   
+	
+	/*
+		 box-shadow parameters:  (example - box-shadow: 0px 5px 10px 0px rgba(0, 0, 0, 0.5))
+		1. x-offset, определяет горизонтальное положение тени;
+		2. y-offset, определяет вертикальное положение тени;
+		3. радиус размытия, который влияет на резкость тени. Чем выше значение, тем менее насыщенные тени, и наоборот;	
+		4. четвёртое значение определяет распространение тени.
+		5. color of shadow				
+		*/
+		
+}
+#db_left_div button:active
+{
+    box-shadow: 2px 2px 2px 0px rgb(52, 31, 39);   
+    transform:translatey(3px);
+    color: white;
+} 
+

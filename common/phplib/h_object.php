@@ -22,6 +22,15 @@ enum HDisplayMode
 }
 
 
+//Position types
+enum HPositionType
+{
+	case hpNone;
+	case hpRelative;
+	case hpAbsolute;	
+}
+
+
 //class-struct for set MAGRIN/PADDING properties
 class HMarginSizes
 {	
@@ -32,12 +41,19 @@ class HMarginSizes
 	public $units = 'px';	//string value
 
 	public function values() {return "left=$this->left  right=$this->right  top=$this->top  top=$this->top";}		
-	public function setValues($l, $r, $t, $b)
+	public function setValues($l, $r, $t, $b, $u)
 	{
+		/*
 		if ($l >= 0) $this->left = $l;
 		if ($r >= 0) $this->right = $r;
 		if ($t >= 0) $this->top = $t;
 		if ($b >= 0) $this->bottom = $b;
+		*/
+		$this->left = $l;
+		$this->right = $r;
+		$this->top = $t;
+		$this->bottom = $b;
+		$this->units = $u;				
 	}
 	public function styles($attr_name)
 	{
@@ -48,6 +64,45 @@ class HMarginSizes
 		if ($this->bottom > 0) $s = $s."$attr_name-bottom: $this->bottom$this->units; ";
 		return $s;
 	}
+}
+
+
+//class-struct for set POSITION properties
+class HPosition
+{
+	public function __construct() //constructor
+	{
+		$this->pos = new HMarginSizes();
+		$this->pos->setValues(-1, -1, -1, -1, 'px');
+	}	
+	
+	
+	public $type = HPositionType::hpNone;
+	public $pos = null; //OBJ of HMarginSizes
+	
+	public function setValues($type, $l, $r, $t, $b, $u)
+	{
+		$this->type = $type;
+		$this->pos->setValues($l, $r, $t, $b, $u);
+	}
+	public function styles()
+	{
+		$s = "";
+		switch ($this->type)
+		{
+			case HPositionType::hpRelative: {$s = $s."position: relative; "; break;}
+			case HPositionType::hpAbsolute: {$s = $s."position: absolute; "; break;}
+			default: break;		
+		}
+		
+		$u = $this->pos->units;
+		if ($this->pos->left != -1) $s = $s."left:".$this->pos->left."$u; ";
+		if ($this->pos->right != -1) $s = $s."right:".$this->pos->right."$u; ";
+		if ($this->pos->top != -1) $s = $s."top:".$this->pos->top."$u; ";
+		if ($this->pos->bottom != -1) $s = $s."bottom:".$this->pos->bottom."$u; ";
+
+		return $s;
+	}	
 }
 
 //class-struct for set BORDER properties
@@ -150,7 +205,7 @@ class HFont
 				default: break;		
 			}
 		}
-		$other_params="";
+		//$other_params="";
 		if ($this->is_bold) $s = $s."font-weight: bold; ";
 		if ($this->is_italic) $s = $s."font-style: italic; ";
 		return $s;
@@ -164,6 +219,7 @@ abstract class HObject
 	public function __construct() //constructor
 	{
 		//echo_br("HObject constructor");
+		$this->m_position = new HPosition();
 		$this->m_border = new HBorder();
 		$this->m_margin = new HMarginSizes();
 		$this->m_padding = new HMarginSizes();
@@ -180,10 +236,10 @@ abstract class HObject
 		$this->placeEnd();		
 	}
 		
-	public function setMargin($l, $r, $t, $b) {$this->m_margin->setValues($l, $r, $t, $b);}
-	public function setMarginUnits($u) {$this->m_margin->units = $u;}
-	public function setPadding($l, $r, $t, $b) {$this->m_padding->setValues($l, $r, $t, $b);}
-	public function setPaddingUnits($u) {$this->m_padding->units = $u;}
+	public function setMargin($l, $r, $t, $b, $u='px') {$this->m_margin->setValues($l, $r, $t, $b, $u);}
+	//public function setMarginUnits($u) {$this->m_margin->units = $u;}
+	public function setPadding($l, $r, $t, $b, $u='px') {$this->m_padding->setValues($l, $r, $t, $b, $u);}
+	//public function setPaddingUnits($u) {$this->m_padding->units = $u;}
 	public function setBorder($w, $color = 'Silver', $r = -1, $type = '') {$this->m_border->setValues($w, $color, $r, $type);}
 	public function setWidth($w, $min_w = -1, $max_w = -1, $u='%') {$this->m_size->setWidth($w, $min_w, $max_w, $u);}
 	public function setHeight($h, $min_h = -1, $max_h = -1, $u='%') {$this->m_size->setHeight($h, $min_h, $max_h, $u);}
@@ -197,11 +253,13 @@ abstract class HObject
 	public function setID($id) {$this->m_id = $id;}
 	public function setTransparent($b) {$this->m_bgColor = ($b) ? 'transparent' : '';} //делает элемент прозрачным
 	public function setDisplayMode($mode) {$this->m_displayMode = $mode;}
+	public function setPosition($type, $l=-1, $r=-1, $t=-1, $b=-1, $u='px') {$this->m_position->setValues($type, $l, $r, $t, $b, $u);}
 	
 		
 	//protected section
 	protected $m_tagName = ''; //
 	protected $m_bgColor = ''; //цвет заливки элемента
+	protected $m_position; //OBJ: type of HPosition
 	protected $m_border; //OBJ: type of HBorder
 	protected $m_margin; //OBJ: type of HMarginSizes
 	protected $m_padding; //OBJ: type of HMarginSizes
@@ -230,6 +288,7 @@ abstract class HObject
 		$s = '';
 		$s = $s."display: ".$this->displayValue()."; ";	
 		$s = $s.$this->m_border->styles();	
+		$s = $s.$this->m_position->styles();	
 		
 		if (!empty($this->m_bgColor)) 
 			$s = $s."background-color: $this->m_bgColor; ";

@@ -15,6 +15,7 @@ class HTable extends HObject
 	}	
 	
 	public function setCaption($text) {$this->m_caption = $text;}
+	public function setCaptionFont($cf) {$this->m_captionFont = $cf;}
 	public function setHeaderFont($hf) {$this->m_headerFont = hf;}
 	public function setHeaderBackground($color) {$this->m_headerBackground = hf;}
 	public function setHeaderLabels($h_labels) //задать текст для заголовка (массив)
@@ -58,19 +59,17 @@ class HTable extends HObject
 			$this->m_colsWidth = array();
 			$this->m_colsWidth = null;
 		}
-	}
-	
+	}	
 					
 	//protected section
 	protected $m_rows = -1;
 	protected $m_cols = -1;
 	protected $m_caption = ''; //название таблицы (может отсутствовать)
+	protected $m_captionFont = null; //OBJ:  type of HFont название таблицы
 	protected $m_headerLabels = null; //строковый массив - заголовок таблицы  (может отсутствовать)
 	protected $m_headerFont = null; //OBJ:  type of HFont заголовокa
 	protected $m_headerBackground = 'LightSteelBlue'; //цвет заливки заголовокa
 	protected $m_colsWidth = null; //массив числовых значений, ширины столбцов в %, сумма всех элементов должна быть 100%
-
-
 	
 	//данные таблицы, представляет из себя строковый одномерный массив (размер постоянный  m_rows*m_cols)
 	//изначально массив заполняется пустыми строками, key каждого элемента вида: i-j (пример 0-3 или 25-1) 
@@ -82,11 +81,7 @@ class HTable extends HObject
 	protected function hasCaption() {return (!empty($this->m_caption));}
 	protected function placeContent() 
 	{
-		echo "<style>", "\n"; //td {background-color:yellow; border: 1px solid black;} </style>", "\n";
-		echo "td {border: 1px solid black; white-space:pre; word-wrap:break-word; white-space:normal; text-align: left; padding: 2px;}", "\n";
-		echo "caption {background-color:transparent; text-align: left; font-style:italic;  color: green;}", "\n";
-		echo "</style>", "\n";
-		
+		$this->placeCommonStyle();
 		$this->placeCaption();
 		$this->placeColGroup();
 		$this->placeHeader();
@@ -96,17 +91,31 @@ class HTable extends HObject
 			echo "<tr>", "\n"; 
 			for ($j=0; $j<$this->m_cols; $j++)
 			{
-				echo "<td>", $this->m_data["$i-$j"], "</td>", "\n"; 
+				$cell_data = $this->m_data["$i-$j"];
+				if (is_array($cell_data)) $cell_data = print_r($cell_data);
+				echo "<td>$cell_data</td>", "\n"; 
+				//echo "<td>", $this->m_data["$i-$j"], "</td>", "\n"; 
 			}
 			echo "</tr>", "\n"; 			
 		}		
 	}	
+	protected function placeCommonStyle()
+	{
+		echo "<style>", "\n";
+		echo "td {border: 1px solid black; white-space:pre; word-wrap:break-word; white-space:normal; text-align: left; padding: 2px;}", "\n";
+		
+		$caption_style = "caption {background-color:transparent; ";
+		if ($this->m_captionFont) $caption_style = $caption_style.$this->m_captionFont->styles();
+		$caption_style = trim($caption_style)."}";		
+		echo $caption_style, "\n";
+		
+		echo "</style>", "\n";		
+	}
 	protected function placeColGroup()
 	{
 		if ($this->m_cols < 2) return;
 		echo "<colgroup>", "\n"; 
 		$w_col = (int)(100/$this->m_cols);
-		//$b = (($this->m_colsWidth != null) && is_array($this->m_colsWidth));
 		$b = ($this->m_colsWidth != null);
 		for ($j=0; $j<$this->m_cols-1; $j++)
 		{

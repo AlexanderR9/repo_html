@@ -306,7 +306,12 @@ class HButton extends HFlexDiv
 			$this->setID($js_id);
 		}			
 	}
-	public function setJSFunc($js) {$this->m_jsFunc = trim($js);}
+	public function setJSFunc($js) //имя функции задавать без скобок
+	{
+		$this->m_jsFunc = trim($js);
+		if (!empty($this->m_jsFunc))
+			$this->setID($this->m_jsFunc);
+	}
 			
 	//protected section	
 	protected $m_caption = '';
@@ -314,23 +319,17 @@ class HButton extends HFlexDiv
 	protected $m_jsScript = '';
 	protected $m_jsFunc = '';
 	
-	
-	
 	protected function placeContent() 
 	{
 		if (!empty($this->m_icon)) 
 		{
 			$icon = new HImage($this->m_icon);
 			$icon->setHeight(90, -1, -1, '%');
-			//$icon->setMargin(10, -1, -1, -1, '%');
-			//$icon->setBorder(1);
 			$this->addChild($icon);
 		}
 		if (!empty($this->m_caption)) 
 		{
 			$text = new HText($this->m_caption);
-			//$text->setHeight(60);
-			//$text->setBorder(1);
 			$this->addChild($text);
 		}
 		if (!empty($this->m_jsScript)) 
@@ -339,14 +338,18 @@ class HButton extends HFlexDiv
 			echo "document.getElementById(\"$this->m_id\").onclick = function() {import('$this->m_jsScript');}", "\n";	
 			echo "</script>", "\n";	
 		}
-		$this->setFontAlign(HAlign::haCenter);
-		
+		else if (!empty($this->m_jsFunc)) 
+		{
+			echo "<script>", "\n";	
+			echo "document.getElementById(\"$this->m_id\").addEventListener('click', $this->m_jsFunc);", "\n";	
+			echo "</script>", "\n";	
+		}			
+		$this->setFontAlign(HAlign::haCenter);		
 		parent::placeContent();		
 	}		
 	protected function otherAttrs() 
 	{
 		$s = "type=\"button\"";
-		if (!empty($this->m_jsFunc))  $s = $s." onclick=\"$this->m_jsFunc\"";
 		return $s;
 	}
 	protected function styleValue() //return style values of attrs OR ""
@@ -358,6 +361,28 @@ class HButton extends HFlexDiv
 
 }
 
+
+class HLine extends HObject 
+{
+	public function __construct($w = 1, $color = 'gray') //constructor
+	{
+		parent::__construct();
+		$this->m_tagName = 'hr';
+		$this->m_displayMode = HDisplayMode::hdmInlineBlock;		
+		$this->setWidth(98, -1, -1, '%');
+		$this->setHeight($w, -1, -1, 'px');
+		$this->setMargin(1, -1, -1, -1, '%');
+		$this->setBackGround($color);
+	}	
+	public function place() //overload func
+	{
+		$this->placeBegin();
+	}
+
+		
+	protected function placeContent() {}
+
+}
 
 
 ?>

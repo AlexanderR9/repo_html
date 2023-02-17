@@ -50,7 +50,8 @@ class DBEditorLeftbar extends HDiv
 	protected function addBarButton($text, $icon_path = '', $js = '')
 	{
 		$btn = new HButton($text, $icon_path);
-		$btn->setJSScript($js);
+		//$btn->setJSScript($js);
+		$btn->setJSFunc(basename($js, '.js'));
 		$btn->setBackGround('SteelBlue');		
 		$btn->setBorder(3, 'Azure', 20);
 		$btn->setFontSize(16);			
@@ -84,9 +85,6 @@ class DBEditorLeftbar extends HDiv
 			$this->addChild($htext);			
 		}		
 	}
-
-
-
 	
 }
 

@@ -155,14 +155,14 @@ class HSize
 		if ($w >= 0) $this->width = $w;
 		if ($min_w >= 0) $this->min_width = $min_w;
 		if ($max_w >= 0) $this->max_width = $max_w;
-		if (!empty($u)) $this->w_units = $u;
+		$this->w_units = $u;
 	}
 	public function setHeight($h, $min_h, $max_h, $u)
 	{
 		if ($h >= 0) $this->height = $h;
 		if ($min_h >= 0) $this->min_height = $min_h;
 		if ($max_h >= 0) $this->max_height = $max_h;
-		if (!empty($u)) $this->h_units = $u;
+		$this->h_units = $u;
 	}
 	public function styles()
 	{

@@ -1,46 +1,96 @@
-//js script
+//js script  db_new_table
 
+
+function db_new_table()
+{
+
+	let sender_id = "db_new_table";
+	let btn = document.getElementById(sender_id);	
+	if (!btn) return;
+	
+	if (btn.hasAttribute('disabled'))
+	{
+		console.log("db_new_table: disabled = ", btn.getAttribute('disabled'));
+		return;
+	}
+	
 
 	let div = document.getElementById("db_main_div");	
 	if (div)
 	{
-		//console.log("find [db_main_div] element, childs: ", div.childElementCount);
-		if (div.childElementCount == 2)
+		btn.setAttribute('disabled', true);
+		while (div.childElementCount > 1)
 		{
 			let childs = div.children;
-			//console.log("get arr of childs, size = ", childs.length);
-			//for (let i=0; i<childs.length; i++)
-				//console.log(i+1,". ", childs[i].tagName, " / ", childs[i].nodeName, " / ", childs[i].nodeType, " / ", childs[i].id);
-			
-			//console.log("try  remove node: <",childs[1].tagName," id=",childs[1].id,">");
 			childs[1].remove();	
-		}
+		}		
 		
 		let l_ajax = new LAjax('../php/db_new_table.php');
-		l_ajax.addParameter('act_mode', 'form');
-		l_ajax.addParameter('t_name', 'couple');
+		//l_ajax.addParameter('act_mode', 'form');
+		//l_ajax.addParameter('t_name', 'couple');
+		div.insertAdjacentHTML('beforeend', "<em> try AJAX request sended: URL=["+l_ajax.url()+"] ........</em>");
 		l_ajax.trySend();
 		
 		
-		div.insertAdjacentHTML('beforeend', "<em>AJAX request sended</em>");
-		
-		
-		
-		var h2 = document.createElement("h2"); div.appendChild(h2);
-		var h2_1 = document.createElement("h2"); div.appendChild(h2_1);
-		h2.innerHTML = "xhr_counter: ?";
-		h2_1.innerHTML = "n_timeout: ?";
-		
-		let nt = 0;
-		function t_func()
+		var h2 = document.createElement("h4"); 
+		div.appendChild(h2);
+		if (l_ajax.hasErr())
 		{
-			nt++;
-			h2.innerHTML = "xhr_counter: "+l_ajax.counter;
-			h2_1.innerHTML = "n_timeout: "+nt;			
-			if (nt > 10) clearInterval();
+			h2.setAttribute('style', 'color:red');
+			h2.innerHTML = "ERR: "+l_ajax.getErr();		
+			btn.removeAttribute('disabled');			
 		}
-		
-		setInterval(t_func, 1000);
+		else
+		{
+			h2.innerHTML = "n_timeout: ?";
+			let nt = 0;
+			let timeout = 300;
+			function t_func()
+			{
+				nt++;
+				h2.innerHTML = "n_timeout: "+nt;			
+				if (l_ajax.finishedOk())
+				{
+					clearTimeout(timeout);
+					h2.setAttribute('style', 'color:blue');
+					h2.innerHTML = "FINISHED OK!: ";			
+					//var result = document.createElement("p"); 
+					//result.innerHTML = l_ajax.response();
+					//document.body.appendChild(result);
+					
+					while (div.childElementCount > 1)
+					{
+						let childs = div.children;
+						childs[1].remove();	
+					}		
+					div.insertAdjacentHTML('beforeend', l_ajax.response());
+					
+					
+					btn.removeAttribute('disabled');
+					return;						
+				}
+				if (l_ajax.hasErr())
+				{
+					clearTimeout(timeout);
+					h2.setAttribute('style', 'color:red');
+					h2.innerHTML = "ERR: "+l_ajax.getErr()+" ("+l_ajax.strStatus()+")";	
+					btn.removeAttribute('disabled');					
+					return;
+				}									
+				if (nt > 10) 
+				{
+					clearTimeout(timeout);
+					l_ajax.tryAbort();
+					h2.setAttribute('style', 'color:red');
+					h2.innerHTML = "ERR: "+l_ajax.getErr();	
+					btn.removeAttribute('disabled');
+					return;	
+				}
+				
+				setTimeout(t_func, timeout);
+			}			
+			setTimeout(t_func, timeout);
+		}
 	}
 	else 
 	{
@@ -50,31 +100,8 @@
 		document.body.appendChild(h2);		
 	}			
 	
+	
 
-
-/*
-let xhr = new XMLHttpRequest();
-var php_script = '../php/db_new_table.php';
-var params = "tname="+encodeURIComponent("couples");
-params += "&n_fields="+encodeURIComponent(6);
-params += "&primary_key="+encodeURIComponent("tiker_id");
-
-xhr.open('POST', php_script, true);
-xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded'); 
-
-xhr.onreadystatechange = function() 
-{
-	//console.log("current state: "+xmlhttp.readyState);    
-	if (xhr.readyState == XMLHttpRequest.DONE && xhr.status == 200) 
-	{
-		console.log("request finished ok!");
-		console.log(xhr.responseText);		
-    }
-};
-xhr.send(params);
-*/
-
-console.log("AJAX request sended (create table)");
-
+}
 
 

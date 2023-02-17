@@ -10,6 +10,7 @@
     include("$phplib_path/h_object.php");
     include("$phplib_path/h_content.php");
     include("$phplib_path/h_table.php");
+    include("$phplib_path/h_input.php");
     include("$phplib_path/db.php");
 	
 	//include php modules of this project

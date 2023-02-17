@@ -23,7 +23,7 @@ class HTable extends HObject
 		$this->m_headerLabels = array();
 		if (count($h_labels) != $this->m_cols)
 		{
-			echo_br("WARNING: invalid h_labels size - ".count($h_labels)." != $this->m_cols", red);	
+			echo_br("WARNING: invalid h_labels size - ".count($h_labels)." != $this->m_cols", 'red');	
 			$this->m_headerLabels = null;
 		}
 		else
@@ -35,6 +35,23 @@ class HTable extends HObject
 	public function setCellData($i, $j, $text) //задать текст ячейки таблицы
 	{
 		$this->m_data["$i-$j"] = $text;
+	}
+	public function setRowData($i, $arr) //задать текст в строке
+	{
+		if (!is_array($arr)) {echo_br("WARNING: row data is not array"); return;}
+		if (count($arr) != $this->m_cols)
+		{
+			echo_br("WARNING: invalid arr size - ".count($arr)." != $this->m_cols", 'red');	
+			return;
+		}
+		if ($i < 0 || $i >= $this->m_rows)
+		{
+			echo_br("WARNING: invalid row value ".$i." (out of range)", 'red');	
+			return;
+		}
+		
+		for ($j=0; $j<$this->m_cols; $j++)
+			$this->setCellData($i, $j, $arr[$j]);
 	}
 	public function setColsWidth($w_arr) //задать ширины для всех столбцов, сумма должна быть 100%  (массив)
 	{

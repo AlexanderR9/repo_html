@@ -1,47 +1,54 @@
-//js script
+//js script db_remove_table
 
-/*
-	let div = document.getElementById("db_main_div");	
-	if (div)
-	{
-		if (div.childElementCount == 2)
-		{
-			div.lastChild.remove();	
-		}
-		
-	}
-	else 
-	{
-		var h2 = document.createElement("h2");
-		h2.appendChild(document.createTextNode("ERROR: main_div not found"));
-		h2.setAttribute('style', 'color:red');
-		document.body.appendChild(h2);
-	}			
-	
-*/
-
-/*
-let xhr = new XMLHttpRequest();
-var php_script = '../php/db_new_table.php';
-var params = "tname="+encodeURIComponent("couples");
-params += "&n_fields="+encodeURIComponent(6);
-params += "&primary_key="+encodeURIComponent("tiker_id");
-
-xhr.open('POST', php_script, true);
-xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded'); 
-
-xhr.onreadystatechange = function() 
+function db_remove_table()
 {
-	//console.log("current state: "+xmlhttp.readyState);    
-	if (xhr.readyState == XMLHttpRequest.DONE && xhr.status == 200) 
+	//console.log("AJAX start");
+	let sender_id = this.id;
+	
+	let s = "node type "+this.nodeText+",  id="+this.id;
+	//let html_code = "<em>"+s+"</em>";
+	//document.body.insertAdjacentHTML('beforebegin', html_code);
+	
+	
+	//let sender_id = "db_remove_table";
+	//let btn = document.getElementById(sender_id);	
+	//if (!btn) return;
+	
+	if (this.hasAttribute('disabled'))
 	{
-		console.log("request finished ok!");
-		console.log(xhr.responseText);		
-    }
-};
-xhr.send(params);
-*/
+		console.log("db_new_table: disabled = ", btn.getAttribute('disabled'));
+		return;
+	}
+	
+	
+	this.setAttribute('disabled', true);
+	
+	
+	if (this.getAttribute('disabled') == "true")
+		console.log("has attr db_new_table: disabled = ", this.getAttribute('disabled'));
+	
+	console.log("AJAX request sended (remove table)");
+	
+	//this.removeAttribute('disabled');
+	
+	//setTimeout(() => {this.removeAttribute('disabled');}, 2000);
+	
+	let tn = 0;
+	function tf() 
+	{
+		//alert('Привет');
+		let html_code = "<em>"+s+"</em><br>";
+		document.body.insertAdjacentHTML('beforebegin', html_code);
+		tn++;	
+		if (tn > 5) return;
+		setTimeout(tf, 2000);
+	}
+	
+	setTimeout(() => this.removeAttribute('disabled'), 3000);
+	
+	tf() ;
+}
 
-console.log("AJAX request sended (remove table)");
+
 
 

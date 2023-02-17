@@ -1,22 +1,49 @@
 <?php	
-	//include('../phplib/common.php');
+	//include('../phplib/h_object.php');
+	//include('../phplib/h_content.php');
+	//include('../phplib/h_input.php');
 
 
 //align enum
+/*
 enum TAction
 {
-    case tShowForm = 105;
+    case tShowForm;
     case tCheckName;
     case tNextField;
     case tCreate;
 }
+*/
 
 
 	$main_div = new HDiv();
-	$main_div->setID("db_newtable_div");
+	$main_div->setID("db_new_table_div");
 	$main_div->setBorder(2, 'green');
-	$main_div->setMargin(5, 5, 5, 5, '%');
+	$main_div->setWidth(78);
+	//$main_div->setHeight(98, -1, -1, '%');
+	//$main_div->setMargin(5, 5, 5, 5, '%');
+	
+	$cb_type = new HComboBox();
+	$main_div->addChild($cb_type);		
+	$t_req = $_SERVER['REQUEST_METHOD'];
+	$cb_type->addItem('req_type', $t_req);
+	
+	$cb_params = new HComboBox();
+	$main_div->addChild($cb_params);		
+	if ($t_req == 'GET') $cb_params->addItem(0, 'empty');
+	else
+	{
+		$edit = new HLineEdit("params: ".count($_POST));
+		$main_div->addChild($edit);		
+		foreach($_POST as $key => $value)
+		{
+			$s = ($cb_params->itemsCount()+1).".  $key => $value";
+			$cb_params->addItem($key, $s);
+		}
+	}
+	//$cb_params->addItem('req_type', $_SERVER['REQUEST_METHOD']);
 
+	
 	$main_div->place();
 
 /*
@@ -29,15 +56,5 @@ enum TAction
 	
 	*/
 	
-	//to_debug("GET: ".count($_GET));	
-
-		//create main_div
-		//$main_div = new HDiv();
-		//$main_div->setBorder(4, 'GreenYellow');
-		//$main_div->setMargin(-1, -1, 10, -1);
-		//$main_div->addClass('main_params_size');
-		//$main_div->setTransparent(true);
-
-		//$main_div->place();
 
 ?>

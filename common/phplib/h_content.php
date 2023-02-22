@@ -100,6 +100,7 @@ class HFlexDiv extends HDiv
 	{
 		parent::__construct();
 		$this->m_displayMode = HDisplayMode::hdmFlex;
+		$this->m_justifyType = HFlexJustifyType::fjtBetween;
 	}
 	public function setEvenlyChilds() //сделать ширину всех детей одинаковую и разложить их равномерно по всей длине блока-parent
 	{
@@ -116,11 +117,31 @@ class HFlexDiv extends HDiv
 		if ($i < 0 || $i >= $this->childsCount()) return;		
 		$this->m_childs[$i]->addChild($child_obj);
 	}
+	public function setJustifyType($jt) {$this->m_justifyType = $jt;}
+
+	
+	//protected section
+	protected $m_justifyType = null;
+	
+	
+	protected function justifyValue()
+	{
+		switch ($this->m_justifyType)
+		{
+			case HFlexJustifyType::fjtBetween: {return 'space-between';}
+			case HFlexJustifyType::fjtRound: {return 'space-around';}
+			case HFlexJustifyType::fjtCenter: {return 'center';}
+			case HFlexJustifyType::fjtLeft: {return 'start';}
+			case HFlexJustifyType::fjtRight: {return 'flex-end';}
+			default: break;
+		}
+		return '';
+	}
+	
 	protected function styleValue() //return style values of attrs OR ""
 	{
-		$s = "justify-content: space-between; ";
-//		$s = "justify-content: space-around; ";
-//		$s = "justify-content: center; ";
+		$s = $this->justifyValue();
+		if (!empty($s)) $s = "justify-content: $s; ";
 		$s = $s.parent::styleValue();
 		return trim($s);
 	} 
@@ -296,6 +317,7 @@ class HButton extends HFlexDiv
 		$this->m_tagName = 'button';	
 		$this->m_caption = $caption;	
 		$this->m_icon = $icon_path;	
+		$this->setJustifyType(HFlexJustifyType::fjtCenter);
 	}	
 	public function setJSScript($js) 
 	{
@@ -342,6 +364,7 @@ class HButton extends HFlexDiv
 		{
 			echo "<script>", "\n";	
 			echo "document.getElementById(\"$this->m_id\").addEventListener('click', $this->m_jsFunc);", "\n";	
+			//echo "this.onclick = $this->m_jsFunc;", "\n";	
 			echo "</script>", "\n";	
 		}			
 		$this->setFontAlign(HAlign::haCenter);		
@@ -361,7 +384,7 @@ class HButton extends HFlexDiv
 
 }
 
-
+////////////HLine////////////////////////
 class HLine extends HObject 
 {
 	public function __construct($w = 1, $color = 'gray') //constructor

@@ -17,6 +17,8 @@ class AppSettings
 	public static function headerBorderWidth() {return 2;} //px
 	public static function headerFontSize() {return 18;} 
 	
+	//db
+	public static function dbName() {return 'fxstat_db';}	
 	
 	//footer
 	public static function footerBackground() {return 'DarkSlateGray';}

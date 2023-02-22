@@ -30,6 +30,16 @@ enum HPositionType
 	case hpAbsolute;	
 }
 
+//location type on flex DIV
+enum HFlexJustifyType
+{
+	case fjtBetween; //равномерно размазаны, отступов по краям нет
+	case fjtRound; //равномерно размазаны, отступы по краям есть, равны половине отступа между элементами внутри
+	case fjtCenter; //все элементы склеены и находятся по центру блока
+	case fjtLeft; //все элементы склеены и находятся слева
+	case fjtRight; //все элементы склеены и находятся справа
+}
+
 
 //class-struct for set MAGRIN/PADDING properties
 class HMarginSizes
@@ -180,6 +190,13 @@ class HSize
 //class-struct for set FONT params
 class HFont
 {
+	public function __construct($size = 14, $color = "black") //constructor
+	{
+		$this->size = $size;
+		$this->text_color = $color;
+	}	
+	
+	
 	public $text_color = ''; //string value
 	public $size = -1; //px
 	public $family = ''; //string value

@@ -16,7 +16,7 @@ function db_remove_table()
 	
 	if (this.hasAttribute('disabled'))
 	{
-		console.log("db_new_table: disabled = ", btn.getAttribute('disabled'));
+		console.log("db_new_table: disabled = ", this.getAttribute('disabled'));
 		return;
 	}
 	

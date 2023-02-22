@@ -133,7 +133,7 @@ class HCheckBlock extends HDiv
 	{
 		parent::__construct();
 		$this->m_displayMode = HDisplayMode::hdmInlineBlock;
-		$this->setBorder(1, 'gray');
+		//$this->setBorder(1, 'gray');
 		$this->setHeight(22, -1, -1, 'px');
 		$this->setTransparent(true);
 		
@@ -151,6 +151,7 @@ class HCheckBlock extends HDiv
 		$this->m_checkObj->setHeight($size, -1, -1, 'px');		
 	}
 	public function setChecked($b) {$this->m_checkObj->setChecked($b);}
+	public function setID($id) {$this->m_checkObj->setID($id);}
 
 	//protected section
 	protected $m_captionObj = null;

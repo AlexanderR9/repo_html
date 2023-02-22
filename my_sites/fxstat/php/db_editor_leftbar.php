@@ -25,13 +25,14 @@ class DBEditorLeftbar extends HDiv
 		//init table list
 		$this->addBarTitle("Table list (".$db->tableCount().")");		
 		$this->addTablesList($db->tableList());		
-		$this->addSpace(40);
+		$this->addSpace(140);
 
 		//control buttons
 		$this->addBarTitle("Control");
 		$this->addBarButton("Create new table", "../images/db_new_table.png", "../js/db_new_table.js");
 		$this->addBarButton("Remove table", "../images/db_remove_table.png", "../js/db_remove_table.js");
 		$this->addBarButton("Modify table fields", "../images/db_settings.png");
+		$this->addSpace(140);
 
 
 		$db->closeConnection(); //close DB
@@ -44,7 +45,6 @@ class DBEditorLeftbar extends HDiv
 		$title->setBackGround('DarkSlateGray');
 		$title->setFontTextColor('YellowGreen');
 		$title->setFontAlign(HAlign::haCenter);
-		$this->setID("db_left_div");
 		$this->addChild($title);			
 	}
 	protected function addBarButton($text, $icon_path = '', $js = '')

@@ -9,6 +9,7 @@ class HTable extends HObject
 		parent::__construct();
 		$this->m_tagName = 'table';	
 		$this->m_displayMode = HDisplayMode::hdmTable;
+		$this->m_selectableCell = true;
 		$this->m_rows = $rows;
 		$this->m_cols = $cols;
 		$this->initData();
@@ -18,6 +19,8 @@ class HTable extends HObject
 	public function setCaptionFont($cf) {$this->m_captionFont = $cf;}
 	public function setHeaderFont($hf) {$this->m_headerFont = hf;}
 	public function setHeaderBackground($color) {$this->m_headerBackground = hf;}
+	public function setSelectableCell($b) {$this->m_selectableCell = $b;}
+	
 	public function setHeaderLabels($h_labels) //задать текст для заголовка (массив)
 	{
 		$this->m_headerLabels = array();
@@ -87,6 +90,7 @@ class HTable extends HObject
 	protected $m_headerFont = null; //OBJ:  type of HFont заголовокa
 	protected $m_headerBackground = 'LightSteelBlue'; //цвет заливки заголовокa
 	protected $m_colsWidth = null; //массив числовых значений, ширины столбцов в %, сумма всех элементов должна быть 100%
+	protected $m_selectableCell = true; //возможность выделения текста 
 	
 	//данные таблицы, представляет из себя строковый одномерный массив (размер постоянный  m_rows*m_cols)
 	//изначально массив заполняется пустыми строками, key каждого элемента вида: i-j (пример 0-3 или 25-1) 
@@ -119,7 +123,9 @@ class HTable extends HObject
 	protected function placeCommonStyle()
 	{
 		echo "<style>", "\n";
-		echo "td {border: 1px solid black; white-space:pre; word-wrap:break-word; white-space:normal; text-align: left; padding: 2px;}", "\n";
+		$s = "border: 1px solid black; white-space:pre; word-wrap:break-word; white-space:normal; text-align: left; padding: 2px;";
+		if ($this->m_selectableCell == false) $s = $s." user-select: none;";
+		echo "td {".$s."}", "\n";
 		
 		$caption_style = "caption {background-color:transparent; ";
 		if ($this->m_captionFont) $caption_style = $caption_style.$this->m_captionFont->styles();

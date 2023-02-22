@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-	<?php include('../php/includes.php'); ?>	
 	<title>Database editor</title>
 	
-	<?php include('../php/db_editor_leftbar.php'); ?>
-	<?php include('../php/db_editor_centerdiv.php'); ?>
+	<?php 
+		include('../php/includes.php'); 
+		include('../php/db_editor_leftbar.php');
+		include('../php/db_editor_centerdiv.php');
+		//include('../php/db_new_table.php');
+	?>	
 	
-	<script type="text/javascript" src="../js/lajax.js"></script>
+	<script src="../js/ltable.js"></script>
+	<script src="../js/lajax.js"></script>
 	<script type="text/javascript" src="../js/db_remove_table.js"></script>
 	<script type="text/javascript" src="../js/db_new_table.js"></script>
 	
@@ -16,12 +20,11 @@
 <body>
 
     <?php 
-		include('../html/header.html'); 
+		//include('../html/header.html'); 
 		
 
 		//create page title
-		/*
-		$title = new HText("Database:   ".$db->dbName());
+		$title = new HText("Database:   ".AppSettings::dbName());
 		$title->setMargin(-1, -1, 20, -1);
 		$title->setDisplayMode(HDisplayMode::hdmBlock);
 		$title->setBorder(1);
@@ -30,27 +33,19 @@
 		$title->setFontBoldItalic(true, true);
 		$title->addClass('main_params_size');
 		$title->place();
-		*/
 		
 		//create main_div
 		$main_div = new HFlexDiv();
 		$main_div->setID("db_main_div");
-		//$main_div->setBorder(1, 'green');
 		$main_div->setMargin(-1, -1, 10, -1);
 		$main_div->addClass('main_params_size');
 		$main_div->setTransparent(true);
 		$main_div->addChild(new DBEditorLeftbar(20));			
+//		$main_div->addChild(new DB_NewTableDiv(78));			
 //		$main_div->addChild(new DBEditorCenterDiv(78));			
-
-		//test btn
-		$btn = new HButton("test");
-		$btn->setID("test_btn");
-		$btn->setBorder(5, 'blue');
-		//$main_div->addChild($btn);			
-		//place content    $center_div->place();   HText("HText element");
 		$main_div->place();
+
 		
-		include('../php/db_new_table.php'); 
 
 		
 		/*

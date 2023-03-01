@@ -10,6 +10,7 @@
 		//include('../php/db_new_table.php');
 	?>	
 	
+	<script src="../js/lcommon.js"></script>
 	<script src="../js/ltable.js"></script>
 	<script src="../js/lajax.js"></script>
 	<script type="text/javascript" src="../js/db_remove_table.js"></script>
@@ -24,19 +25,18 @@
 		
 
 		//create page title
-		$title = new HText("Database:   ".AppSettings::dbName());
-		$title->setMargin(-1, -1, 20, -1);
+		$title = new HText("   Database:   ".AppSettings::dbName());
+		$title->setMargin(-1, -1, 10, -1, 'px');
 		$title->setDisplayMode(HDisplayMode::hdmBlock);
-		$title->setBorder(1);
-		$title->setFontTextColor('SteelBlue');
-		$title->setFontSize(22);
+		$title->setBorder(2, 'green');
+		$title->setFont(22, 'SteelBlue');
 		$title->setFontBoldItalic(true, true);
 		$title->addClass('main_params_size');
 		$title->place();
 		
 		//create main_div
-		$main_div = new HFlexDiv();
-		$main_div->setID("db_main_div");
+		$main_div = new HFlexDiv('db_main_div');
+		//$main_div->setID("db_main_div");
 		$main_div->setMargin(-1, -1, 10, -1);
 		$main_div->addClass('main_params_size');
 		$main_div->setTransparent(true);
@@ -46,45 +46,9 @@
 		$main_div->place();
 
 		
-
-		
-		/*
-		//group box
-		$box = new HGroupBox('Group box title');
-		$box->setWidth(20, -1, -1, '%');
-		$main_div->addChild($box);
-		//combo box
-		$cb = new HComboBox();
-		$cb->addItem(105, "item 1");
-		$cb->addItem(107, "item 2");
-		$cb->addItem(27, "item 3");
-		$cb->setFontTextColor('SteelBlue');
-		$main_div->addChild($cb);
-		//line edit
-		$main_div->addChild(new HLineEdit("lineedit textttt"));		
-		//check box
-		$check = new HCheckBlock("CheckBlock caption");
-		//$check->setWidth(300, -1, -1, 'px');
-		$check->setFontBoldItalic(false, true);
-		$main_div->addChild($check);				
-		*/
-		
-		
-		
-		//$line = new HLine(1, 'red');
-		//$line->place();
-		
 	?> <!-- END PHP -->
 
 
-	<script>
-		function ftest() 
-		{
-			console.log("test_btn click");
-			console.log("test_btn click 2");
-		}
-		//document.getElementById("test_btn").addEventListener('click', db_remove_table);					
-	</script> 
  
 	<script>
 		let div = document.getElementById("db_main_div");	

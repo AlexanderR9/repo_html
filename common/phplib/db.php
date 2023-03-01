@@ -38,6 +38,63 @@ class DBObject
 	public function isConnected() {if (!$this->m_db) return false; return $this->m_db->ping();} //признак наличия подключения к базе
 	public function closeConnection() {if ($this->isConnected()) $this->m_db->close();} //в деструкторе нельзя вызывать этот метод
 	
+	//список возможных типов данных полей для интерфейса пользователя.
+	//возвращает массив элементов: типа ключ - значение.
+	public static function userFieldTypes() 
+	{		
+		return array('char' => "Char (1 symbol)", //1 символ (длина фиксированная)
+					'short_string' => "Short string (max len 10)", //переменная строка до 10 символов
+					'string' => "String (max len 100)", //переменная строка до 100 символов
+					'text' => "Text", //произвольный длинный текст (например некое описание)
+					'date' => "Date",
+					'time' => "Time",					
+					'int8' => "Int (8 bit)",
+					'int16' => "Int (16 bit)",
+					'int32' => "Int (32 bit)",
+					'uint8' => "Unsigned int (8 bit)",
+					'uint16' => "Unsigned int (16 bit)",
+					'uint32' => "Unsigned int (32 bit)",					
+					'float' => "Float",
+					'bool' => "Boolean"					
+					);															
+	}
+	
+	//получить реальный тип данных языка MySQL по пользовательскому ключу из массива fieldTypes() 
+	public static function getDBType($type) 
+	{
+		if ($type == 'char') 	return "CHAR(1)";
+		if ($type == 'short_string') 	return "VARCHAR(10)";
+		if ($type == 'string') 	return "VARCHAR(100)";
+		if ($type == 'text') 	return "TEXT";
+		if ($type == 'date') 	return "DATE";
+		if ($type == 'time') 	return "TIME";
+		if ($type == 'int8') 	return "TINYINT";
+		if ($type == 'uint8') 	return "TINYINT UNSIGNED";
+		if ($type == 'int16') 	return "SMALLINT";
+		if ($type == 'uint16')	return "SMALLINT UNSIGNED";
+		if ($type == 'int32') 	return "INT";
+		if ($type == 'uint32') 	return "INT UNSIGNED";
+		if ($type == 'float') 	return "FLOAT";
+		if ($type == 'bool') 	return "BOOLEAN";		
+		return "none";		
+	}
+	
+	//возвращает признак только что пользовательский тип данных является целым
+	public static function isIntegerType($type) 
+	{
+		return str_contains($type, 'int');
+	}
+
+	//возвращает признак только что пользовательский тип данных численным (целым или вещественным)
+	public static function isNumeric($type) 
+	{
+		if (isIntegerType($type)) return true;
+		return ($type == 'float');
+	}
+	
+	
+
+	
 	/////////////////SQL query finctions////////////////////////
 	
 	//возвращает количество таблиц в рабочей БД
@@ -94,13 +151,40 @@ class DBObject
 	
 	
 	//создает в БД таблицу с указанным именем, ничего не возвращает
-	public function createTable($t_name)
+	//$fields_info - двумерный массив, где ключ первого уровня это имя поля,
+	//а значение это массив 2-го уровня, который содержит 1-тип данных(string) 2-is_primary_key(bool) 3-is_unique(bool).
+	//ВНИМАНИЕ: тип данных необходимо передавать вида: ключ из массива DBObject::userFieldTypes() 
+	public function createTable($t_name, $fields_info)
 	{
 		if ($this->existTable($t_name))
 		{
 			$this->m_err = "the table [".$t_name."] already exist in ".$this->dbName();
 			return;
-		}				
+		}			
+		
+		
+		$req = "CREATE TABLE IF NOT EXISTS $t_name ( ";
+		$first = true;
+		foreach($fields_info as $key => $value)
+		{
+			$mysql_dt = DBObject::getDBType($value[0]);
+			$is_int = DBObject::isIntegerType($value[0]);
+			
+			$s = "$key $mysql_dt";
+			if ($value[1])
+			{
+				$s = $s." PRIMARY KEY";
+				if ($is_int) $s = $s." AUTO_INCREMENT";
+			}
+			else if ($value[2]) $s = $s." UNIQUE";
+			
+			if ($first) {$first = false; $req = $req.$s;}
+			else $req = $req.", ".$s;
+		}
+		$req = $req." );";
+		
+
+/*			EXAMPLE		
 		$req = "
 					CREATE TABLE IF NOT EXISTS $t_name 
 					(
@@ -109,6 +193,11 @@ class DBObject
 						name VARCHAR(50) DEFAULT '---'
 					);
 				";
+				*/
+				
+		
+		
+		//echo "$req";
 		$this->trySqlRequest($req);
 	}
 	

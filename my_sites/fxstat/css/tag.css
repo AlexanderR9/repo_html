@@ -36,14 +36,30 @@ table
 }
 img
 {
-	max-width: 95%;
+	//max-width: 95%;
+	width: auto;
+	
 }
 button
 {
 	width: 100%;
 	height: auto;
 }
-
-
+select
+{
+	height: auto;
+	min-width: 50px;
+}
+select option
+{
+	//border-radius: 35px;
+	//background-color: PaleGreen;	
+}
+input
+{
+	height: auto;
+	min-width: 20px;
+	float:left;
+}
 
 

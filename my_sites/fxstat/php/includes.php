@@ -8,6 +8,7 @@
 	include("$phplib_path/common.php");
     include("$phplib_path/fileworker.php");
     include("$phplib_path/h_object.php");
+    include("$phplib_path/h_div.php");
     include("$phplib_path/h_content.php");
     include("$phplib_path/h_table.php");
     include("$phplib_path/h_input.php");

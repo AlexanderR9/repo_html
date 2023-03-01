@@ -1,18 +1,14 @@
 
 <?php
 	$proj_path = "/".AppSettings::projectName();	
-	
-	
-	$header_div = new HFlexDiv();
-	$header_div->setID('header_div');
+
+	//header div
+	$header_div = new HFlexDiv('header_div');
 	$header_div->setBackGround(AppSettings::headerBackground());
 	$header_div->addClass('main_params_size');
 	$header_div->setHeight(AppSettings::headerHeight(), -1, -1, 'px');
 	$header_div->setMargin(-1, -1, AppSettings::headerMarginTop(), -1);	
 	$header_div->setBorder(AppSettings::headerBorderWidth(), AppSettings::headerBorderColor(), AppSettings::headerBorderRadius());
-	
-	
-	
 	
 	//load  instruments list
     $arr_instruments = AppSettings::instruments();
@@ -27,25 +23,19 @@
 		$title_div->setTransparent(true);
 		if ($i == $n || $i == ($n+1)) $title_div->addClass('hidden_child');
 		$header_div->addChild($title_div);		
-	}
-	
+	}	
 	$header_div->setEvenlyChilds();
-	
-	//print_r($arr_instruments);
 	
 	//look to db
 	$i=0;
 	$db = new DBObject(false);	
 	if ($db->isConnected())
 	{
-	//	print_r($db->tableList());
 		foreach($arr_instruments as $key => $value)
 		{
 			$text = new HText($value);
 			$text->addClass('instrument_p');
-			$text->setFontSize(AppSettings::headerFontSize());
-			$text->setFontTextColor(AppSettings::headerMenuTitleColor());
-			$text->setFontAlign(HAlign::haCenter);
+			$text->setFont(AppSettings::headerFontSize(), AppSettings::headerMenuTitleColor(), HAlign::haCenter);
 			$header_div->addChildToItem($i, $text);		
 			
 			if ($db->existTable($key))
@@ -54,37 +44,30 @@
 				$l_path = "$proj_path/$key.php";		
 				$t_link = new HLink($l_path);
 				$text->setLink($t_link);				
-			}
-			
+			}			
 			$i++;
 		}	
 	}
 	
-		//set link animation
-		$childs_style = "";
-		//$childs_style = $childs_style."#index_matrix_div a {display: block; width: auto; height: auto; 1px solid red;}";
-		$childs_style = $childs_style."\n"."#header_div a {transition: all 0.4s ease-out; color: red;}";		
-		//$childs_style = $childs_style."\n"."#header_div a:hover img { transform: scaleY(0.7) translate(0%, -20%);}";	
-		$header_div->setChildsStyle($childs_style);
-	
+	//set link animation
+	$childs_style = "";
+	$childs_style = $childs_style."\n"."#header_div a {transition: all 0.4s ease-out; color: red;}";		
+	$header_div->setChildsStyle($childs_style);
 	
 	//create index-page link
 	$text = new HText("Main page");
-	$text->setFontSize(AppSettings::headerFontSize());
-	$text->setFontTextColor(AppSettings::indexLinkColor());
-	$text->setFontAlign(HAlign::haLeft);
+	$text->setFont(AppSettings::headerFontSize(), AppSettings::indexLinkColor(), HAlign::haLeft);
 	$text->setFontBoldItalic(false, true);
 	$header_div->addChildToItem($n+2, $text);		
+	
 	//bind link
 	$l_path = "$proj_path/index.php";		
 	$index_link = new HLink($l_path);
 	$index_link->setColors(AppSettings::indexLinkColor(), 'Gold');
 	$text->setLink($index_link);
-	
 
 	//place header to HTML	
 	$header_div->place();
 	
-
 ?>
 

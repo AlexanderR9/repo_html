@@ -109,7 +109,7 @@
 													"Зацикливание выполнения функции с заданным периодом до тех пор пока не выполнится некоторое условие."));
 													
 													
-		setNextRow($t_js, array("STRING", "", "" ,""));
+		setNextRow($t_js, array("STRING", "indexOf", "if (str.indexOf(sub_str) >= 0)" , "Поиск подстроки в строке, вернет позицию или -1(в случае если подстрока не найдена)."));
 		setNextRow($t_js, array("STRING", "", "" ,""));
 		setNextRow($t_js, array("STRING", "", "" ,""));
 		setNextRow($t_js, array("STRING", "", "" ,""));
@@ -118,9 +118,27 @@
 
 
 		///////////////TABLE 4//////////////////			
-		$t_php = addTable("PHP help", 10, 3);
+		$t_php = addTable("PHP help", 20, 3);
 		setTableHeader($t_php, array("Subject", "Example", "Description"), array(10, 40, 50));
 		setNextRow($t_php, array("var", "\$i = 0; <br> function fname() {global \$i; \$i++;}", "Видимость внешней переменной внутри функции"));
+		setNextRow($t_php, array("var", "", ""));
+		setNextRow($t_php, array("array", "\$var_arr = array();", "Создать пустой массив. <br>Таким же способом можно очистить уже существующий массив."));
+		setNextRow($t_php, array("array", "\$var_arr = array(\"foo\", \"bar\", true, 1.56);", "Создать привычный индексированный массив"));
+		setNextRow($t_php, array("array", "\$var_arr = array(\"one\" => 45, \"two\" => 1.56);", "Создать массив из элементов типа ключ - значений"));
+		setNextRow($t_php, array("array", "\$n = count(\$var_arr);", "Получить количество элементов массива."));
+		setNextRow($t_php, array("array", "array_push(\$var_arr, \$v1, \$v2, ...);", "Добавляет один или несколько элементов в конец массива"));
+		setNextRow($t_php, array("array", "\$arr_keys = array_keys(\$var_arr);", "Возвращает массив ключей массива var_arr."));
+		setNextRow($t_php, array("array", "\$arr_values = array_values(\$var_arr);", "Возвращает массив значений массива var_arr."));
+		setNextRow($t_php, array("array", "if (array_key_exists(\$key_name, \$var_arr)) {}", "Проверить, есть ли указанный ключ в массиве"));
+		setNextRow($t_php, array("array", "if (in_array(\$v, \$var_arr)) {}", "Проверить, есть ли указанное значение в массиве"));
+		setNextRow($t_php, array("array", "\$last_v = array_pop(\$var_arr);", "Извлекает и возвращает значение последнего элемента, уменьшая размер на один элемент."));
+		setNextRow($t_php, array("array", "\$first_v = array_shift(\$var_arr);", "Извлекает и возвращает значение 1-го элемента, уменьшая размер на один элемент."));
+		setNextRow($t_php, array("array", "unset(\$var_arr[\$key]);", "Удалить заданный элемент из массива."));
+		setNextRow($t_php, array("array", "foreach (\$var_arr as \$value) {}", "Перебрать значения массива."));
+		setNextRow($t_php, array("array", "foreach (\$var_arr as \$key => \$value) {}", "Перебрать ключи и значения массива."));
+		
+		
+		setNextRow($t_php, array("string", "if (str_contains(\$str, \$sub_s)) {}", "Проверяет вхождение подстроки в строку (регистр учитывается)."));
 		setNextRow($t_php, array("var", "", ""));
 
 		

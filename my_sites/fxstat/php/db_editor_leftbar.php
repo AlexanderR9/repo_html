@@ -4,12 +4,10 @@ class DBEditorLeftbar extends HDiv
 {
 	public function __construct($width_percent) //constructor
 	{
-		parent::__construct();
-		$this->setID("db_left_div");
+		parent::__construct('db_left_div');
 		$this->setWidth($width_percent);
 		$this->initContent();
 	}	
-
 
 /////////////////protected section//////////////////	
 	protected function initContent()
@@ -26,40 +24,34 @@ class DBEditorLeftbar extends HDiv
 		$this->addBarTitle("Table list (".$db->tableCount().")");		
 		$this->addTablesList($db->tableList());		
 		$this->addSpace(140);
+		$db->closeConnection(); //close DB
 
 		//control buttons
 		$this->addBarTitle("Control");
-		$this->addBarButton("Create new table", "../images/db_new_table.png", "../js/db_new_table.js");
-		$this->addBarButton("Remove table", "../images/db_remove_table.png", "../js/db_remove_table.js");
+		$this->addBarButton("Create new table", "../images/db_new_table.png", "db_new_table");
+		$this->addBarButton("Remove table", "../images/db_remove_table.png", "db_remove_table");
 		$this->addBarButton("Modify table fields", "../images/db_settings.png");
 		$this->addSpace(140);
-
-
-		$db->closeConnection(); //close DB
 	}
 	protected function addBarTitle($text)
 	{
 		$title = new HText($text);
-		$title->setFontSize(18);			
+		$title->setFont(18, 'YellowGreen', HAlign::haCenter);			
 		$title->setPadding(-1, -1, 8, 8);
 		$title->setBackGround('DarkSlateGray');
-		$title->setFontTextColor('YellowGreen');
-		$title->setFontAlign(HAlign::haCenter);
 		$this->addChild($title);			
 	}
 	protected function addBarButton($text, $icon_path = '', $js = '')
 	{
 		$btn = new HButton($text, $icon_path);
-		//$btn->setJSScript($js);
-		$btn->setJSFunc(basename($js, '.js'));
+		$btn->setJSFunc($js);
 		$btn->setBackGround('SteelBlue');		
 		$btn->setBorder(3, 'Azure', 20);
-		$btn->setFontSize(16);			
+		$btn->setFont(16);			
 		$btn->setWidth(90, -1, -1, '%');
 		$btn->setHeight(36, -1, -1, 'px');
 		$btn->setMargin(5, -1, 5, 5, '%');
 		$btn->setPadding(7, 7, -1, -1, '%');
-		$this->setID("db_left_div");
 		$this->addChild($btn);			
 	}
 	protected function addSpace($h_size)
@@ -80,15 +72,11 @@ class DBEditorLeftbar extends HDiv
 		{
 			$htext = new HText("&#9885;  ".$value);
 			$htext->setMargin(20, -1, 10, 10);
-			$htext->setFontTextColor('SteelBlue');
-			$htext->setFontSize(16);			
+			$htext->setFont(16, 'SteelBlue');			
 			$this->addChild($htext);			
 		}		
-	}
-	
+	}	
 }
-
-
 
 ?>
 

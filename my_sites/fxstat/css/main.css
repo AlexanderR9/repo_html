@@ -2,14 +2,28 @@
 /* основные параметры горизонтали страницы (для глобальных блоков), в коде html нужно указать высоту */
 .main_params_size 
 {
-	width:80%; 	
-	margin-left:auto;
-	margin-right:auto;
+	width: 80%; 	
+	margin-left: auto;
+	margin-right: auto;
 }
-.hidden_child /*внутренний элемент (ребенок), который не будет виден на странице, но при этом занимает место  */
+
+/*внутренний элемент (ребенок), который не будет виден на странице, но при этом занимает место  */
+.hidden_child 
 {
 	visibility: hidden;
 }
+
+/*внутренний элемент (ребенок), который не будет виден на странице и не занимает место (как будто удален)  */
+.invisible_child 
+{
+	//z-index: -1;
+	display: none;
+}
+.removable_row:hover
+{
+	background: Pink;	
+}
+
 
 
 
@@ -56,52 +70,14 @@
 }
 */
 
-/* применяется к блоку-подвалу страницы */
-/*
-#footer_div
-{
-	background-color:DarkSlateGray; 
-	margin-bottom:20px;
-	height:70px; 
-	border-radius: 10px; 
-}
-#footer_div > div 
-{
-	background-color:DarkSlateGray; 
-}
-#footer_div > div > p
-{
-	color: white;
-	font-size: 12px;
-	margin-top: 2px;
-}
-#footer_div a
-{
-	color: White;
-	font-style: italic;
-}
-#footer_div a:hover 
-{
-  color: gray;
-}
-
-#sidebar_div a
-{
-  color: Olive;  
-}
-#sidebar_div a:hover 
-{
-  color: red;
-  font-weight: bold;
-}
-*/
 
 /* применяется к db_left_div */
 #db_left_div button
 {
 	transition: all 0.2s;
     cursor: pointer;
-    box-shadow: 2px 5px 1px 0px rgb(72, 61, 139);   
+    box-shadow: 2px 5px 1px 0px rgb(72, 61, 139);  
+	color: white;	
 	
 	/*
 		 box-shadow parameters:  (example - box-shadow: 0px 5px 10px 0px rgba(0, 0, 0, 0.5))
@@ -118,5 +94,24 @@
     box-shadow: 2px 2px 2px 0px rgb(52, 31, 39);   
     transform:translatey(3px);
     color: white;
+} 
+
+#db_new_table_add_field, .control_button
+{
+    cursor: pointer;
+	
+}
+.control_button:active
+{
+    color: white;
+	font-weight: bold;
+	background:white; 
+} 
+#db_new_table_add_field:active
+{
+    //border: 3px solid white;
+	border-radius: 30px; 
+	opacity: 0.4;
+	background:white; 
 } 
 

@@ -5,9 +5,9 @@
 //выпадающий список с набором итемов
 class HComboBox extends HObject 
 {
-	public function __construct($data = null) //constructor
+	public function __construct($data = null, $id = '') //constructor
 	{
-		parent::__construct();
+		parent::__construct($id);
 		$this->m_tagName = 'select';	
 		$this->m_displayMode = HDisplayMode::hdmInline;
 		$this->setFontAlign(HAlign::haCenter);
@@ -19,22 +19,39 @@ class HComboBox extends HObject
 		$this->setWidth(100, -1, -1, 'px');
 		$this->setBorder(1, 'gray', 3);
 		$this->setBackGround('White');
-
 	}	
 	
 	public function itemsCount() {if (is_array($this->m_data)) return count($this->m_data); return 0;}
 	public function isEmpty() {return ($this->itemsCount() == 0);}
-	public function addItem($key, $item_text) {$this->m_data[$key] = $item_text;}
+	public function addItem($key, $item_text) {$this->m_data[$key] = $item_text;}	
+	public function setJSFunc($js) //имя функции задавать без скобок
+	{
+		$this->m_jsFunc = trim($js);
+		if (!empty($this->m_jsFunc))
+			$this->setID($this->m_jsFunc);
+	}
+	
 	
 	//protected section
 	
-	//данные combobo[, представляет из себя строковый одномерный массив каждый элемент сопровождается ключем 
+	//данные combobox, представляет из себя строковый одномерный массив каждый элемент сопровождается ключем 
 	//индексация итемов с 0
 	protected $m_data = null; 
+	
+	//имя функции которая выполняется по событию - смена итема
+	protected $m_jsFunc = '';
+
 	
 	protected function placeContent() 
 	{
 		if ($this->isEmpty()) return;
+		
+		if (!empty($this->m_jsFunc)) 
+		{
+			echo "<script>", "\n";	
+			echo "document.getElementById(\"$this->m_id\").addEventListener('change', $this->m_jsFunc);", "\n";	
+			echo "</script>", "\n";	
+		}			
 		
 		foreach($this->m_data as $key => $value)
 		{
@@ -47,9 +64,9 @@ class HComboBox extends HObject
 //базовый класс тега <input>
 class HInputBase extends HObject 
 {
-	public function __construct() //constructor
+	public function __construct($id = '') //constructor
 	{
-		parent::__construct();
+		parent::__construct($id);
 		$this->m_tagName = 'input';	
 		$this->m_displayMode = HDisplayMode::hdmInline;		
 		$this->setHeight(22, -1, -1, 'px');
@@ -78,9 +95,9 @@ class HInputBase extends HObject
 //поле для ввода
 class HLineEdit extends HInputBase 
 {
-	public function __construct($text = '') //constructor
+	public function __construct($text = '', $id = '') //constructor
 	{
-		parent::__construct();
+		parent::__construct($id);
 		$this->m_text = $text;
 		$this->m_readOnly = false;
 		$this->m_type = 'text';		
@@ -105,9 +122,9 @@ class HLineEdit extends HInputBase
 //////////////// HCheckBox  ///////////////////////
 class HCheckBox extends HInputBase
 {
-	public function __construct() //constructor
+	public function __construct($id = '') //constructor
 	{
-		parent::__construct();
+		parent::__construct($id);
 		$this->m_checked = false;
 		$this->m_type = 'checkbox';		
 		$this->setHeight(15, -1, -1, 'px');
@@ -129,18 +146,15 @@ class HCheckBox extends HInputBase
 //////////////// HCheckBlock  ///////////////////////
 class HCheckBlock extends HDiv
 {
-	public function __construct($caption) //constructor
+	public function __construct($caption, $id = '') //constructor
 	{
 		parent::__construct();
 		$this->m_displayMode = HDisplayMode::hdmInlineBlock;
-		//$this->setBorder(1, 'gray');
 		$this->setHeight(22, -1, -1, 'px');
-		$this->setTransparent(true);
-		
+		$this->setTransparent(true);		
 		$this->m_captionObj = new HText($caption);
 		$this->m_captionObj->setDisplayMode(HDisplayMode::hdmInline);
-		//$this->m_captionObj->setBorder(1, 'yellow');		
-		$this->m_checkObj = new HCheckBox();				
+		$this->m_checkObj = new HCheckBox($id);				
 		$this->addChild($this->m_checkObj);
 		$this->addChild($this->m_captionObj);
 	}	
@@ -155,25 +169,22 @@ class HCheckBlock extends HDiv
 
 	//protected section
 	protected $m_captionObj = null;
-	protected $m_checkObj = false;
+	protected $m_checkObj = null;
 }
 
 
 //////////////// HGroupBox /////////////////////
 class HGroupBox extends HDiv
 {
-	public function __construct($title) //constructor
+	public function __construct($title, $id = '') //constructor
 	{
-		parent::__construct();
-		//$this->m_displayMode = HDisplayMode::hdmInlineBlock;
+		parent::__construct($id);
 		$this->m_tagName = 'fieldset';	
 		$this->setBorder(1, 'green', 5);
-		//$this->setHeight(1, -1, -1, 'px');
 		$this->setTransparent(true);
 		$this->m_title = $title;
 	}	
-	
-	
+		
 	//protected section
 	protected $m_title = '';	
 	protected function placeContent() 
@@ -182,15 +193,6 @@ class HGroupBox extends HDiv
 		parent::placeContent();		
 
 	}
-	/*
-	protected function styleValue() //return style values of attrs OR ""
-	{
-		$s = "border-style: groove; ";
-		$s = parent::styleValue().$s;
-		return trim($s);
-	}	
-	*/
-
 
 }
 

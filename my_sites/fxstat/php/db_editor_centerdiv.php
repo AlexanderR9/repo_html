@@ -71,7 +71,7 @@ class DBEditorCenterDiv extends HDiv
 			{
 				if ($field_attrs[1]) $f_primary = $field;
 			}
-			if (empty($f_primary)) $f_primary = 'NO';
+			if (empty($f_primary)) $f_primary = '---';
 			$t->setCellData($i, 2, $f_primary);
 		}
 	}	

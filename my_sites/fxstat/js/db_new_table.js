@@ -1,7 +1,9 @@
 //js script  db_new_table
 
+//send ajax req func
 function db_new_table()
 {
+	//console.log(this.id+"  "+this.tagName);
 	if (this.hasAttribute('disabled'))
 	{
 		console.log("db_new_table: disabled = ", this.getAttribute('disabled'));
@@ -10,40 +12,34 @@ function db_new_table()
 	let div = document.getElementById("db_main_div");	
 	if (div)
 	{
-		this.setAttribute('disabled', true);
+		this.setAttribute('disabled', true);		
 		while (div.childElementCount > 1)
 		{
 			let childs = div.children;
 			childs[1].remove();	
 		}		
 		
-		let l_ajax = new LAjax('../php/db_new_table.php');
-		//l_ajax.addParameter('act_mode', 'form');
-		//l_ajax.addParameter('t_name', 'couple');
+		let l_ajax = new LAjax('../php/db_new_table.php', 700);
 		div.insertAdjacentHTML('beforeend', "<em> try AJAX request sended: URL=["+l_ajax.url()+"] ........</em>");
 		l_ajax.trySend();
 		
 		
 		var h2 = document.createElement("h4"); 
 		div.appendChild(h2);
-		if (l_ajax.hasErr())
-		{
-			h2.setAttribute('style', 'color:red');
-			h2.innerHTML = "ERR: "+l_ajax.getErr();		
-			this.removeAttribute('disabled');			
-		}
-		else
-		{
-			h2.innerHTML = "n_timeout: ?";
-			let nt = 0;
-			let timeout = 2000;
-			function t_func()
+			
+			//WAIT RESULT FUNCTION
+			function wait_func()
 			{
-				console.log("run t_func()");
-				nt++;
-				h2.innerHTML = "n_timeout: "+nt;			
-				if (l_ajax.finishedOk())
+				//console.log(LDateTime.currentTime(true)+"...........run t_func()");
+				if (l_ajax.hasErr())
 				{
+					h2.setAttribute('style', 'color:red');
+					h2.innerHTML = "ERR: "+l_ajax.getErr()+" ("+l_ajax.strStatus()+")";	
+					this.removeAttribute('disabled');					
+				}									
+				else if (l_ajax.finishedOk())
+				{
+					console.log("ajax executed ok!");
 					//удаление текущих элементов из главного div
 					while (div.childElementCount > 1)
 					{
@@ -51,31 +47,23 @@ function db_new_table()
 						childs[1].remove();	
 					}		
 					div.insertAdjacentHTML('beforeend', l_ajax.response());					
-					this.removeAttribute('disabled');
+					
+					//выполнение всех новых скриптов полученных в ответе
+					let new_table_div = document.getElementById("db_new_table_div"); 
+					let scripts = new_table_div.querySelectorAll("script");
+					scripts.forEach(item => eval(item.innerHTML));
+					
+					
 					db_new_table_update_visible(true);
-					return;						
-				}
-				if (l_ajax.hasErr())
-				{
-					h2.setAttribute('style', 'color:red');
-					h2.innerHTML = "ERR: "+l_ajax.getErr()+" ("+l_ajax.strStatus()+")";	
-					this.removeAttribute('disabled');					
-					return;
-				}									
-				if (nt > 10) 
-				{
-					l_ajax.tryAbort();
-					h2.setAttribute('style', 'color:red');
-					h2.innerHTML = "ERR: "+l_ajax.getErr();	
 					this.removeAttribute('disabled');
-					return;	
 				}
-				
-				setTimeout(t_func.bind(this), timeout);
-			}			
-			
-			t_func.call(this);
-		}
+				else
+				{
+					l_ajax.checkTimeout();				
+					setTimeout(wait_func.bind(this), l_ajax.timerInterval());
+				}
+			}						
+			wait_func.call(this);
 	}
 	else 
 	{
@@ -159,9 +147,9 @@ function db_new_table_next_action()
 {
 	console.log("click db_new_table_next_action");
 		
+	let t_name = document.getElementById("db_new_table_name_input").value.trim();		
 	if (isVisibleNode("db_new_table_page1")) //if show page1		
 	{
-		let t_name = document.getElementById("db_new_table_name_input").value.trim();
 		if (t_name.length == 0) 
 		{
 			alert("WARNING: table name is empty!");
@@ -172,41 +160,40 @@ function db_new_table_next_action()
 			alert("WARNING: table name is invalid, remove all spaces!");
 			return;
 		}
+		
 		let tf  = document.getElementById("db_new_table_fields_table");
-		tf.caption.innerHTML = "New table: "+t_name;
-		
-		
-		console.log("table name: " + t_name);
-		//alert("table name is OK");
-		db_new_table_update_visible();
-		
+		tf.caption.innerHTML = "New table: "+t_name;		
+		//console.log("table name: " + t_name);
+		db_new_table_update_visible();		
 	}
-	else if (isVisibleNode("db_new_table_page2")) //if show page1		
+	else if (isVisibleNode("db_new_table_page2")) //if show page2		
 	{
-		let tf  = document.getElementById("db_new_table_fields_table");
-		let tbody = tf.tBodies[0];
-		console.log(tbody.tagName+"   childs: "+tbody.childElementCount);
-		if (tbody.childElementCount <= 2)
+		let t_fields = new LTable("db_new_table_fields_table");
+		if (t_fields.rowCount() <= 2)
 		{
-			//alert("WARNING: invalid column count, must be over 1!");
-			//return;			
+			alert("WARNING: invalid column count, must be over 1!");
+			return;			
 		}
 		db_new_table_update_visible();
 		
 		
-		let tr_rows = document.getElementById("db_new_table_result_table").getElementsByTagName("tr");
-		console.log(tr_rows+"  count: "+tr_rows.length);
-		for (let j=0; j<10; j++)
+		let t_result = new LTable("db_new_table_result_table");
+		while (t_result.colCount() > (t_fields.rowCount()-1)) 
+			t_result.removeCol(0); 		
+		t_result.setColSizes([]);
+		
+		t_result.setCaptionFont(14, "Olive", true, true);		
+		t_result.setCaption(t_name);		
+		t_result.setRowFont(0, 16, "blue", true, false, "center");		
+		
+		for (let j=0; j<t_result.colCount(); j++)
 		{
-			for (let i=0; i<tr_rows.length; i++)
-			{
-				let cells = tr_rows[i].children;
-				cells[j].remove();
-			}
+			t_result.setCellData(0, j, t_fields.getCellData(j, 0));
+			t_result.setCellData(1, j, "data"+(j+1));
+			t_result.setCellData(2, j, "---");
 		}
-	}
-	
-	
+		t_result.setCellData(3, 0, "*");
+	}		
 }
 
 function db_new_table_prev_action()
@@ -239,9 +226,7 @@ function db_new_table_add_field()
 			alert("WARNING: field name is invalid!");
 			return;
 	}
-	let tf  = document.getElementById("db_new_table_fields_table");
-	
-	
+	let tf  = document.getElementById("db_new_table_fields_table");		
 	
 	function fields()
 	{
@@ -274,18 +259,6 @@ function db_new_table_add_field()
 	
 	console.log(f_name+" / "+d_type_obj.value+" / "+Boolean(is_primary)+" / "+ is_unique);
 	
-	/*
-	if (fields().length = 0)
-	{
-		 //let h_cell = tf.rows[0].insertCell();
-		 //h_cell.innerHTML = "act";
-		var trArr = tf.getElementsByTagName('tr');
-	    for (var i = 0, l = trArr.length; i < l; i++)
-	        trArr[i].insertCell(0);
-	}
-	*/
-	
-	
 	let new_row = tf.insertRow(fields().length+1);
 	let cell = new_row.insertCell();
 	cell.innerHTML = f_name;
@@ -302,27 +275,101 @@ function db_new_table_add_field()
 	resetInputs();
 }
 
+
+//AJAX func
 function db_new_table_create_action()
 {
 	console.log("click db_new_table_create_act");
-	
-	let t = new LTable("db_new_table_fields_table");
-	console.log(t.info());
-	
-	//t.removeHeader();
-	t.appendRow(0);
-	t.setCellData(1, 2, "bbb");
-	//t.removeCol(2);
-	//t.removeCol(2);
-	t.setTableDataFont(26, 'green', true, true, 'right');
-	//t.removeRow(1);
-	
-	t.setColSizes([15, 15, 20, 50]);
-	
-	console.log(t.getCellData(0, 1)+"   "+t.getHeaderCellData(1));
+	if (this.hasAttribute('disabled'))
+	{
+		console.log("db_new_table_create_action: button is disabled");
+		return;
+	}
 
 	
-	//db_new_table_update_visible(true);
+	let t = new LTable("db_new_table_fields_table");
+	let status_text = document.getElementById("db_new_table_status");
+	status_text.innerHTML = "creating table ............";
+	status_text.style.color = "DarkOrange";
+	hideNode("db_new_table_prev_action");
+	this.setAttribute('disabled', 'true');
+	console.log(t.info());
+	
+		///prepare ajax request
+		let t_name = document.getElementById("db_new_table_name_input").value.trim();		
+		let l_ajax = new LAjax('../php/db_new_table.php', 2000);
+		l_ajax.addParameter('t_name', t_name);
+		for (let i=0; i<(t.rowCount()-1); i++)
+		{
+			let key = "field"+(i+1);
+			//let value = t.getCellData(i, 0)+";"+mysqlDatatype(t.getCellData(i, 1))+";"; 
+			let value = t.getCellData(i, 0)+";"+t.getCellData(i, 1)+";"; 
+			value += (t.getCellData(i, 2)+";"+t.getCellData(i, 3));
+			l_ajax.addParameter(key, value);						
+		}
+		l_ajax.trySend();
+
+			//WAIT RESULT FUNCTION
+			function wait_func()
+			{
+				//console.log(LDateTime.currentTime(true)+"...........run t_func()");
+				if (l_ajax.hasErr())
+				{
+					status_text.style.color = "red";
+					status_text.innerHTML = "ERR: "+l_ajax.getErr()+" ("+l_ajax.strStatus()+")";	
+					this.removeAttribute('disabled');					
+				}									
+				else if (l_ajax.finishedOk()) //ajax runned ok
+				{
+					console.log("ajax executed ok!");
+					let result = l_ajax.response().trim().toLowerCase();
+					if (result != "ok") //db action fault
+					{
+						status_text.style.color = "red";
+						status_text.innerHTML = "ERR: "+result;	
+						this.removeAttribute('disabled');											
+					}
+					else
+					{
+						status_text.style.color = "blue";
+						status_text.innerHTML = "Creating result: OK!";	
+						this.style.opacity = "0.3";	
+					}
+					
+					//status_text.style.color = "blue";
+					//status_text.innerHTML = "AJAX finished Ok!";
+					//document.body.insertAdjacentHTML('beforeend', "SQL request result: "+l_ajax.response());
+					//this.removeAttribute('disabled');
+					
+				}
+				else
+				{
+					l_ajax.checkTimeout();				
+					setTimeout(wait_func.bind(this), l_ajax.timerInterval());
+				}
+			}						
+			wait_func.call(this);
 	
 }
+/*
+function mysqlDatatype(type)
+{
+	if (type == 'char') return "CHAR(1)";
+	if (type == 'string') return "VARCHAR(100)";
+	if (type == 'text') return "TEXT";
+	if (type == 'float') return "FLOAT";
+	if (type == 'date') return "DATE";
+	if (type == 'time') return "TIME";
+	if (type == 'bool') return "BOOLEAN";
+	
+	if (type == 'int8') return "TINYINT";
+	if (type == 'uint8') return "TINYINT UNSIGNED";
+	if (type == 'int16') return "SMALLINT";
+	if (type == 'uint16') return "SMALLINT UNSIGNED";
+	if (type == 'int32') return "INT";
+	if (type == 'uint32') return "INT UNSIGNED";
+
+	return "none";
+}
+*/
 

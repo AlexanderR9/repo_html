@@ -1,14 +1,74 @@
 //class for working  with html table
-class LTable 
+class LNodeBase
 {
   constructor(t_id) 
   { 
 	this._id = t_id;
-	this._node = document.getElementById(t_id);
+	this._node = document.getElementById(t_id);	
+  }
+
+  isNull() {return (this._node == null);}
+
+  info() {return "LNodeBase: base func!";}
+  
+  
+}
+
+//class for element ComboBox
+class LComboBox extends LNodeBase
+{	
+	count() {return (this.isNull() ? -1 : this._node.options.length);}
+	isEmpty() {return (this.count() <= 0);}
+	currentIndex() {return (this.isNull() ? -1 : this._node.options.selectedIndex);}
+	currentKey() {return (this.isNull() ? "?" : this._node.value);}
+	currentItemText()
+	{
+		if (this.isNull()) return "?";
+		let i = this.currentIndex();
+		return this._node.options[i].text;;
+	}
+	removeAt(i) //return reuslt_ok
+	{
+		if (this.isNull()) return false;
+		let item = this._getOption(i);
+		if (!item) return false;
+		item.remove();
+		return true;		
+	}
+	removeCurrentItem()  //return reuslt_ok
+	{
+		let i = this.currentIndex();
+		return this.removeAt(i);
+	}
 	
+	
+	//protected
+	_getOption(i)
+	{
+		if (i < 0 || i >= this.count()) return null;  
+		return this._node.options[i];
+	}
+	
+	
+}
+
+
+
+//class for element Table
+class LTable extends LNodeBase
+{
+	
+	/*
+  constructor(t_id) 
+  { 
+	this._id = t_id;
+	this._node = document.getElementById(t_id);	
   }
     
   isNull() {return (this._node == null);}
+  */
+  
+  
   rowCount() //without header
   {
 	if (this.isNull()) return -1;
@@ -153,6 +213,12 @@ class LTable
 	let el = this._getHeader();
 	this._setElementFont(el, size, color, b, i, align);
   }
+  setRowFont(row_index, size, color = 'black', b = false, i = false, align = "")
+  {
+	let el = this._getRow(row_index);
+	this._setElementFont(el, size, color, b, i, align);
+  }
+  
   setTableDataFont(size, color = 'black', b = false, i = false, align = "")
   {
 	  /*
@@ -168,7 +234,7 @@ class LTable
 	let el = this._getBody();	
 	this._setElementFont(el, size, color, b, i, align);
   }
-  setColSizes(arr_sizes) //sum arr(int) must be 100%
+  setColSizes(arr_sizes) //sum arr(int) must be 100%, если массив пустой то столбцы размажутся равномерно
   {
 	let el = this._getColGroup();	
 	if (!el)
@@ -176,6 +242,16 @@ class LTable
 		console.log("_getColGroup: NULL");
 		return;
 	}
+
+	//	if need evenly colls width
+	if (arr_sizes.length == 0)
+	{
+		let full_w = 100;
+		let w = Math.floor(full_w/this.colCount());
+		for (let j=0; j<(this.colCount()-1); j++) {arr_sizes.push(w); full_w -= w;}
+		arr_sizes.push(full_w);
+	}
+	
 	
 	if (arr_sizes.length != this.colCount()) {console.log("ERR: setColSizes - (arr_sizes.length != colCount) "); return;}
 	let sum = 0;
@@ -207,10 +283,7 @@ class LTable
 		if (this.hasCaption()) s += "has_caption("+this.captionText()+")  ";
 		else s += "no_caption  ";
 		if (this.hasHeader()) s += "has_header(rows="+this.headerRowCount()+")  ";
-		else s += "no_header  ";
-		
-		
-		
+		else s += "no_header  ";						
 		return s;	
 	}		
  

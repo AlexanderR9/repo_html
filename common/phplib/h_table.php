@@ -4,9 +4,9 @@
 //////////////// HText (paragraph element) ///////////////////////
 class HTable extends HObject 
 {
-	public function __construct($rows, $cols) //constructor
+	public function __construct($rows, $cols, $id = '') //constructor
 	{
-		parent::__construct();
+		parent::__construct($id);
 		$this->m_tagName = 'table';	
 		$this->m_displayMode = HDisplayMode::hdmTable;
 		$this->m_selectableCell = true;

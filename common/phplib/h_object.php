@@ -190,13 +190,13 @@ class HSize
 //class-struct for set FONT params
 class HFont
 {
-	public function __construct($size = 14, $color = "black") //constructor
+	public function __construct($size = 14, $color = "black", $align = HAlign::haNone) //constructor
 	{
 		$this->size = $size;
 		$this->text_color = $color;
+		$this->align = $align;
 	}	
-	
-	
+		
 	public $text_color = ''; //string value
 	public $size = -1; //px
 	public $family = ''; //string value
@@ -233,9 +233,8 @@ class HFont
 //abstract class of base HTML-object
 abstract class HObject
 {
-	public function __construct() //constructor
+	public function __construct($id = '') //constructor
 	{
-		//echo_br("HObject constructor");
 		$this->m_position = new HPosition();
 		$this->m_border = new HBorder();
 		$this->m_margin = new HMarginSizes();
@@ -243,6 +242,7 @@ abstract class HObject
 		$this->m_font = new HFont();
 		$this->m_size = new HSize();
 		$this->m_classes = array();
+		if (!empty($id)) $this->setID($id);
 	}	
 	
 	abstract protected function placeContent(); //virtual func
@@ -254,16 +254,15 @@ abstract class HObject
 	}
 		
 	public function setMargin($l, $r, $t, $b, $u='px') {$this->m_margin->setValues($l, $r, $t, $b, $u);}
-	//public function setMarginUnits($u) {$this->m_margin->units = $u;}
 	public function setPadding($l, $r, $t, $b, $u='px') {$this->m_padding->setValues($l, $r, $t, $b, $u);}
-	//public function setPaddingUnits($u) {$this->m_padding->units = $u;}
 	public function setBorder($w, $color = 'Silver', $r = -1, $type = '') {$this->m_border->setValues($w, $color, $r, $type);}
 	public function setWidth($w, $min_w = -1, $max_w = -1, $u='%') {$this->m_size->setWidth($w, $min_w, $max_w, $u);}
 	public function setHeight($h, $min_h = -1, $max_h = -1, $u='%') {$this->m_size->setHeight($h, $min_h, $max_h, $u);}
-	public function setFontTextColor($color) {$this->m_font->text_color = $color;}
-	public function setFontSize($size) {$this->m_font->size = $size;}
-	public function setFontFamily($ff) {$this->m_font->family = $ff;}
+	//public function setFontTextColor($color) {$this->m_font->text_color = $color;}
+	//public function setFontSize($size) {$this->m_font->size = $size;}
+	public function setFont($size, $color = '', $align = HAlign::haNone) {$this->m_font->size = $size; $this->m_font->text_color = $color; $this->m_font->align = $align;}
 	public function setFontAlign($align) {$this->m_font->align = $align;}
+	public function setFontFamily($ff) {$this->m_font->family = $ff;}
 	public function setFontBoldItalic($b, $i) {$this->m_font->is_bold = $b; $this->m_font->is_italic = $i;}
 	public function setBackGround($color) {$this->m_bgColor = $color;}
 	public function addClass($class_name) {array_push($this->m_classes, $class_name);}
@@ -272,6 +271,12 @@ abstract class HObject
 	public function setDisplayMode($mode) {$this->m_displayMode = $mode;}
 	public function setPosition($type, $l=-1, $r=-1, $t=-1, $b=-1, $u='px') {$this->m_position->setValues($type, $l, $r, $t, $b, $u);}
 	
+	
+	//is func
+	public function isButton() {return ($this->m_tagName == "button");}
+	public function isDiv() {return ($this->m_tagName == "div");}
+	public function isParagraph() {return ($this->m_tagName == "p");}
+	public function isImage() {return ($this->m_tagName == "img");}
 		
 	//protected section
 	protected $m_tagName = ''; //

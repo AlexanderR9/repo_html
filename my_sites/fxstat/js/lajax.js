@@ -3,7 +3,7 @@
 
 class LAjax
 {	
-	constructor(url) 
+	constructor(url, t_interval = 500, wait_result_cycles = 10) 
 	{
 		this._type = 'POST';
 		this._params = new Map();
@@ -13,6 +13,8 @@ class LAjax
 		//this._state = LAState.lasNone;
 		
 		this.counter1 = 0;
+		this._timerInterval = t_interval;
+		this._waitCycles = wait_result_cycles;
 		//this.counter2 = 0;
 	}			
 	
@@ -23,6 +25,17 @@ class LAjax
 	hasErr() {return (this._err.length > 0);}
 	getErr() {return this._err;}
 	url() {return this._script_file;}
+	timerInterval() {return this._timerInterval;}
+	checkTimeout() 
+	{
+		if (this.counter1 < this._waitCycles)
+		{
+			this.counter1++;
+			if (this.counter1 == this._waitCycles)
+				tryAbort();
+		}
+	}
+	
 	
 	
 	/* текущий код состояния выпонения запроса
@@ -49,6 +62,7 @@ class LAjax
 	
 	trySend()
 	{
+		this.counter1 = 0;
 		this._err = "";
 		this._prepare();
 		if (this.hasErr()) return;

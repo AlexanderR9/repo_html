@@ -1,0 +1,15 @@
+{
+  "name": "proj",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "roman",
+  "dependencies": {
+    "@uniswap/sdk-core": "^5.9.0",
+    "@uniswap/smart-order-router": "^4.9.2",
+    "@uniswap/v3-sdk": "^3.18.1",
+    "axios": "^1.7.5",
+    "dotenv": "^16.4.7",
+    "ethers": "^5.7.2"
+  }
+}

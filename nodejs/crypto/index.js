@@ -98,7 +98,7 @@ async function sendToken(w, to_addr)
 	log("transaction ....");
 	const tx = await w.sendTransaction(params);
 //	log(tx);	
-	log("2. tx prepared, feegas ", m_base.toReadableAmount(tx.maxPriorityFeePerGas));
+//	log("2. tx prepared, feegas ", m_base.toReadableAmount(tx.maxPriorityFeePerGas));
 //	const result = await tx.wait();
 	return tx;
 }
@@ -131,28 +131,72 @@ async function send_usdt(w_obj, to_addr)
 	return result;
 
 }
-function f()
+
+async function main(pool_obj, w_obj)
 {
+	//swap token1(usdt), buy tolen0(usdc)
+	log("get pool immutables params ...");	
+	const immutables = await poolData(pool_obj)
+	log(immutables);
+
+  const swapRouterContract = m_base.getRouterContract(w_obj.provider);
+  log("swapRouterContract: ", swapRouterContract.address);
+
+  log("set swap sum ...");
+  let swap_sum = 0.6; //usdt
+  const in_sum = m_base.fromReadableAmount(swap_sum, 6);
+  log("swap_sum =", swap_sum, "  in format: ", in_sum);	
+
+  //connet token1 to wallet
+  space();	
+  log("connect token1 contract to wallet ...");
+  const t1_obj = m_base.getTokenContract(immutables.t1_addr, w_obj.provider);  	
+  const t1_connected = await t1_obj.connect(w_obj);
+  log("connected!");	
+  
+	
+  //stage APPROVE
+  space();	
+  const approvalAmount = (in_sum * 2).toString();
+  log("approvalAmount: ", approvalAmount);
+  log("check allowance .....");
+  log("wallet:", w_obj.address, "TO", "swapRouterContract:", swapRouterContract.address)
+  const alw = await t1_connected.allowance(w_obj.address, swapRouterContract.address);
+  log("allowance NOW: ", alw, " | ", m_base.toReadableAmount(alw, 6));
+  
+  
+  log("try approve .....");
+  const approvalResponse = await t1_connected.approve(swapRouterContract.address, approvalAmount);
+  log("approvalResponse:", approvalResponse);	 
+  space();	
+  log("start wait ....");	 
+  const result = await approvalResponse.wait();
+  log("result: ", result);	 
+    
 
 }
+
 // body
 const pv = m_base.getProvider();
 log("provider info:", pv.connection);
 //chainInfo(pv).then((data) => log("CHAIN:", data));
 log("---------------------------------");
 
-//log(curTime(), "try get pool data", ".....");
-//log("POOL ADDRESS:", m_const.POOL_WMATIC_USDC);
-//const poolContract = m_base.getPoolContract(m_const.POOL_WMATIC_USDC, pv);
-//poolData(poolContract).then((data) => printPoolData(data));
+log(curTime(), "try get pool data", ".....");
+log("POOL ADDRESS:", m_const.POOL_USDC_USDT);
+const pool = m_base.getPoolContract(m_const.POOL_USDC_USDT, pv);
+//poolData(poolContract).then((data) => log("INFO: ", data));
 //poolState(poolContract).then((data) => log("STATE:", data));
-
 
 
 //get wallet object
 const wallet = m_base.getWallet(process.env.WKEY, pv);
-sendToken(wallet, process.env.WA1).then((data) => log(data));
+//sendToken(wallet, process.env.WA1).then((data) => log(data));
 //send_usdt(wallet, process.env.WA1).then((data) => log(data));
+
+main(pool, wallet);
+
+
 
 //await pv.getSigner().then((data) => log(data));
 //txCount(wallet).then((data) => log(data));

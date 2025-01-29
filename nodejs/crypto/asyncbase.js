@@ -2,6 +2,7 @@
 
 const ethers = require("ethers");
 const m_base = require("./base.js");
+const {space, log, curTime} = require("./utils.js");
 
 
 //возвращает баланс(родного токена) в 2-х представлениях ГВеях и обычных единицах.
@@ -12,8 +13,9 @@ async function balance(w_obj)
 {
         let result = { };
         const data = await w_obj.getBalance();
-        result.gwei = m_base.hexToGwei(data);
-        result.tokens = result.gwei/(10**9);
+//	log(data);
+        result.gwei = Math.round(m_base.fromGwei(data));
+        result.tokens = m_base.fromGwei(result.gwei);
         return result;
 }
 //возвращает баланс произвольного токена хранящегося в указанном кошельке в обычных единицах.
@@ -22,12 +24,20 @@ async function balance(w_obj)
 async function balanceAt(w_obj, t_addr) 
 {
 	const t_obj = m_base.getTokenContract(t_addr, w_obj);
-
         const dec = await t_obj.decimals();
 	let result = await t_obj.balanceOf(w_obj.address);
-        result = m_base.hexToGwei(result, dec);
+        result = m_base.toReadableAmount(result, dec);
         return result;
 }
+//возвращает количетсво всех транзакций совершенных указанным кошельком
+async function txCount(w_obj)
+{
+        log("get Tx count of WALLET ....");
+        const result = await w_obj.getTransactionCount();
+        return result;
+}
+
+
 
 
 //тип возвращаемого значения - объект с двумя полями(float): gas и maxfee, 
@@ -37,20 +47,19 @@ async function feeGas(provider)
 {
         let result = { };
         const data = await provider.getFeeData();
-        result.gas = m_base.hexToGwei(data.gasPrice);
-        result.maxfee = m_base.hexToGwei(data.maxFeePerGas);
-        result.prior = m_base.hexToGwei(data.maxPriorityFeePerGas);
-        //result.maxfee = m_base.toReadableAmount(data.maxFeePerGas, 18);
-//        result.maxfee = ethers.utils.formatUnits(data.maxFeePerGas, "gwei");
+	//log("provider.getFeeData:", data);
+	result.baseFeePerGas = data.lastBaseFeePerGas.toNumber().toString()+" GWei"; //базовая транзакция в последнем блоке
+	result.maxFeePerGas = data.maxFeePerGas.toNumber();
+	result.maxPriorityFeePerGas = data.maxPriorityFeePerGas.toNumber();
+//	result.gasPrice = data.gasPrice.toNumber();
         return result;
 }
+///информация о сети к которой подключен провайдер
 async function chainInfo(provider)
 {
 	const result = await provider.getNetwork()
 	return result;
 }
-
-
 //возвращает неизменяемую информацию о пуле.
 //тип возвращаемого значения - объект, который содержит 3 поля: t0_addr, t1_addr, fee
 //на вход подается ранее созданный объект POOL (ethers.Contract(address, abi, provider))
@@ -63,7 +72,6 @@ async function poolData(pool_obj) //getting poolData from object poolContract
         result.fee = fee;
 	return result;
 }
-
 //возвращает информацию о текущем состоянии пула.
 //тип возвращаемого значения - объект, который содержит 3 поля: liq, sqrtPrice(price in format Q96), tick(current tick of price)
 //на вход подается ранее созданный объект POOL (ethers.Contract(address, abi, provider))
@@ -84,6 +92,7 @@ module.exports = {
         balance,
         balanceAt,
 	feeGas,
+	txCount,
 	chainInfo,
 	poolData,
 	poolState

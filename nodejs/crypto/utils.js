@@ -22,6 +22,7 @@ function countDecimals(x) //возвращает количество десят
   return x.toString().split('.')[1].length || 0;
 }
 
+
 //export funcs
 module.exports = {log, curTime, delay, space, countDecimals};
 

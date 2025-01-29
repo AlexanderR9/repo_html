@@ -42,6 +42,7 @@ for (i=0; i<args_count; i++)
 		balanceAt(wallet, m_const.USDT_ADDR).then((data) => log('Balance(USDT):', data));
 	else if (t == "LDO")
 		balanceAt(wallet, m_const.LDO_ADDR).then((data) => log('Balance(LDO):', data));
+	else log("WARINNG: wrong token - ", t);
 }
 
 

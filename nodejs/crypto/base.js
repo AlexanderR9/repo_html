@@ -17,7 +17,6 @@ const READABLE_FORM_LEN = 8;
 function getProvider() //: ethers.providers.Provide, get provider by user INFURA key (rpc_url) and chain
 {
   return new ethers.providers.JsonRpcProvider(process.env.RPC_URL)
-//	return new ethers.providers.InfuraProvider("polygon-mainnet", process.env.INFURA_KEY);
 }
 function getWallet(p_key, provider) 
 {
@@ -39,7 +38,6 @@ function getQuoterContract(q_addr, provider)
 {
   return getContract(q_addr, QUOTER_ABI, provider);			
 }
-
 function getRouterContract(provider)
 {
   return getContract(m_const.SWAP_ROUTER_ADDRESS, ROUTER_ABI, provider);			
@@ -48,11 +46,12 @@ function getPosManagerContract(provider)
 {
   return getContract(m_const.POS_MANAGER_ADDRESS, POS_MANAGER_ABI, provider);			
 }
-
 function getRouterObj(provider)
 {
   return new AlphaRouter({chainId: m_const.CHAIN_ID, provider });			
 }
+
+//convert funcs
 function fromReadableAmount(amount, decimals = 18)
 {
   return ethers.utils.parseUnits(amount.toString(), decimals);
@@ -64,6 +63,7 @@ function toReadableAmount(rawAmount, decimals = 18)
 const toGwei = (float_num) => { return float_num*(10**9); } 
 const fromGwei = (int_num) => { return int_num/(10**9); }
 const toBig = (sum) => {return ethers.BigNumber.from(sum.toString());}
+
 // MAX_VALUE UINT128, to Collect All value
 const MAX_BIG128 = ethers.BigNumber.from(2).pow(128).sub(1).toString() // "340282366920938463463374607431768211455"
 

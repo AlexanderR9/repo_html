@@ -15,7 +15,7 @@ const USDT_ADDR='0xc2132d05d31c914a87c6611c10748aeb04b58e8f';
 const USDC_POS_ADDR='0x2791bca1f2de4661ed88a30c99a7a9449aa84174';  //PoS
 const USDC_ADDR='0x3c499c542cef5e3811e1192ce70d8cc03d5c3359';  
 const LDO_ADDR='0xc3c7d422809852031b44ab29eec9f1eff2a58756';
-const WMATIC_ADDR='0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270';
+const WPOL_ADDR='0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270'; //is the same POL
 
 
 //export declare enum ChainId {^M
@@ -51,7 +51,7 @@ module.exports = {
 	USDC_ADDR,
 	USDC_POS_ADDR,
 	LDO_ADDR,
-	WMATIC_ADDR,
+	WPOL_ADDR,
 	CHAIN_ID,
 	CHAIN_TOKEN
 };

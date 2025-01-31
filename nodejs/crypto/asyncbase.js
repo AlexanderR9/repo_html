@@ -37,7 +37,15 @@ async function txCount(w_obj)
         return result;
 }
 
-
+//возвращает объект с полями ticker, decimal, addr
+async function tokenData(t_addr, pv)
+{
+	const t_obj = m_base.getTokenContract(t_addr, pv);
+	let result = {addr: t_addr};
+	result.ticker = await t_obj.symbol();
+	result.decimal = await t_obj.decimals();
+	return result;
+}
 
 
 //тип возвращаемого значения - объект с двумя полями(float): gas и maxfee, 
@@ -95,7 +103,8 @@ module.exports = {
 	txCount,
 	chainInfo,
 	poolData,
-	poolState
+	poolState,
+	tokenData
   
 };
 

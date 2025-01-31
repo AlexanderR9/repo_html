@@ -8,9 +8,6 @@ const m_base = require("./base.js");
 const {space, log, curTime, delay, countDecimals} = require("./utils.js");
 const {feeGas} = require("./asyncbase.js");
 
-//const args = process.argv;
-//log("ARGS: ", args);
-
 
 // body
 const pv = m_base.getProvider();

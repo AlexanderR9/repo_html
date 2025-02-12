@@ -1,4 +1,4 @@
- 1. установка в Ubuntu/Debian
+1. установка в Ubuntu/Debian
     - apt update
     - apt install nodejs
     - apt install npm
@@ -24,5 +24,13 @@
   }
 	затем просто выполнить команду: npm i
 	и все указанные пакеты в секции "dependencies" скачаются в папку node_modules
+
+
+3. для работы с быблиотекой ethers если заготовленный(в архивах) набор файлов ABI и библиотек.
+    - архив abi.tar.gz распаковать рядом с архивами
+    - распаковать рядом с архивами создать папку 'node_modules'
+    - в 'node_modules' распаковать dotenv.tar.gz
+    - в 'node_modules' распаковать содержимое ethers.tar.gz/eth_kit
+    после чего можно выполнять скрипты, в которых подключена 'ethers'
 
 

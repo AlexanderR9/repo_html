@@ -70,11 +70,11 @@ function getQuoterContract(q_addr, provider)
 }
 function getRouterContract(provider)
 {
-  return getContract(m_const.SWAP_ROUTER_ADDRESS, ROUTER_ABI, provider);			
+  return getContract(SWAP_ROUTER_ADDRESS, ROUTER_ABI, provider);			
 }
 function getPosManagerContract(provider)
 {
-  return getContract(m_const.POS_MANAGER_ADDRESS, POS_MANAGER_ABI, provider);			
+  return getContract(POS_MANAGER_ADDRESS, POS_MANAGER_ABI, provider);			
 }
 /*
 function getRouterObj(provider)
@@ -121,7 +121,8 @@ module.exports = {
 	currentChain,
 	fromGwei,
 	toBig,
-	MAX_BIG128
+	MAX_BIG128,
+	SWAP_ROUTER_ADDRESS
 	
 };
 

@@ -3,11 +3,23 @@
 //getting balance native tokens and gas price
 
 //include
-const m_const = require("./const.js");
+//const m_const = require("./const.js");
 const m_base = require("./base.js");
 const {space, log, curTime, delay, countDecimals} = require("./utils.js");
-const {balance, balanceAt, feeGas, poolData, poolState} = require("./asyncbase.js");
+//const {balance, balanceAt, feeGas, poolData, poolState} = require("./asyncbase.js");
+const m_wallet = require("./wallet.js");
 
+
+//WALLET DATA
+let w_obj = new m_wallet.WalletObj(process.env.WA2);
+w_obj.out();
+//w_obj.outAssets();
+w_obj.updateBalance().then(() => w_obj.showBalances());
+
+
+
+
+/* OLD VERSION
 const args = process.argv;
 const args_count = args.length - 2;
 const hasArgs = () => {return (args_count > 0);}
@@ -44,5 +56,5 @@ for (i=0; i<args_count; i++)
 		balanceAt(wallet, m_const.LDO_ADDR).then((data) => log('Balance(LDO):', data));
 	else log("WARINNG: wrong token - ", t);
 }
-
+*/
 

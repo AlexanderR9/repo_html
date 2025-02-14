@@ -2,7 +2,7 @@
 //calc unclimed fees of pos
 
 //including
-const m_const = require("./const.js");
+//const m_const = require("./const.js");
 const ethers = require("ethers");
 const m_base = require("./base.js");
 const {space, log, curTime} = require("./utils.js");

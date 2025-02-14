@@ -30,9 +30,11 @@ class TokenObj
 		log(s, "price:", this.price);
 	}		
 	decimalFactor() {return (10 ** this.decimal);}
+	isStable() {return (this.ticker.slice(0, 3) == "USD");}
 	pricePrecision()
 	{
 		if (this.price == 0) return 1;
+		if (this.isStable()) return 6;
 		if (this.price > 100) return 2;
 //		if (this.price > 2) return 2;
 //		if (this.price > 0.8) return 4;
@@ -73,6 +75,11 @@ class PoolObj
 		this.state = await poolState(this.contract);
 		this.recalcPrices();
 	}
+	//вернет true если пул состоит из стейблов, перед выполнением этой функции нужно вызвать updateData()
+	isStable() 
+	{
+	    return (this.T0.isStable() && this.T1.isStable());
+	}
 	//функция извлекает всю основную не изменяемую информацию о пуле и его активах.
 	//ее необходимо выполнить 1 раз сразу после создания экземпляра
 	async updateData()
@@ -103,6 +110,7 @@ class PoolObj
 	out()
 	{
 		log("PoolObj: ", this.address);
+		if (this.isStable()) log("IS_STABELS_POOL");
 		log("token 0:");
 		this.T0.out();
 		log("token 1:");

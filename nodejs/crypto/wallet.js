@@ -1,12 +1,12 @@
 const fs = require("fs");
 const TOKENS_FILE="token.txt";
 
-const {space, log, curTime} = require("./utils.js");
+const {space, log, curTime, varNumber} = require("./utils.js");
 const m_base = require("./base.js");
 const {poolData, poolState, tokenData, balanceAt} = require("./asyncbase.js");
 
 
-
+//вспомогательный класс контейнер для одного актива
 class WalletAsset
 {
 	constructor(num)
@@ -49,6 +49,32 @@ class WalletAsset
 
 }
 
+//вспомогательный класс, служит для установки количество газа и максимального объема комисий
+//перед проведенной транзакцией
+class TxGas
+{
+    constructor() 
+    {
+	this.gas_limit = 45000; //максимально единиц газа за транзакцию
+	this.max_fee = 160; //максимальная цена за единицу газа, gwei
+	this.priority = 50; //пожертвование за приоритет, gwei
+	
+    }
+    update(g, m, p)
+    {
+	this.gas_limit = g;
+	this.max_fee = m;
+	this.priority = p;
+    }
+    //установить в объект транзакции текщие значения комиссий
+    setFeeParams(txp) 
+    {
+        txp.gasLimit = this.gas_limit;
+        txp.maxFeePerGas = m_base.toGwei(this.max_fee);
+        txp.maxPriorityFeePerGas = m_base.toGwei(this.priority);
+    }
+
+}
 
 
 
@@ -70,9 +96,16 @@ class WalletObj
 	
 
 		this.signer = null;
+		this.gas = null;
 		if (private_key.length > 10)  
-			this.signer = m_base.getWallet(private_key, this.pv);
+		{
+		    this.signer = m_base.getWallet(private_key, this.pv);
+		    this.gas = new TxGas();
+		}
   	}
+	//установка параметров трат коммисии на газ за предстоящую транзакцию.
+	//функция выполнится только если кошелек находится в режиме SIGNER.	
+	setGas(g, m, p) {if (this.gas) this.gas.update(g,m,p);}
 	initNativeToken()
 	{
 		let asset = new WalletAsset(1);
@@ -82,14 +115,18 @@ class WalletObj
 		this.assets[0] = asset;
 	}
 	assetsCount() {return this.assets.length;}
-
-	//функция извлекает всю основную не изменяемую информацию о пуле и его активах.
-	//ее необходимо выполнить 1 раз сразу после создания экземпляра	
-	async updateData()
-	{
-
-	}
 	isSigner() {return (this.signer != null);}
+
+	//возвращает количетсво всех транзакций совершенных кошельком
+	//кошелек должен находится в режиме SIGNER.	
+	async txCount()
+	{
+    	    log("get Tx count of WALLET ....");
+	    if (!this.isSigner()) {log("WARNING: wallet object is not SIGNER!!!"); return;}
+    	    const result = await this.signer.getTransactionCount();
+    	    return result;
+	}
+	//diag debug
 	out()
 	{
 		log("WalletObj: ");
@@ -123,6 +160,7 @@ class WalletObj
 	        const data = await this.pv.getBalance(this.address);
 		return m_base.toReadableAmount(data);
 	}
+	//получить баланс актива с указанным индексом из списка активов кошелька (this.assets)
 	async balance(i)
 	{
 //		log("try get balance by index ", i, "......");
@@ -141,7 +179,6 @@ class WalletObj
 			log("Invalid asset index ", i, ", assets count: ", this.assetsCount());
 			return -1;
 		}
-//		const result = await balanceAt(this.pv, this.assets[i].address);
         	const t_obj = m_base.getTokenContract(this.assets[i].address, this.pv);
         	const result = await t_obj.balanceOf(this.address);
         	return m_base.toReadableAmount(result, this.assets[i].decimal);
@@ -179,6 +216,7 @@ class WalletObj
 		//	this.assets[i].balance = result[i];
 		return result;
 	}
+	//загрузить список токенов из файла
 	readFileTokens()
 	{
 		log("read tokens file ....");
@@ -198,6 +236,78 @@ class WalletObj
 			}
 		}	
 		log("done! \n");
+	}
+	//функция определяет сколько единиц актива с индексом i предоставлено контракту to_addr.
+	//результат возвращается в нормализованных единицах.
+	async checkApproved(i, to_addr)
+	{
+	    log("try check approved size ......");
+	    if (i >= this.assetsCount() || i < 0)
+	    {
+	    	log("Invalid asset index ", i, ", assets count: ", this.assetsCount());
+		return -1;
+	    }
+	    log("ASSET:", this.assets[i].name, "/" ,this.assets[i].address);
+	    log("TO_CONTRACT:", to_addr);
+	    
+	    //try send request 
+    	    const t_obj = m_base.getTokenContract(this.assets[i].address, this.pv);
+    	    const result = await t_obj.allowance(this.address, to_addr);
+	    return m_base.toReadableAmount(result, this.assets[i].decimal);;	    
+	}
+
+
+	/////////////////////////////TRANSACTIONS FUNCS//////////////////////////////////////////
+
+
+
+
+	//функция предоставляет актив с указанным индексом контракту to_addr. sum - количество предоставляемого токена.
+	//кошелек должен находится в режиме SIGNER.	
+	async tryApprove(i, to_addr, sum)
+	{
+	    log("try approve asset ......");
+	    if (!this.isSigner()) {log("WARNING: wallet object is not SIGNER!!!"); return;}
+	    if (!varNumber(sum))  {log("WARNING: approvig SUM is not number_value, sum: ", sum); return;}
+	    if (sum < 0.01 || sum > 1000)  {log("WARNING: approvig SUM is not correct, sum:", sum); return;}
+	    if (i >= this.assetsCount() || i < 0)
+	    {
+	    	log("Invalid asset index ", i, ", assets count: ", this.assetsCount());
+		return -1;
+	    }
+	    
+	    log("ASSET:", this.assets[i].name, "/" ,this.assets[i].address);
+	    log("TO_CONTRACT:", to_addr);
+	    log("APPROVING_AMOUNT:", sum);
+	    space();
+
+    	    //prepare sum
+    	    const bi_sum = m_base.fromReadableAmount(sum, this.assets[i].decimal);
+    	    const approvalAmount = bi_sum.toString();
+    	    log("BI sum format: ", bi_sum, "approvalAmount: ", approvalAmount);
+    	    space();
+
+	    //prepare tx_params
+    	    //log("set option params .....");
+    	    let tx_params = {};
+    	    this.gas.setFeeParams(tx_params);
+    	    const tx_count = await this.txCount();
+    	    log("tx_count:", tx_count);
+    	    tx_params.nonce = tx_count;
+    	    log("tx_params:", tx_params);
+    	    space();
+ 
+    	    ///////////////////////////////TX//////////////////////////////////////////
+    	    log("try approve .....");
+    	    const t_obj = m_base.getTokenContract(this.assets[i].address, this.signer);	    
+    	    try 
+	    {
+		const approvalResponse = await t_obj.approve(to_addr, approvalAmount, tx_params);
+    		log("approvalResponse:", approvalResponse);      
+	    }
+	    catch(e) {log("ERROR:", e); return false;}
+
+	    return true;
 	}
 
 

@@ -6,6 +6,7 @@
 const m_base = require("./base.js");
 const m_pool = require("./pool.js");
 const m_wallet = require("./wallet.js");
+const m_posManager = require("./posmanager.js");
 const {space, log, curTime, delay, countDecimals} = require("./utils.js");
 
 
@@ -45,6 +46,7 @@ async function getOutputQuote(provider, router, t_in)
 //chainInfo(pv).then((data) => log("CHAIN:", data));
 log("---------------------------------");
 
+//POOL DATA
 //let p_obj = new m_pool.PoolObj("0x167384319b41f7094e62f7506409eb38079abff8"); // WMATIC / WETH 
 //let p_obj = new m_pool.PoolObj("0xdac8a8e6dbf8c690ec6815e0ff03491b2770255d"); // USDC/USDT 
 //let p_obj = new m_pool.PoolObj("0x2aceda63b5e958c45bd27d916ba701bc1dc08f7a");
@@ -53,11 +55,30 @@ log("---------------------------------");
 //p_obj.updateData().then(() => {p_obj.out(); p_obj.showPrices();});
 //return 0;
 
-
-let w_obj = new m_wallet.WalletObj(process.env.WA2 /* , process.env.WKEY*/);
-w_obj.out();
+//WALLET DATA
+//let w_obj = new m_wallet.WalletObj(process.env.WA2 /* , process.env.WKEY*/);
+//w_obj.out();
 //w_obj.outAssets();
-w_obj.updateBalance().then(() => w_obj.showBalances());
+//w_obj.updateBalance().then(() => w_obj.showBalances());
+
+//POS MANAGER
+let pm = new m_posManager.PosManager(process.env.WA1);
+//pm.getPosData("2417171").then((data) => log("POS_DATA:", data));
+//pm.getPosCount().then((n) => log("POS_COUNT:", n));
+/*
+pm.updatePosCount().then(() => {
+    space();
+    pm.updatePosData().then((data) => {
+	log("PID_LIST:", data);
+	space();
+	log("finished")
+    });
+});
+*/
+//pm.updatePosData().then((data) => log("PID_LIST:", data));
+//pm.getPosID(0).then((data) => log("PID:", data));
+pm.getPosData(2417180).then((data) => log("POS_DATA:", data));
+
 
 
 

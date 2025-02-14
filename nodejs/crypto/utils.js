@@ -21,8 +21,13 @@ function countDecimals(x) //возвращает количество десят
   if (Math.floor(x) === x) return 0;
   return x.toString().split('.')[1].length || 0;
 }
+function varNumber(a) ///проверяет является ли параметр числом (float или int)
+{
+    let res = Number.parseFloat(a);
+    return Number.isFinite(res);
+}
 
 
 //export funcs
-module.exports = {log, curTime, delay, space, countDecimals};
+module.exports = {log, curTime, delay, space, countDecimals, varNumber};
 

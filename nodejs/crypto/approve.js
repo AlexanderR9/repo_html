@@ -1,22 +1,51 @@
 
 //desc of script
-//скрипт совершает approve токенов с адресом TOKEN_ADDR.
+//скрипт совершает approve токенов с указанным индексом в списке активов кошелька TOKEN_INDEX.
 //TO_ADDR - кому дать разрешение тратить.
 //сумма задается в 1-м аргументе скрипта.
 //если скрипт выполнить без аргументов то он покажет текущуую уже одобренную сумму для TOKEN_ADDR.
 
 
 //including
-const m_const = require("./const.js");
 const m_base = require("./base.js");
+const m_wallet = require("./wallet.js");
 const {space, log, curTime, delay, countDecimals} = require("./utils.js");
 const {tokenData, poolData, poolState, chainInfo, txCount} = require("./asyncbase.js");
 const {ArgsParser} = require("./argsparser.js");
 
+
+
 // user vars
 let APPROVE_SUM = -1;
-const TOKEN_ADDR = m_const.WPOL_ADDR; //какой актив разрешить тратить
-const TO_ADDR = m_const.SWAP_ROUTER_ADDRESS; //кому одобрить (адрес контракта)
+const TOKEN_INDEX = 7;
+const TO_ADDR = m_base.SWAP_ROUTER_ADDRESS; //кому одобрить (адрес контракта)
+
+//read input args
+let a_parser = new ArgsParser(process.argv);
+if (!a_parser.isEmpty())  APPROVE_SUM = a_parser.first();
+
+
+
+//WALLET DATA
+let w_obj = new m_wallet.WalletObj(process.env.WA2  , process.env.WKEY);
+//w_obj.out();
+if (a_parser.isEmpty()) w_obj.checkApproved(TOKEN_INDEX, TO_ADDR).then((data) => log("supplied: ", data));
+else w_obj.tryApprove(TOKEN_INDEX, TO_ADDR, APPROVE_SUM).then((data) => log("result: ", data));
+//w_obj.outAssets();
+
+return 0;
+
+
+
+
+
+
+
+
+
+
+
+/*
 log("TOKEN_ADDR: ", TOKEN_ADDR);
 log("TO_ADDR: ", TO_ADDR);
 
@@ -106,4 +135,4 @@ else // do approve
 	log("TOKEN APPROVE TRANSACTION");
 	main(wallet);
 }
-
+*/

@@ -2,23 +2,19 @@ require("dotenv").config();
 
 
 //including
-//const m_const = require("./const.js");
 const ethers = require("ethers");
 
 //ABI of contracts
-//const {abi: QUOTER_ABI} = require("@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json");
 const {abi: QUOTER_ABI} = require("./abi/Quoter.json");
-//const {abi: POOL_ABI} = require("@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json");
 const {abi: POOL_ABI} = require("./abi/IUniswapV3Pool.json");
-//const {abi: ROUTER_ABI} = require("@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json");
 const {abi: ROUTER_ABI} = require("./abi/ISwapRouter.json");
-//const {abi: POS_MANAGER_ABI} = require("@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json");
 const {abi: POS_MANAGER_ABI} = require("./abi/INonfungiblePositionManager.json");
 const ERC20_ABI = require("./abi/erc20.abi.json");
 
 const READABLE_FORM_LEN = 8;
 const SWAP_ROUTER_ADDRESS='0xE592427A0AEce92De3Edee1F18E0157C05861564';
 const POS_MANAGER_ADDRESS='0xC36442b4a4522E871399CD717aBDD847Ab11FE88';
+const QUOTER_CONTRACT_ADDRESS='0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6';
 
 
 const RPC_URL = () => (process.env.INFURA_URL.toString() + "/" + process.env.INFURA_KEY.toString()); 
@@ -64,9 +60,9 @@ function getTokenContract(t_addr, provider)
 {
   return getContract(t_addr, ERC20_ABI, provider);			
 }
-function getQuoterContract(q_addr, provider)
+function getQuoterContract(provider)
 {
-  return getContract(q_addr, QUOTER_ABI, provider);			
+  return getContract(QUOTER_CONTRACT_ADDRESS, QUOTER_ABI, provider);			
 }
 function getRouterContract(provider)
 {

@@ -41,6 +41,7 @@ class WalletAsset
 	{
 		if (this.invalid()) log("WalletAsset: [INAVLID_FIELDS]");	
 		else log("WalletAsset", this.number,":");	
+		log("   INDEX: ", this.number-1)
 		log("   NAME: ", this.name)
 		log("   ADDR: ", this.address)
 		log("   DECIMAL: ", this.decimal)
@@ -49,7 +50,7 @@ class WalletAsset
 
 }
 
-//вспомогательный класс, служит для установки количество газа и максимального объема комисий
+//вспомогательный класс, служит для установки количества газа и максимального объема комисий
 //перед проведенной транзакцией
 class TxGas
 {
@@ -81,6 +82,7 @@ class TxGas
 //класс для работы с кошельком
 //сначала загружает информацию о токенах из файла token.txt, файл должен быть заранее подготовлен
 //можно просматривать балансы всех токенов, предварительно вызвав функцию updateBalance()	
+//класс при инициализации в список активов сначала добавляет нативный токен (т.е. он будет с индесом 0), затем считывает из файла остальные токены.
 class WalletObj
 {
 	//при создании экземпляра необходимо сразу передать публичный адрес и необязательный параметр - приватный ключ
@@ -212,8 +214,6 @@ class WalletObj
 		let p_arr = [];		
 		for (let i=0; i<this.assetsCount(); i++) p_arr[i] = this.balance(i);
 		const result = await Promise.all(p_arr);
-		//for (let i=0; i<this.assetsCount(); i++)
-		//	this.assets[i].balance = result[i];
 		return result;
 	}
 	//загрузить список токенов из файла
@@ -237,6 +237,30 @@ class WalletObj
 		}	
 		log("done! \n");
 	}
+	//функция ищет по адресу контракта актив кошелька из контейнера this.assets.
+	//возвращает объект с полями ticker, decimal, addr.
+	//если актив не будет найден то, поле decimal=-1, ticker=""
+	findAsset(t_addr)
+	{
+	    let result = {addr: t_addr.trim().toLowerCase(), ticker: "", decimal: -1};
+	    log("find asset by address: ", result.addr, " .........");	    
+	    if (result.addr.length < 10) {log("Invalid input address"); return result;}
+	    if (this.assetsCount() <= 0) {log("Invalid assets container"); return result;}
+    	    
+	    for (let i=0; i<this.assets.length; i++)
+	    {
+		if (this.assets[i].address.toLowerCase() == result.addr)
+		{
+		    result.ticker = this.assets[i].name;
+		    result.decimal = this.assets[i].decimal;
+		    break;
+		}
+	    }
+	    return result;
+	}
+
+
+
 	//функция определяет сколько единиц актива с индексом i предоставлено контракту to_addr.
 	//результат возвращается в нормализованных единицах.
 	async checkApproved(i, to_addr)
@@ -260,21 +284,15 @@ class WalletObj
 	/////////////////////////////TRANSACTIONS FUNCS//////////////////////////////////////////
 
 
-
-
 	//функция предоставляет актив с указанным индексом контракту to_addr. sum - количество предоставляемого токена.
 	//кошелек должен находится в режиме SIGNER.	
 	async tryApprove(i, to_addr, sum)
 	{
 	    log("try approve asset ......");
-	    if (!this.isSigner()) {log("WARNING: wallet object is not SIGNER!!!"); return;}
-	    if (!varNumber(sum))  {log("WARNING: approvig SUM is not number_value, sum: ", sum); return;}
-	    if (sum < 0.01 || sum > 1000)  {log("WARNING: approvig SUM is not correct, sum:", sum); return;}
-	    if (i >= this.assetsCount() || i < 0)
-	    {
-	    	log("Invalid asset index ", i, ", assets count: ", this.assetsCount());
-		return -1;
-	    }
+	    if (!this.isSigner()) {log("WARNING: wallet object is not SIGNER!!!"); return -1;}
+	    if (!varNumber(sum))  {log("WARNING: approvig SUM is not number_value, sum: ", sum); return -2;}
+	    if (sum < 0.01 || sum > 1000)  {log("WARNING: approvig SUM is not correct, sum:", sum); return -3;}
+	    if (i >= this.assetsCount() || i < 0) {log("Invalid asset index ", i, ", assets count: ", this.assetsCount()); return -4;}
 	    
 	    log("ASSET:", this.assets[i].name, "/" ,this.assets[i].address);
 	    log("TO_CONTRACT:", to_addr);
@@ -305,11 +323,78 @@ class WalletObj
 		const approvalResponse = await t_obj.approve(to_addr, approvalAmount, tx_params);
     		log("approvalResponse:", approvalResponse);      
 	    }
-	    catch(e) {log("ERROR:", e); return false;}
+	    catch(e) {log("ERROR:", e); return -5;}
 
 	    return true;
 	}
 
+
+
+	//функция отправляет актив с указанным индексом на другой кошелек to_addr. sum - количество переводимого токена.
+	//кошелек должен находится в режиме SIGNER.	
+	async trySend(i, to_addr, sum)
+	{
+	    log("try transfer asset ......");
+	    if (!this.isSigner()) {log("WARNING: wallet object is not SIGNER!!!"); return -1;}
+	    if (!varNumber(sum))  {log("WARNING: transfer SUM is not number_value, sum: ", sum); return -2;}
+	    if (sum < 0.01 || sum > 1000)  {log("WARNING: transfer SUM is not correct, sum:", sum); return -3;}
+	    if (i >= this.assetsCount() || i < 0) {log("Invalid asset index ", i, ", assets count: ", this.assetsCount()); return -4;}
+
+	    log("SENDING ASSET:", this.assets[i].name, "/" ,this.assets[i].address);
+	    log("TO_WALLET:", to_addr);
+	    log("ASSET_AMOUNT:", sum);
+	    space();
+
+    	    //prepare sum
+    	    const bi_sum = m_base.fromReadableAmount(sum, this.assets[i].decimal);
+    	    log("BI sum format: ", bi_sum);
+    	    space();
+
+	    //prepare tx_params
+    	    const tx_count = await this.txCount();
+    	    log("tx_count:", tx_count);
+
+	    //transfer token
+	    let result = -9999;
+	    if (i == 0) result = await this.sendNativeToken(to_addr, bi_sum, tx_count)
+	    else result = await this.sendAnyToken(i, to_addr, bi_sum, tx_count)
+
+	    return result;
+	}
+	async sendNativeToken(to_addr, bi_sum, tx_count) //private
+	{
+	    log("IS A NATIVE TOKEN");
+    	    let tx_params = {to: to_addr, nonce: tx_count, value: bi_sum};
+    	    this.gas.setFeeParams(tx_params);
+    	    log("tx_params:", tx_params);
+    	    space();
+	    ////////////////TX///////////////
+    	    log("send transaction ....");
+            try
+            {
+                const tx = await this.signer.sendTransaction(tx_params);
+                log("TX:", tx);
+            }
+            catch(e) {log("ERROR:", e); return -5;}
+            return true;
+	}
+	async sendAnyToken(i, to_addr, bi_sum, tx_count) //private
+	{
+    	    let tx_params = {nonce: tx_count};
+    	    this.gas.setFeeParams(tx_params);
+    	    log("tx_params:", tx_params);
+    	    space();
+	    ////////////////TX///////////////
+            const t_obj = m_base.getTokenContract(this.assets[i].address, this.signer);
+    	    log("send transaction ....");
+            try
+            {
+                const tx = await t_obj.transfer(to_addr, bi_sum, tx_params);
+                log("TX:", tx);
+            }
+            catch(e) {log("ERROR:", e); return -5;}
+            return true;
+	}
 
 };
 

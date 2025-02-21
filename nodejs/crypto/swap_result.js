@@ -39,7 +39,6 @@ log("//////////////////WITH SWAPPER_OJ/////////////////////////");
 let w_obj = new m_wallet.WalletObj(process.env.WA2);
 let s_obj = new m_swapper.SwapperObj(w_obj);
 s_obj.setPoolAddr(POOL_ADDR);
-space();
 s_obj.tokenSizeBySwapping(INPUT_SUM, INPUT_T).then((out_sum) => log("calc finished!"));
 
 

@@ -54,12 +54,12 @@ class WalletAsset
 //перед проведенной транзакцией
 class TxGas
 {
+    //настройки по умолчанию стоят минимальные, но этого хватает чтобы например сделать approve
     constructor() 
     {
 	this.gas_limit = 45000; //максимально единиц газа за транзакцию
 	this.max_fee = 160; //максимальная цена за единицу газа, gwei
-	this.priority = 50; //пожертвование за приоритет, gwei
-	
+	this.priority = 50; //пожертвование за приоритет, gwei	
     }
     update(g, m, p)
     {
@@ -74,7 +74,6 @@ class TxGas
         txp.maxFeePerGas = m_base.toGwei(this.max_fee);
         txp.maxPriorityFeePerGas = m_base.toGwei(this.priority);
     }
-
 }
 
 
@@ -243,7 +242,7 @@ class WalletObj
 	findAsset(t_addr)
 	{
 	    let result = {addr: t_addr.trim().toLowerCase(), ticker: "", decimal: -1};
-	    log("find asset by address: ", result.addr, " .........");	    
+//	    log("find asset by address: ", result.addr, " .........");	    
 	    if (result.addr.length < 10) {log("Invalid input address"); return result;}
 	    if (this.assetsCount() <= 0) {log("Invalid assets container"); return result;}
     	    

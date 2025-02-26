@@ -1,4 +1,4 @@
-const {space, log, curTime, varNumber} = require("./utils.js");
+const {space, log, curTime, varNumber, decimalFactor, uLog} = require("./utils.js");
 const m_base = require("./base.js");
 const {poolData, poolState, tokenData} = require("./asyncbase.js");
 
@@ -61,6 +61,7 @@ class PoolObj
 		this.T0 = new TokenObj("?"); //пустой объект
 		this.T1 = new TokenObj("?");
 		this.fee = 0.0;
+		this.tick_space = -1;
 		this.pv = m_base.getProvider();	
 		this.contract = m_base.getPoolContract(this.address, this.pv);
 		this.state = {liq: 0, sqrtPrice: 0, tick: 0};
@@ -96,15 +97,16 @@ class PoolObj
 	}
 	//функция извлекает всю основную не изменяемую информацию о пуле и его активах.
 	//ее необходимо выполнить 1 раз сразу после создания экземпляра
-	async updateData()
+	async updateData(with_state = true)
 	{
 		log("PoolObj: try update ...........");
 		const data = await poolData(this.contract);
 		this.T0.address = data.t0_addr;		
 		this.T1.address = data.t1_addr;		
 		this.fee = data.fee;
+		this.tick_space = data.tspace;
 		await Promise.all([this.T0.update(this.pv), this.T1.update(this.pv)]);
-		await this.updateState();
+		if (with_state) await this.updateState();
 		log("done!");
 	}
 	recalcPrices()
@@ -130,6 +132,7 @@ class PoolObj
 		log("token 1:");
 		this.T1.out();
 		log("fee: ", this.strFee());
+		log("tickSpacing: ", this.tick_space);
 	}
 	outState()
 	{
@@ -182,6 +185,39 @@ class PoolObj
 	log("Result: ", result.toFixed(4));
 	return result;
     }
+
+    //получить номера тиков для открытия позы по реальным значениям цен (внимательно: цена указывается для токена0 в ед. токена1).
+    //вернет объект с двумя полями tick1, tick2 (c учетом tickSpacing, причем значения будут притянуты к нижним границам интервалов tickSpacing).
+    //предварительно должна быть вызвана функция update.
+    calcTickRange(p1, p2)
+    {
+        log("try get ticks range ......");
+        let result = {};
+        let f_dec = 1;
+        f_dec = decimalFactor(this.T0.decimal, this.T1.decimal);
+
+	log("prices: p1 =", p1, "  p2 =", p2);
+	
+        p1 *= f_dec;
+        p2 *= f_dec;
+
+	const qp = m_base.TICK_QUANTUM;
+        result.tick1 = Math.floor(uLog(qp, p1));
+        result.tick2 = Math.floor(uLog(qp, p2));
+	log("raw_result:", result);    	
+	
+	//find ticks nearest tickSpacing
+	let mod = result.tick1 % this.tick_space;
+	if (mod < 0) {mod += this.tick_space; result.tick1 -= mod;}
+	else if (mod > 0) result.tick1 -= mod;
+
+	mod = result.tick2 % this.tick_space;
+	if (mod < 0) {mod += this.tick_space; result.tick2 -= mod;}
+	else if (mod > 0) result.tick2 -= mod;
+
+        return result;
+    }
+
 
 };
 

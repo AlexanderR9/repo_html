@@ -69,15 +69,16 @@ async function chainInfo(provider)
 	return result;
 }
 //возвращает неизменяемую информацию о пуле.
-//тип возвращаемого значения - объект, который содержит 3 поля: t0_addr, t1_addr, fee
+//тип возвращаемого значения - объект, который содержит 4 поля: t0_addr, t1_addr, fee, tspace
 //на вход подается ранее созданный объект POOL (ethers.Contract(address, abi, provider))
 async function poolData(pool_obj) //getting poolData from object poolContract
 {
         let result = { };
-        const [token0, token1, fee] = await Promise.all([pool_obj.token0(), pool_obj.token1(), pool_obj.fee()]);
+        const [token0, token1, fee, tickSpacing] = await Promise.all([pool_obj.token0(), pool_obj.token1(), pool_obj.fee(), pool_obj.tickSpacing()]);
         result.t0_addr = token0;
         result.t1_addr = token1;
         result.fee = fee;
+        result.tspace = tickSpacing;
 	return result;
 }
 //возвращает информацию о текущем состоянии пула.

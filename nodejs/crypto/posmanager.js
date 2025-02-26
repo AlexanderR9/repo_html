@@ -23,10 +23,18 @@ class PosData
 	this.fee = -1;
 	this.token0 = ""; //adress of contract
 	this.token1 = ""; //adress of contract
+	this.pricesRange = {p1: -1, p2: -1, p_cur: 0};
+	//this.pool_info = ""; //short pool info
     }
 
-    invalid() {return (this.fee <= 0);}
+    invalid() {return (this.fee <= 0 || this.pid <= 0);}
     isActive() {return (!this.invalid() && this.liq > 0);}
+    strPricesRange()
+    {
+	let s = "RANGE[" + this.pricesRange.p1.toFixed(4).toString() + " - " +
+	    this.pricesRange.p2.toFixed(4).toString() + "]"
+	return s;
+    }	
     out()
     {
 	log("POS_DATA: PID =", this.pid);
@@ -36,14 +44,38 @@ class PosData
 	log("token 0: ", this.token0);
 	log("token 1: ", this.token1);
 	log("fee: ", this.fee);
+	//log("POOL: ", this.pool_info);
     }
     toFileLine()
     {
 	let fline = this.pid.toString();        
 	if (this.invalid()) return (fline + " / invalid pos" + '\n');
 	fline += (" / " + this.liq.toString() + " / " + this.l_tick.toString() + " / " + this.u_tick.toString());
-	fline += (" / " + this.token0 + " / " + this.toekn1 + " / " + this.fee.toString());
+	fline += (" / " + this.token0 + " / " + this.token1 + " / " + this.fee.toString());
 	return (fline + '\n');    	
+    }
+    fromFileLine(fline)
+    {
+	let row_list = fline.toString().split("/");
+        if (row_list.length != 7) return;
+
+	let i = 0;
+	this.pid = parseInt(row_list[i].trim()); i++;
+	this.liq = BigInt(row_list[i].trim()); i++;
+	this.l_tick = parseInt(row_list[i].trim()); i++;
+	this.u_tick = parseInt(row_list[i].trim()); i++;
+	this.token0 = row_list[i].trim(); i++;
+	this.token1 = row_list[i].trim(); i++;
+	this.fee = parseInt(row_list[i].trim()); i++;
+    }
+    setData(p_data)
+    {
+        this.liq = p_data.liquidity;
+        this.fee = parseInt(p_data.fee);
+        this.l_tick = p_data.tickLower;
+        this.u_tick = p_data.tickUpper;
+        this.token0 = p_data.token0;
+        this.token1 = p_data.token1;    
     }
 
 };
@@ -63,6 +95,12 @@ class PosManager
         }
 	posDataCount() {return this.pos_list.length;}
 	posEmpty() {return ((this.posDataCount() == 0) ? true : false);}
+	activeCount() //количество открытых поз, т.е. у которых добавлена ликвидность
+	{
+	    let n = 0;
+	    this.pos_list.forEach((item) => {if (item.isActive()) n++;});		
+	    return n;
+	}
 	//получить количество всех позиций для текущего кошелька (открытых/закрытых) из сети
 	async getPosCount() 
 	{
@@ -118,7 +156,7 @@ class PosManager
 	}	
 
 	//получить список идентификаторов всех поз(открытых/закрытых) , 
-	//предварительно необходимо выполнить updatePosCount()
+	//начиная с индекса позы i_start, n шт
 	async getPidList(i_start, n)
 	{
 	    log("try get PID_LIST of positions ..........");        
@@ -200,9 +238,54 @@ class PosManager
 		log("pos_list size: ",  this.posDataCount());
                 log("done! \n");	    
 	}
+	//загрузить данные позиций в контейнер this.pos_list из файла  POS_DATA_FILE.
+	// контейнер this.pos_list полностью перезаписывается.
+	//перед выполнением этой функции желательно один раз выполнить  updateArrPosData.
+	loadPosDataFromFile()
+	{
+	    log("read POS_DATA file ....");
+	    log("file:", POS_DATA_FILE);
+	    
+	    this.pos_list = [];
+            const data = fs.readFileSync(POS_DATA_FILE);
+            let list = data.toString().split("\n");
 
-
-
+            for (let i=0; i<list.length; i++)
+            {
+                let fline = list[i].trim();
+                if (fline == "") continue;
+		
+		let pos_obj = new PosData(-1);
+		pos_obj.fromFileLine(fline);
+		if (!pos_obj.invalid())
+	    	{
+		    //const np = this.pos_list.length;
+		    //this.pos_list[i] = pos_obj;
+		    this.recalcPosRange(pos_obj);
+		    this.pos_list.push(pos_obj);
+		}
+	    }	
+	    const np = this.posDataCount();
+	    log("posDataCount: ", np, ", active: ", this.activeCount());
+	    this.outActive();
+	    return np;	    
+	}
+	outActive()
+	{
+	    const a = this.activeCount();
+	    space();
+	    log("Active positions: ", a);
+	    if (a == 0) return;
+	    	
+	    this.pos_list.forEach((p) => 
+	    {
+		if (p.isActive())
+		{	
+		    let s = p.pid.toString() + "  " +this.poolByPos(p) + "  " + p.strPricesRange();	
+		    log(s);    
+		}
+	    });		
+	}
 	//получить ID одной позиции по ее порядковому индексу [0..N]
 	async getPosID(pos_index)
 	{
@@ -242,23 +325,70 @@ class PosManager
 	    }    
 	    return data;
 	}	
-	//запросит в сети и обновит поля указанной(индекс this.pos_list) позиции
-	async updatePosData(i) 
-	{
-            log("try update pos data ......");
-            if (i >= this.posDataCount() || i < 0) {log("Invalid pos index ", i, ", pos count: ", this.posDataCount());  return -1;}	
-	    const p_data = await this.getPosData(this.pos_list[i].pid);
-	    space();	
-	    
 
-	    this.pos_list[i].liq = p_data.liquidity;
-	    this.pos_list[i].fee = parseInt(p_data.fee);
-	    this.pos_list[i].l_tick = p_data.tickLower;
-	    this.pos_list[i].u_tick = p_data.tickUpper;
-	    this.pos_list[i].token0 = p_data.token0;
-	    this.pos_list[i].token1 = p_data.token1;
-	    this.pos_list[i].out();
-	    log("POOL:", this.poolByPos(this.pos_list[i]));
+	//запрашивает данные всех позиций из цепи. предварительно уже должен быть подготовлен файл PID_FILE.
+	// а также предварительно необходимо выполнить loadPidListFromFile(), т.е. загрузить все PID поз.
+	//после получения всех данных перезапишет файл POS_DATA_FILE.
+	async updateArrPosData(n_sep = 8)
+	{
+	    log("try update arr_pos data .....");
+	    const n_pos = this.posDataCount();
+	    if (n_pos <= 0) {log("WARNING: pos data is empty"); return false;}
+	    
+	    let i =0;
+	    let i_start = 0;
+	    let remainder = n_pos;
+	    while (2 > 1)
+	    {
+		space();
+		log("try get next fraction, i_start", i_start, ".........");
+		if ((n_pos - i_start) < n_sep) 
+		{
+		    n_sep = (n_pos - i_start); 
+		    remainder = -1;
+		    log("it is last iteration,  n_sep ", n_sep);
+		} //it is last iteration
+		log("n_sep = ", n_sep);
+
+
+		const calls = [];
+		for (i = i_start; i < (i_start+n_sep); i++) 
+		{
+		    calls.push(this.getPosData(this.pos_list[i].pid));
+		}
+		try
+		{
+		    const call_resp = await Promise.all(calls);
+		    if (Array.isArray(call_resp)) 
+		    {
+			space();
+			log("is Array, size ", call_resp.length);
+			//log("callResponses:", call_resp);
+			for (i = i_start; i < (i_start+n_sep); i++) 
+			{
+			    space();
+			    this.pos_list[i].setData(call_resp[i - i_start]);
+			    //this.pos_list[i].out();
+			    log("POOL: ", this.poolByPos(this.pos_list[i]));
+			}
+		    }
+		    log("done!");
+		}
+		catch(err) {log("CATCH_ERR:", err); break;}    
+
+		if (remainder < 0) break; //получили все POS_DATA		
+
+		i_start += n_sep;
+		remainder -= n_sep;		
+		if (i_start > (n_pos-1)) break; //получили все POS_DATA				
+		if (remainder == 0) break; //получили все POS_DATA				
+
+		log("fraction fetched, remainder =", remainder);
+	    }
+	    log("//////////FINISHED ALL!/////////////////");	
+	    this.rewritePosDataFile();
+	    return true;
+
 	}
 	// вернет краткую инфу о пуле для указанной позы.
 	//результат - строка вида: TOKEN0/TOKEN1 (0.05%) или '?' если pos_obj нулевой или некоректные данные
@@ -273,6 +403,30 @@ class PosManager
 	    s +=  " (" + (pos_obj.fee/10000).toString() + "%)"
 	    return s;	    
 	}
+	//пересчитать значения диапазона pricesRange для указанной позы по номерам тиков
+	recalcPosRange(pos_obj)
+	{
+	    let p1 = m_base.TICK_QUANTUM ** (pos_obj.l_tick);
+	    let p2 = m_base.TICK_QUANTUM ** (pos_obj.u_tick);
+	    const t0 = this.wallet.findAsset(pos_obj.token0);
+	    const t1 = this.wallet.findAsset(pos_obj.token1);
+	    let f_dec = 1;
+	    f_dec = 10 ** ((t0.decimal - t1.decimal));
+	    p1 *= f_dec; p2 *= f_dec;
+
+//	    pos_obj.pricesRange.p_cur = 
+
+	    if (t0.ticker.slice(0, 3) == "USD" && t0.ticker != "USDT")
+	    {
+		pos_obj.pricesRange.p1 = 1/p2;
+		pos_obj.pricesRange.p2 = 1/p1;		
+	    }
+	    else
+	    {
+		pos_obj.pricesRange.p1 = p1;
+		pos_obj.pricesRange.p2 = p2;
+	    }
+	}	
 
 };
 

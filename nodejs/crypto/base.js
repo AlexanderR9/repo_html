@@ -12,6 +12,7 @@ const {abi: POS_MANAGER_ABI} = require("./abi/INonfungiblePositionManager.json")
 const ERC20_ABI = require("./abi/erc20.abi.json");
 
 const READABLE_FORM_LEN = 8;
+const TICK_QUANTUM = 1.0001;	
 const SWAP_ROUTER_ADDRESS='0xE592427A0AEce92De3Edee1F18E0157C05861564';
 const POS_MANAGER_ADDRESS='0xC36442b4a4522E871399CD717aBDD847Ab11FE88';
 const QUOTER_CONTRACT_ADDRESS='0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6';
@@ -118,7 +119,8 @@ module.exports = {
 	fromGwei,
 	toBig,
 	MAX_BIG128,
-	SWAP_ROUTER_ADDRESS
+	SWAP_ROUTER_ADDRESS,
+	TICK_QUANTUM
 	
 };
 

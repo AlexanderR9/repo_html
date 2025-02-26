@@ -26,8 +26,21 @@ function varNumber(a) ///проверяет является ли парамет
     let res = Number.parseFloat(a);
     return Number.isFinite(res);
 }
+function decimalFactor(decimal0, decimal1) //возвращает кеф для пула с разностью (decimal1 - decimal0)
+{
+    if (decimal0 <= 0 || decimal1 <= 0) return -1;
+    if (decimal0 == decimal1) return 1;
+    return (10 ** (decimal1 - decimal0));
+}
+function uLog(a, b) //пользовательски логорифм, привычный log_a(b)
+{
+    if (b == 1 || a == 0) return 0;
+    if (a == 1 || a < 0) return -1;    
+    return (Math.log(b)/Math.log(a));
+}
+
 
 
 //export funcs
-module.exports = {log, curTime, delay, space, countDecimals, varNumber};
+module.exports = {log, curTime, delay, space, countDecimals, varNumber, decimalFactor, uLog};
 

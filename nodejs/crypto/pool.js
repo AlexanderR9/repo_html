@@ -60,7 +60,7 @@ class PoolObj
 		this.address = addr; //список только полезных аргументов
 		this.T0 = new TokenObj("?"); //пустой объект
 		this.T1 = new TokenObj("?");
-		this.fee = 0.0;
+		this.fee = 0;
 		this.tick_space = -1;
 		this.pv = m_base.getProvider();	
 		this.contract = m_base.getPoolContract(this.address, this.pv);
@@ -114,6 +114,7 @@ class PoolObj
 		const p96 = Number(this.state.sqrtPrice);
 		if (p96 == 0) return;
 		let p = (p96 / (2 ** 96));
+	//	let p = (p96/Q96);
 		p = p*p;
 		
 		this.T0.price = p*this.T0.decimalFactor()/this.T1.decimalFactor();
@@ -193,8 +194,7 @@ class PoolObj
     {
         log("try get ticks range ......");
         let result = {};
-        let f_dec = 1;
-        f_dec = decimalFactor(this.T0.decimal, this.T1.decimal);
+        let f_dec = decimalFactor(this.T0.decimal, this.T1.decimal);
 
 	log("prices: p1 =", p1, "  p2 =", p2);
 	
@@ -218,6 +218,28 @@ class PoolObj
         return result;
     }
 
+    //получить цену вида Q96 но номеру тика (внимательно: цена указывается для токена0 в ед. токена1).
+    //предварительно должна быть вызвана update, возвращает BigInt
+    priceQ96ByTick(tick)
+    {
+        log("try get price Q96 by tick range ......");
+	log("tick: ", tick);
+        let f_dec = decimalFactor(this.T0.decimal, this.T1.decimal);
+
+	//--------------stage 1----------------------------
+	const a = m_base.TICK_QUANTUM ** tick;
+    	const real_price = a/f_dec;
+	log("real_price: ", real_price);
+
+	//--------------stage 2----------------------------
+	const price_raw = real_price*f_dec;
+	let sqrtPrice = Math.sqrt(price_raw);
+	sqrtPrice = Math.round(sqrtPrice*(2 ** 96));
+	const biX96 = BigInt(sqrtPrice);
+	log("sqrtPriceX96: ", biX96, " / ", biX96.toString());
+	    
+	return biX96;
+    }
 
 };
 

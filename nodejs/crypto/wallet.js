@@ -57,9 +57,9 @@ class TxGas
     //настройки по умолчанию стоят минимальные, но этого хватает чтобы например сделать approve
     constructor() 
     {
-	this.gas_limit = 45000; //максимально единиц газа за транзакцию
+	this.gas_limit = 145000; //максимально единиц газа за транзакцию
 	this.max_fee = 160; //максимальная цена за единицу газа, gwei
-	this.priority = 50; //пожертвование за приоритет, gwei	
+	this.priority = 70; //пожертвование за приоритет, gwei	
     }
     update(g, m, p)
     {
@@ -88,7 +88,7 @@ class WalletObj
 	constructor(addr, private_key = "") 
 	{	
 		log("Create wallet object: ", addr);
-		this.address = addr; 
+		this.address = addr; //public address
 		this.pv = m_base.getProvider();	
 		this.assets = []; /// WalletAsset array
 		this.chain = m_base.currentChain();
@@ -112,11 +112,12 @@ class WalletObj
 		let asset = new WalletAsset(1);
 		asset.name = m_base.nativeToken();
 		asset.decimal = 18;
-		asset.address = "0x00000000000000000000000000000000099";
+		asset.address = "0x00000000000000000000000000000000000000ff";
 		this.assets[0] = asset;
 	}
 	assetsCount() {return this.assets.length;}
 	isSigner() {return (this.signer != null);}
+	nativeDecimal() {return ((this.assetsCount()>0) ? this.assets[0].decimal : -1);}
 
 	//возвращает количетсво всех транзакций совершенных кошельком
 	//кошелек должен находится в режиме SIGNER.	
@@ -143,7 +144,7 @@ class WalletObj
 			this.assets[i].out();
 		
 	}
-	showBalances()
+	showBalances(with_addrs = false)
 	{	
 		log("----------- WALLET ASSETS BALANCES -------------");		
 		for (let i=0; i<this.assets.length; i++)
@@ -151,8 +152,12 @@ class WalletObj
 			let isnat = "";
 			if (i==0) isnat = "(is_native)";
 			const t_len = this.assets[i].name.length;
-			let s = this.assets[i].number.toString()+". " + this.assets[i].name;
-			log(s, Array(20-t_len).join("_"), this.assets[i].balance, isnat);
+
+			let s = this.assets[i].number.toString()+".  ";			
+			if (with_addrs) s += (this.assets[i].address + "  ");
+			s += this.assets[i].name;
+			s += Array(16-t_len).join("_");			
+			log(s, this.assets[i].balance, isnat);
 		}
 	}
 	async balanceNative()

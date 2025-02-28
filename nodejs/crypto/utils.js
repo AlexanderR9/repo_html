@@ -38,6 +38,7 @@ function uLog(a, b) //пользовательски логорифм, прив�
     if (a == 1 || a < 0) return -1;    
     return (Math.log(b)/Math.log(a));
 }
+//const Q96 = () =>  Math.Pow(2, 96);
 
 
 

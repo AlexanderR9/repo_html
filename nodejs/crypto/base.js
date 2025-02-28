@@ -120,6 +120,7 @@ module.exports = {
 	toBig,
 	MAX_BIG128,
 	SWAP_ROUTER_ADDRESS,
+	POS_MANAGER_ADDRESS,
 	TICK_QUANTUM
 	
 };

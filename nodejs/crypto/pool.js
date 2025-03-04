@@ -2,6 +2,8 @@ const {space, log, curTime, varNumber, decimalFactor, uLog} = require("./utils.j
 const m_base = require("./base.js");
 const {poolData, poolState, tokenData} = require("./asyncbase.js");
 
+const fs = require("fs");
+const POOL_FILE="pools.txt";
 
 
 //вспомогательный класс-контейнер для  PoolObj
@@ -79,7 +81,68 @@ class PoolObj
 	    if (this.T0.invalid() || this.T1.invalid()) return true;
 	    return false;
 	}
+	baseInfo()
+	{
+	    if (this.invalidPoolData()) return "???";
+	    let s = this.T0.ticker + ":";
+	    s += this.T1.ticker + ":";
+	    s += this.floatFee() + "%";
+	    return s;
+	}
+	appendDataToFile()
+	{
+	    log("try append pool record to file [pools.txt] ......");
+	    if (this.invalidPoolData()) {log("invalid pool"); return;}
+	    if (!fs.existsSync(POOL_FILE)) {log("WARNING: pools file not found - ", POOL_FILE); return;}
+
+	    
+	    const p_addr = this.address.trim().toLowerCase();	    
+	    const f_arr = this.lookPoolsFile();
+            for (let i=0; i<f_arr.length; i++)
+	    {
+		if (f_arr[i].addr == p_addr)
+		{
+		    log("pool already exist in file: ", p_addr);
+		    return;
+		}
+	    }
+
+
+            let fline = p_addr  + " / " + this.baseInfo();
+	    fline += " / " + this.T0.address.toLowerCase() + " / " + this.T1.address.toLowerCase() + " / " + this.fee;
+	    fs.appendFileSync(POOL_FILE, (fline + '\n'));
+	    log("done!");
+	}
+	//читает файл pools.txt и возвращает массив записей-объектов всех пулов
+	static lookPoolsFile() 
+	{	    
+	    let result = [];
+	    log("try get pools from file [pools.txt] ......");
+	    if (!fs.existsSync(POOL_FILE)) {log("WARNING: pools file not found - ", POOL_FILE); return result;}
 	
+            const data = fs.readFileSync(POOL_FILE);
+            let list = data.toString().split("\n");
+            for (let i=0; i<list.length; i++)
+            {
+                let fline = list[i].trim();
+                if (fline == "") continue;
+                if (fline.slice(0, 1) == "#") continue;
+
+                let row_list = fline.toString().split("/");
+                if (row_list.length != 5) continue;
+
+		let p_data = {};
+		p_data.addr = row_list[0].trim();
+		p_data.info = row_list[1].trim();
+		p_data.t0_addr = row_list[2].trim();
+		p_data.t1_addr = row_list[3].trim();
+		p_data.fee = parseInt(row_list[4].trim());
+		result.push(p_data);
+
+            }
+            log("pools count: ",  result.length);
+	    return result;
+    	}	
 
 
 	//функция обновляет состояние пула, т.е. изменяемые параметры.

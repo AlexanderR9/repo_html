@@ -55,10 +55,15 @@ async function feeGas(provider)
 {
         let result = { };
         const data = await provider.getFeeData();
-	//log("provider.getFeeData:", data);
-	result.baseFeePerGas = data.lastBaseFeePerGas.toNumber().toString()+" GWei"; //базовая транзакция в последнем блоке
-	result.maxFeePerGas = data.maxFeePerGas.toNumber();
-	result.maxPriorityFeePerGas = data.maxPriorityFeePerGas.toNumber();
+//	log("provider.getFeeData:", data);
+//	result.baseFeePerGas = data.lastBaseFeePerGas.toNumber().toString()+" GWei"; //базовая транзакция в последнем блоке
+//	result.maxFeePerGas = data.maxFeePerGas.toNumber();
+//	result.maxPriorityFeePerGas = data.maxPriorityFeePerGas.toNumber();
+
+	result.baseFeePerGas = data.lastBaseFeePerGas.toString()+" GWei"; //базовая транзакция в последнем блоке
+	result.maxFeePerGas = data.maxFeePerGas.toString();
+	result.maxPriorityFeePerGas = data.maxPriorityFeePerGas.toString();
+
 //	result.gasPrice = data.gasPrice.toNumber();
         return result;
 }

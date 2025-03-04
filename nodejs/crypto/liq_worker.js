@@ -177,9 +177,6 @@ class LiqWorker
     	    log("set FEE  params .....");
     	    let fee_params = {};
     	    this.wallet.gas.setFeeParams(fee_params);
-    	    //const tx_count = await this.wallet.txCount();
-    	    //log("tx_count:", tx_count);
-    	    //tx_params.nonce = tx_count;
     	    log("fee_params:", fee_params);
     	    space();
  

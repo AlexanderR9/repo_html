@@ -5,10 +5,35 @@ const {space, log, curTime, varNumber} = require("./utils.js");
 const m_base = require("./base.js");
 const {poolData, poolState, tokenData} = require("./asyncbase.js");
 const m_wallet = require("./wallet.js");
+const m_pool = require("./pool.js");
 
 const fs = require("fs");
 const PID_FILE="pid_list.txt";
 const POS_DATA_FILE="pos_data.txt";
+
+
+
+
+//вспомогательный класс-контейнер, содержит минимальные данные о пуле в котором отчеканена поза
+class PosPool
+{
+    constructor()
+    {
+	this.address = "0x0";
+	this.info = "?";
+    }
+    invalid() {return (this.address.length < 40);}
+    toStr() 
+    {
+	let s = "POOL: ";
+	if (this.invalid()) {s += "???"; return s;}
+
+	s += (this.address + " / " + this.info);
+	return s;
+    }
+
+};
+
 
 
 //вспомогательный класс-контейнер, содержит данные по одной позе
@@ -25,16 +50,31 @@ class PosData
 	this.token1 = ""; //adress of contract
 	this.pricesRange = {p1: -1, p2: -1, p_cur: 0};
 	//this.pool_info = ""; //short pool info
+
+	this.pool = new PosPool();
     }
 
     invalid() {return (this.fee <= 0 || this.pid <= 0);}
     isActive() {return (!this.invalid() && this.liq > 0);}
+    
     strPricesRange()
     {
 	let s = "RANGE[" + this.pricesRange.p1.toFixed(4).toString() + " - " +
 	    this.pricesRange.p2.toFixed(4).toString() + "]"
 	return s;
     }	
+    strTickRange()
+    {
+	return ("ticks: " + this.l_tick + "/" + this.u_tick);
+    }
+    toStr()
+    {
+	let s = ("PID=" + this.pid + "  ");
+	s += (this.strTickRange() + "  ");	
+	s += (this.strPricesRange() + "  ");	
+	s += (this.pool.toStr());	
+	return s;
+    }
     out()
     {
 	log("POS_DATA: PID =", this.pid);
@@ -46,12 +86,30 @@ class PosData
 	log("fee: ", this.fee);
 	//log("POOL: ", this.pool_info);
     }
+    findOwnPool(fdata_pools)
+    {
+	if (this.invalid()) return;
+	//this.out();
+	space();
+        for (let i=0; i<fdata_pools.length; i++)
+        {
+	    const rec = fdata_pools[i];
+	//    log("REC: ", rec);
+	    if ((rec.t0_addr == this.token0) && (rec.t1_addr == this.token1) && (rec.fee == this.fee))	 
+	    {
+//		log("find own pool!!!!!!!!!!");
+		this.pool.address = rec.addr; 
+		this.pool.info = rec.info;
+		break;
+	    }	
+	}
+    }
     toFileLine()
     {
 	let fline = this.pid.toString();        
 	if (this.invalid()) return (fline + " / invalid pos" + '\n');
 	fline += (" / " + this.liq.toString() + " / " + this.l_tick.toString() + " / " + this.u_tick.toString());
-	fline += (" / " + this.token0 + " / " + this.token1 + " / " + this.fee.toString());
+	fline += (" / " + this.token0.toLowerCase() + " / " + this.token1.toLowerCase() + " / " + this.fee.toString());
 	return (fline + '\n');    	
     }
     fromFileLine(fline)
@@ -268,7 +326,32 @@ class PosManager
 	    const np = this.posDataCount();
 	    log("posDataCount: ", np, ", active: ", this.activeCount());
 	    this.outActive();
+
+	    this.syncByPoolsFile();
 	    return np;	    
+	}
+	//загрузить файл pools.txt и синхронизировать данные поз с данными пулов, т.е. найти для каждой позы свой пул
+	syncByPoolsFile()
+	{
+	    const fdata = m_pool.PoolObj.lookPoolsFile();
+	    for (var i=0; i<this.pos_list.length; i++)
+		this.pos_list[i].findOwnPool(fdata);	    
+	}
+	outPIDList()
+	{
+	    log("----------PID list of positions---------");
+	    for (var i=0; i<this.pos_list.length; i++)
+		log(i+1, ".  ", this.pos_list[i].pid);
+	}
+	outFull() //вывести все данные о позициях
+	{
+	    log("----------data list of positions---------");
+	    for (var i=0; i<this.pos_list.length; i++)
+	    {
+		let s = (i+1).toString() + ".  ";
+		log(s, this.pos_list[i].toStr());
+		//log(this.pos_list[i].out());
+	    }
 	}
 	outActive()
 	{

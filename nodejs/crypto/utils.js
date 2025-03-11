@@ -48,8 +48,16 @@ function priceToStr(p) //приводит вещественное значен�
     if (p < 100) return p.toFixed(2);
     return p.toFixed(1);
 }
+function amountToStr(p) //приводит вещественное значение количетсва актива в строку для пользователя, округляя до нужного количества знаков
+{
+    if (p < 0) return p.toString();
+    if (p == 0) return p.toFixed(1);
+    if (p < 0.1) return p.toFixed(5);
+    if (p < 100) return p.toFixed(2);
+    return p.toFixed(1);
+}
 
 
 //export funcs
-module.exports = {log, curTime, delay, space, countDecimals, varNumber, decimalFactor, uLog, priceToStr};
+module.exports = {log, curTime, delay, space, countDecimals, varNumber, decimalFactor, uLog, priceToStr, amountToStr};
 

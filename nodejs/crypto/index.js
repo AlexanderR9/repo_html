@@ -47,6 +47,7 @@ pos.updateData().then((result) => {
     space();
     log(pos.strTickRange());
     log(pos.strPriceRange(0));
+    log(pos.strAssetsAmount());
     log("finished!!!");
 });
 

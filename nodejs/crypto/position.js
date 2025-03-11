@@ -1,11 +1,14 @@
 
 //классы для работы с 1 экзепляром позиции ликвидности
-
-const {space, log, curTime, varNumber, priceToStr} = require("./utils.js");
+//const ethers = require("ethers");
+const {space, log, curTime, varNumber, priceToStr, amountToStr} = require("./utils.js");
 const m_base = require("./base.js");
+const w_liq = require("./liq_worker.js");
+
 const {poolData, poolState, tokenData} = require("./asyncbase.js");
 //const m_wallet = require("./wallet.js");
 const {PoolObj} = require("./pool.js");
+const JSBI= require("jsbi");
 
 //const fs = require("fs");
 //const PID_FILE="pid_list.txt";
@@ -15,6 +18,7 @@ const {PoolObj} = require("./pool.js");
 //класс, содержит данные по одной позе
 class PositionObj
 {
+    //в конструкторе необходимо передать PID позиции и ссылку на объект PosManagerContract
     constructor(pid, pm_contract)
     {
 	this.pid = -1;
@@ -33,6 +37,9 @@ class PositionObj
 	//prices object of range, fields: l_p0, u_p0, l_p1, i_p1
 	this.rangePrices = {};
 	this._initRangePrices();
+
+	//assets voluve, fields: asset0, asset1
+	this.assetsVolume = {asset0: -1, asset1: -1};
     }
 
     invalid() {return (this.fee <= 0 || this.pid <= 0 || this.pm_contract == null);}
@@ -45,23 +52,7 @@ class PositionObj
 	this.fee = -1;
 	this.token0 = this.token1 = "";
     }
-    //init object this.rangePrices	
-    _initRangePrices() //protected metod
-    {
-	this.rangePrices.l_p0 = -1;
-	this.rangePrices.u_p0 = -1;
-	this.rangePrices.l_p1 = -1;
-	this.rangePrices.u_p1 = -1;
-    }
-    //пересчитать поля объекта this.rangePrices
-    _recalcRangePrices() //protected metod
-    {
-	if (!this.ready()) {log("WARNING: invalid pool object, can't recalc prices"); return;}
-	this.rangePrices.l_p0 = this.pool.priceByTick(this.l_tick);
-	this.rangePrices.u_p0 = this.pool.priceByTick(this.u_tick);
-	if (this.rangePrices.l_p0 > 0) this.rangePrices.l_p1 = 1/this.rangePrices.l_p0;
-	if (this.rangePrices.u_p0 > 0) this.rangePrices.u_p1 = 1/this.rangePrices.u_p0;
-    }
+
     //признак того что поза находится в диапазоне, перед вызовов необходимо выполнить updateData()
     isInRange() 
     {
@@ -87,6 +78,10 @@ class PositionObj
 	const result = this._updatePoolData();
 	return result;
     }	
+
+
+    ///////////////////// PROTECTED FUNCS ////////////////////////////////
+
     // запросить текущее состояние пула в сети
     async _updatePoolData() //protected metod
     {
@@ -95,7 +90,78 @@ class PositionObj
 	catch(err) {log("CATCH_POOL_ERR:"); log(err); return false;}    
 
 	this._recalcRangePrices();
+	this._recalcAssets();
 	return true;
+    }
+
+
+    //init object this.rangePrices	
+    _initRangePrices() //protected metod
+    {
+	this.rangePrices.l_p0 = -1;
+	this.rangePrices.u_p0 = -1;
+	this.rangePrices.l_p1 = -1;
+	this.rangePrices.u_p1 = -1;
+    }
+    //пересчитать поля объекта this.rangePrices
+    _recalcRangePrices() //protected metod
+    {
+	if (!this.ready()) {log("WARNING: invalid pool object, can't recalc prices"); return;}
+	this.rangePrices.l_p0 = this.pool.priceByTick(this.l_tick);
+	this.rangePrices.u_p0 = this.pool.priceByTick(this.u_tick);
+	if (this.rangePrices.l_p0 > 0) this.rangePrices.l_p1 = 1/this.rangePrices.l_p0;
+	if (this.rangePrices.u_p0 > 0) this.rangePrices.u_p1 = 1/this.rangePrices.u_p0;
+    }
+    //пересчитать объемы активов
+    _recalcAssets()
+    {
+	if (!this.ready()) {log("WARNING: invalid pool object, can't recalc assets"); return;}
+	const l_priceX96 = this.pool.priceQ96ByTick(this.l_tick);
+	const u_priceX96 = this.pool.priceQ96ByTick(this.u_tick);
+       //to JSBI
+        const jsbi_p1 = JSBI.BigInt(l_priceX96.toString());
+        const jsbi_p2 = JSBI.BigInt(u_priceX96.toString());
+        const jsbi_pcur = JSBI.BigInt(this.pool.state.sqrtPrice.toString());
+        const jsbi_liq = JSBI.BigInt(this.liq.toString());	
+
+	//calculation
+	const t = this.pool.state.tick;
+	if (t < this.l_tick) //under range
+	{
+	    this.assetsVolume.assets0 = w_liq.LiqWorker.getAmount0Mint(jsbi_p1, jsbi_p2, jsbi_liq);
+	    this.assetsVolume.assets1 = w_liq.LiqWorker.jsbiZero();
+	}
+	else if (t >= this.u_tick) //upper range
+	{
+	    this.assetsVolume.assets0 = w_liq.LiqWorker.jsbiZero();
+	    this.assetsVolume.assets1 = w_liq.LiqWorker.getAmount1Mint(jsbi_p1, jsbi_p2, jsbi_liq);
+	}
+	else //in range
+	{
+	    this.assetsVolume.assets0 = w_liq.LiqWorker.getAmount0Mint(jsbi_pcur, jsbi_p2, jsbi_liq);
+	    this.assetsVolume.assets1 = w_liq.LiqWorker.getAmount1Mint(jsbi_p1, jsbi_pcur, jsbi_liq);
+	}
+
+	//transform to normal values
+	this.assetsVolume.assets0 = this._normalizeAssetVolume(this.assetsVolume.assets0, 0);
+	this.assetsVolume.assets1 = this._normalizeAssetVolume(this.assetsVolume.assets1, 1);
+    }
+    //преобразование объема актива, у которого тип JSBI в обычный float вид	
+    _normalizeAssetVolume(jsbi_amount, t_index)
+    {
+	if (jsbi_amount == w_liq.LiqWorker.jsbiZero()) return 0.0;
+	const dec = ((t_index == 1) ? this.pool.T1.decimal : this.pool.T0.decimal);
+	if (dec == 18)
+	{
+	    const dec_factor = 10 ** 9;
+	    const mid_jsbi = JSBI.divide(jsbi_amount, JSBI.BigInt(dec_factor));
+	    const f_mid = parseFloat(mid_jsbi.toString());
+	    return (f_mid/dec_factor);
+	}
+
+        const dec_factor = 10 ** dec;
+	const f_mid = parseFloat(jsbi_amount.toString());
+	return (f_mid/dec_factor);
     }
     //установить значения полей позы полученные из сети
     _setData(data) //protected metod
@@ -120,6 +186,17 @@ class PositionObj
 	    }	   
 	});
     }    
+
+
+
+    
+    ////////////////////////DEBUG FUNCS///////////////////////
+    strAssetsAmount()
+    {
+	let s = "ASSETS_AMOUNT: " + amountToStr(this.assetsVolume.assets0);
+	s += (" / " + amountToStr(this.assetsVolume.assets1));
+	return s;
+    }
     strTickRange()
     {
 	let s = ("ticks: " + this.l_tick + "/" + this.u_tick);

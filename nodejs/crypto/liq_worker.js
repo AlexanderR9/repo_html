@@ -118,18 +118,19 @@ class LiqWorker
 	
 	    return result;
 	}
-	getAmount0Mint(jsbi_p1, jsbi_p2, jsbi_liq)	
+	static getAmount0Mint(jsbi_p1, jsbi_p2, jsbi_liq)	
 	{
     	    const d_price = JSBI.subtract(jsbi_p2, jsbi_p1);
 	    const numerator1 = JSBI.leftShift(jsbi_liq, JSBI.BigInt(96));
 	    const numerator2 = JSBI.multiply(numerator1, d_price);
 	    return JSBI.divide(JSBI.divide(numerator2, jsbi_p2), jsbi_p1);
 	}
-	getAmount1Mint(jsbi_p1, jsbi_p2, jsbi_liq)	
+	static getAmount1Mint(jsbi_p1, jsbi_p2, jsbi_liq)	
 	{
     	    const d_price = JSBI.subtract(jsbi_p2, jsbi_p1);
 	    return JSBI.divide(JSBI.multiply(jsbi_liq, d_price), JSBI_Q96);
 	}
+	static jsbiZero() {return JSBI_ZERO;}
 
 
 	//////////////////////////////////////////////////////

@@ -94,7 +94,6 @@ class PoolObj
 	    log("try append pool record to file [pools.txt] ......");
 	    if (this.invalidPoolData()) {log("invalid pool"); return;}
 	    if (!fs.existsSync(POOL_FILE)) {log("WARNING: pools file not found - ", POOL_FILE); return;}
-
 	    
 	    const p_addr = this.address.trim().toLowerCase();	    
 	    const f_arr = this.lookPoolsFile();
@@ -106,8 +105,6 @@ class PoolObj
 		    return;
 		}
 	    }
-
-
             let fline = p_addr  + " / " + this.baseInfo();
 	    fline += " / " + this.T0.address.toLowerCase() + " / " + this.T1.address.toLowerCase() + " / " + this.fee;
 	    fs.appendFileSync(POOL_FILE, (fline + '\n'));
@@ -283,31 +280,31 @@ class PoolObj
     //предварительно должна быть вызвана update, возвращает BigInt
     priceQ96ByTick(tick)
     {
-        log("try get price Q96 by tick range ......");
-	log("tick: ", tick);
+        //log("try get price Q96 by tick range ......");
+	//log("tick: ", tick);
         let f_dec = decimalFactor(this.T0.decimal, this.T1.decimal);
 
 	//--------------stage 1----------------------------
 	const a = m_base.TICK_QUANTUM ** tick;
     	const real_price = a/f_dec;
-	log("real_price: ", real_price);
+	//log("real_price: ", real_price);
 
 	//--------------stage 2----------------------------
 	const price_raw = real_price*f_dec;
 	let sqrtPrice = Math.sqrt(price_raw);
 	sqrtPrice = Math.round(sqrtPrice*(2 ** 96));
 	const biX96 = BigInt(sqrtPrice);
-	log("sqrtPriceX96: ", biX96, " / ", biX96.toString());
+	//log("sqrtPriceX96: ", biX96, " / ", biX96.toString());
 	    
 	return biX96;
     }
     priceByTick(tick) //получить реальную цену(token0) по указанному тику
     {
-        log("try get real price by tick", tick, " ......");
+        //log("try get real price by tick", tick, " ......");
         let f_dec = decimalFactor(this.T0.decimal, this.T1.decimal);
 	const a = m_base.TICK_QUANTUM ** tick;
     	const real_price = a/f_dec;
-	log("price: ", real_price);
+	//log("price: ", real_price);
 	return 	real_price;
     }
     

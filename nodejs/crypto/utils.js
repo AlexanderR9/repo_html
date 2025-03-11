@@ -38,10 +38,18 @@ function uLog(a, b) //пользовательски логорифм, прив�
     if (a == 1 || a < 0) return -1;    
     return (Math.log(b)/Math.log(a));
 }
-//const Q96 = () =>  Math.Pow(2, 96);
-
+function priceToStr(p) //приводит вещественное значение цены в строку для пользователя, округляя до нужного количества знаков
+{
+    if (p <= 0) return p.toString();
+    if (p < 0.1) return p.toFixed(5);
+    if (p < 0.9) return p.toFixed(4);
+    if (p < 1.1) return p.toFixed(5);
+    if (p < 10) return p.toFixed(4);
+    if (p < 100) return p.toFixed(2);
+    return p.toFixed(1);
+}
 
 
 //export funcs
-module.exports = {log, curTime, delay, space, countDecimals, varNumber, decimalFactor, uLog};
+module.exports = {log, curTime, delay, space, countDecimals, varNumber, decimalFactor, uLog, priceToStr};
 

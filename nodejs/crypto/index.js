@@ -11,6 +11,7 @@ const m_wallet = require("./wallet.js");
 const m_posManager = require("./posmanager.js");
 const {space, log, curTime, delay, countDecimals, uLog} = require("./utils.js");
 const JSBI= require("jsbi");
+const {PositionObj} = require("./position.js");
 
 
 const POOL_ADDR = "0xb6e57ed85c4c9dbfef2a68711e9d6f36c56e0fcb";  // WPOL/USDC 0.5%
@@ -25,17 +26,32 @@ const PRIOR_FEE = 60;  //Gweis
 log("INFURA RPC_URL:", m_base.RPC_URL() );
 log("Current chain:", m_base.currentChain());
 log(`NATIVE_TOKEN (${m_base.nativeToken()})`);
-log("Q96");
+//log("Q96");
 log(curTime());
 
 
 // body
-//const pv = m_base.getProvider();
+const pv = m_base.getProvider();
 //log("provider info:", pv.connection);
 //chainInfo(pv).then((data) => log("CHAIN:", data));
 log("---------------------------------");
 
+const pid = 2453392;
+//const w_obj = new m_wallet.WalletObj(w_addr);
+const pm =  m_base.getPosManagerContract(pv);
+const pos = new PositionObj(pid, pm);
+pos.updateData().then((result) => {
+    log("result: ", result);
+    space();
+    pos.out();
+    space();
+    log(pos.strTickRange());
+    log(pos.strPriceRange(0));
+    log("finished!!!");
+});
 
+
+/*
 let w_obj = new m_wallet.WalletObj(process.env.WA2, process.env.WKEY);
 //let w_obj = new m_wallet.WalletObj(process.env.WA2);
 w_obj.setGas(GAS_LIMIT, MAX_FEE, PRIOR_FEE);
@@ -52,6 +68,10 @@ liq_worker.tryMint(p1, p2, liq).then((code) => {
     log("minting pos result: ", code);
     log("finished!!!");
 });
+
+*/
+
+
 
 
 

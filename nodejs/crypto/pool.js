@@ -174,14 +174,12 @@ class PoolObj
 	}
 	recalcPrices()
 	{
-		const p96 = Number(this.state.sqrtPrice);
-		if (p96 == 0) return;
-		let p = (p96 / (2 ** 96));
-	//	let p = (p96/Q96);
-		p = p*p;
+	    const p96 = Number(this.state.sqrtPrice);
+	    if (p96 == 0) return;
+	    let p = ((p96 / (2 ** 96)) ** 2);
 		
-		this.T0.price = p*this.T0.decimalFactor()/this.T1.decimalFactor();
-		if (this.T0.price > 0) this.T1.price = 1/this.T0.price;
+	    this.T0.price = p*this.T0.decimalFactor()/this.T1.decimalFactor();
+	    if (this.T0.price > 0) this.T1.price = 1/this.T0.price;
 	}
 
 
@@ -303,6 +301,16 @@ class PoolObj
 	    
 	return biX96;
     }
+    priceByTick(tick) //получить реальную цену(token0) по указанному тику
+    {
+        log("try get real price by tick", tick, " ......");
+        let f_dec = decimalFactor(this.T0.decimal, this.T1.decimal);
+	const a = m_base.TICK_QUANTUM ** tick;
+    	const real_price = a/f_dec;
+	log("price: ", real_price);
+	return 	real_price;
+    }
+    
 
 };
 

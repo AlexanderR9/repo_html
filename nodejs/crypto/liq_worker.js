@@ -131,6 +131,7 @@ class LiqWorker
 	    return JSBI.divide(JSBI.multiply(jsbi_liq, d_price), JSBI_Q96);
 	}
 	static jsbiZero() {return JSBI_ZERO;}
+	static jsbiQ96() {return JSBI_Q96;}
 
 
 	//////////////////////////////////////////////////////

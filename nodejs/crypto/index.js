@@ -2,7 +2,7 @@
 //test script
 
 //including
-//const ethers = require("ethers");
+const ethers = require("ethers");
 const {chainInfo} = require("./asyncbase.js");
 const m_base = require("./base.js");
 const m_pool = require("./pool.js");
@@ -30,14 +30,24 @@ log(`NATIVE_TOKEN (${m_base.nativeToken()})`);
 log(curTime());
 
 
+//let w_obj = new m_wallet.WalletObj(process.env.WA2, process.env.WKEY);
+//let w_obj = new m_wallet.WalletObj(process.env.WA2);
+//w_obj.txCount().then((data) => log("tx_count: ", data));
+//w_obj.txHistory().then((data) => log("tx_history: ", data));
+
+
+//return 0;
+
+
 // body
 const pv = m_base.getProvider();
 //log("provider info:", pv.connection);
 //chainInfo(pv).then((data) => log("CHAIN:", data));
 log("---------------------------------");
 
+
+///получение полной инфы о заданной позе
 const pid = 2453392;
-//const w_obj = new m_wallet.WalletObj(w_addr);
 const pm =  m_base.getPosManagerContract(pv);
 const pos = new PositionObj(pid, pm);
 pos.updateData().then((result) => {
@@ -48,7 +58,14 @@ pos.updateData().then((result) => {
     log(pos.strTickRange());
     log(pos.strPriceRange(0));
     log(pos.strAssetsAmount());
-    log("finished!!!");
+    log(pos.strDepositedAssets());
+
+    space();
+    pos.updateUnclaimedFees().then((result) => {
+	log("result: ", result);
+	log(pos.strUnclaimedFees());
+	log("finished!!!");
+    });
 });
 
 

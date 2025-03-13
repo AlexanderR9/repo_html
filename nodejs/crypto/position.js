@@ -38,8 +38,10 @@ class PositionObj
 	this.rangePrices = {};
 	this._initRangePrices();
 
-	//assets voluve, fields: asset0, asset1
-	this.assetsVolume = {asset0: -1, asset1: -1};
+	//------------------CALC PARAMS----------------------
+	this.assetsVolume = {asset0: -1, asset1: -1};  // current assets volume
+	this.deposited = {asset0: -1, asset1: -1}; // deposited assets volume
+	this.unclaimedFees = {asset0: 0, asset1: 0}; // current unclaimedFees
     }
 
     invalid() {return (this.fee <= 0 || this.pid <= 0 || this.pm_contract == null);}
@@ -64,8 +66,10 @@ class PositionObj
     //получить данные из сети одной позиции по ее ID
     async updateData()
     {
-	this.reset();
+	this.reset();	
 	log("get pos data, PID [", this.pid,"]  ....");
+	if (this.pid < 0) {log("WARNING: invalid PID value."); return false;}
+
 	try
 	{
 	    const data = await this.pm_contract.positions(this.pid);	    
@@ -78,6 +82,33 @@ class PositionObj
 	const result = this._updatePoolData();
 	return result;
     }	
+    //пересчитать невостребованные комиссии
+    async updateUnclaimedFees()
+    {
+	log("try update unclaimed fees ....");
+	this.unclaimedFees.asset0 = this.unclaimedFees.asset1 = 0.0;
+	if (!this.ready()) {log("WARNING: invalid pool object, can't recalc unclaimed"); return false;}
+
+	const encoded = {
+	    tokenId: this.pid,
+	    recipient: process.env.WA2,  // owner wallet
+	    amount0Max: m_base.MAX_BIG128,
+	    amount1Max: m_base.MAX_BIG128
+	};
+
+	try
+	{
+	    const trx = await this.pm_contract.callStatic.collect(encoded);
+	    //log("RESULT:", trx); //for diag
+	    const str_fee0 = m_base.toReadableAmount(trx.amount0, this.pool.T0.decimal);
+	    const str_fee1 = m_base.toReadableAmount(trx.amount1, this.pool.T1.decimal);
+	    this.unclaimedFees.asset0 = parseFloat(str_fee0);
+	    this.unclaimedFees.asset1 = parseFloat(str_fee1);
+	}
+	catch(err) {log("CATCH_ERR:"); log(err); return false;}    
+
+	return true;	
+    }
 
 
     ///////////////////// PROTECTED FUNCS ////////////////////////////////
@@ -112,7 +143,19 @@ class PositionObj
 	if (this.rangePrices.l_p0 > 0) this.rangePrices.l_p1 = 1/this.rangePrices.l_p0;
 	if (this.rangePrices.u_p0 > 0) this.rangePrices.u_p1 = 1/this.rangePrices.u_p0;
     }
-    //пересчитать объемы активов
+    //пересчитать вложенные объемы активов
+    _calcDeposited()
+    {
+        const jsbi_liq = JSBI.BigInt(this.liq.toString());
+        const jsbi_pcur = JSBI.BigInt(this.pool.state.sqrtPrice.toString());
+        const jsbi_p1 = JSBI.BigInt(l_priceX96.toString());
+        const jsbi_p2 = JSBI.BigInt(u_priceX96.toString());
+
+
+	// to do
+	// ?????	
+    }
+    //пересчитать текущие объемы активов
     _recalcAssets()
     {
 	if (!this.ready()) {log("WARNING: invalid pool object, can't recalc assets"); return;}
@@ -128,23 +171,23 @@ class PositionObj
 	const t = this.pool.state.tick;
 	if (t < this.l_tick) //under range
 	{
-	    this.assetsVolume.assets0 = w_liq.LiqWorker.getAmount0Mint(jsbi_p1, jsbi_p2, jsbi_liq);
-	    this.assetsVolume.assets1 = w_liq.LiqWorker.jsbiZero();
+	    this.assetsVolume.asset0 = w_liq.LiqWorker.getAmount0Mint(jsbi_p1, jsbi_p2, jsbi_liq);
+	    this.assetsVolume.asset1 = w_liq.LiqWorker.jsbiZero();
 	}
 	else if (t >= this.u_tick) //upper range
 	{
-	    this.assetsVolume.assets0 = w_liq.LiqWorker.jsbiZero();
-	    this.assetsVolume.assets1 = w_liq.LiqWorker.getAmount1Mint(jsbi_p1, jsbi_p2, jsbi_liq);
+	    this.assetsVolume.asset0 = w_liq.LiqWorker.jsbiZero();
+	    this.assetsVolume.asset1 = w_liq.LiqWorker.getAmount1Mint(jsbi_p1, jsbi_p2, jsbi_liq);
 	}
 	else //in range
 	{
-	    this.assetsVolume.assets0 = w_liq.LiqWorker.getAmount0Mint(jsbi_pcur, jsbi_p2, jsbi_liq);
-	    this.assetsVolume.assets1 = w_liq.LiqWorker.getAmount1Mint(jsbi_p1, jsbi_pcur, jsbi_liq);
+	    this.assetsVolume.asset0 = w_liq.LiqWorker.getAmount0Mint(jsbi_pcur, jsbi_p2, jsbi_liq);
+	    this.assetsVolume.asset1 = w_liq.LiqWorker.getAmount1Mint(jsbi_p1, jsbi_pcur, jsbi_liq);
 	}
 
 	//transform to normal values
-	this.assetsVolume.assets0 = this._normalizeAssetVolume(this.assetsVolume.assets0, 0);
-	this.assetsVolume.assets1 = this._normalizeAssetVolume(this.assetsVolume.assets1, 1);
+	this.assetsVolume.asset0 = this._normalizeAssetVolume(this.assetsVolume.asset0, 0);
+	this.assetsVolume.asset1 = this._normalizeAssetVolume(this.assetsVolume.asset1, 1);
     }
     //преобразование объема актива, у которого тип JSBI в обычный float вид	
     _normalizeAssetVolume(jsbi_amount, t_index)
@@ -191,10 +234,22 @@ class PositionObj
 
     
     ////////////////////////DEBUG FUNCS///////////////////////
+    strUnclaimedFees()
+    {
+	let s = "UNCLAIMED_FEES: " + this.pool.T0.ticker + " " + amountToStr(this.unclaimedFees.asset0);
+	s += (" / "  + this.pool.T1.ticker + " " + amountToStr(this.unclaimedFees.asset1));
+	return s;
+    }
     strAssetsAmount()
     {
-	let s = "ASSETS_AMOUNT: " + amountToStr(this.assetsVolume.assets0);
-	s += (" / " + amountToStr(this.assetsVolume.assets1));
+	let s = "ASSETS_AMOUNT: " + amountToStr(this.assetsVolume.asset0);
+	s += (" / " + amountToStr(this.assetsVolume.asset1));
+	return s;
+    }
+    strDepositedAssets()
+    {
+	let s = "DEPOSITED_ASSETS: " + amountToStr(this.deposited.asset0);
+	s += (" / " + amountToStr(this.deposited.asset1));
 	return s;
     }
     strTickRange()

@@ -85,7 +85,7 @@ else if (PID_VALUE > 0)
 else
 {
     pm.loadPosDataFromFile();
-    pm.outActive();
+//    pm.outActive();
 //    pm.outPIDList();
     pm.outFull();
     

@@ -25,10 +25,10 @@ class PosPool
     invalid() {return (this.address.length < 40);}
     toStr() 
     {
-	let s = "POOL: ";
+	let s = "POOL_INFO(";
 	if (this.invalid()) {s += "???"; return s;}
 
-	s += (this.address + " / " + this.info);
+	s += (this.address + " / " + this.info + ")");
 	return s;
     }
 
@@ -59,17 +59,18 @@ class PosData
     
     strPricesRange()
     {
-	let s = "RANGE[" + this.pricesRange.p1.toFixed(4).toString() + " - " +
+	let s = "RANGE[" + this.pricesRange.p1.toFixed(4).toString() + " / " +
 	    this.pricesRange.p2.toFixed(4).toString() + "]"
 	return s;
     }	
     strTickRange()
     {
-	return ("ticks: " + this.l_tick + "/" + this.u_tick);
+	return ("Ticks[" + this.l_tick + " / " + this.u_tick + "]");
     }
     toStr()
     {
 	let s = ("PID=" + this.pid + "  ");
+	s += ("liq_size=" + this.liq + "  ");	
 	s += (this.strTickRange() + "  ");	
 	s += (this.strPricesRange() + "  ");	
 	s += (this.pool.toStr());	
@@ -153,6 +154,12 @@ class PosManager
         }
 	posDataCount() {return this.pos_list.length;}
 	posEmpty() {return ((this.posDataCount() == 0) ? true : false);}
+	posAt(i) //вернет указанный элемент из контейнера pos_list или null
+	{
+	    if (this.posEmpty()) return null;
+	    if (i<0 || i>=this.posDataCount())  return null;
+	    return this.pos_list[i];
+	}
 	activeCount() //количество открытых поз, т.е. у которых добавлена ликвидность
 	{
 	    let n = 0;

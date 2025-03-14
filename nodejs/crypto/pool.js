@@ -254,7 +254,7 @@ class PoolObj
         let result = {};
         let f_dec = decimalFactor(this.T0.decimal, this.T1.decimal);
 
-	log("prices: p1 =", p1, "  p2 =", p2);
+	//log("prices: p1 =", p1, "  p2 =", p2);
 	
         p1 *= f_dec;
         p2 *= f_dec;
@@ -262,7 +262,7 @@ class PoolObj
 	const qp = m_base.TICK_QUANTUM;
         result.tick1 = Math.floor(uLog(qp, p1));
         result.tick2 = Math.floor(uLog(qp, p2));
-	log("raw_result:", result);    	
+	//log("raw_result:", result);    	
 	
 	//find ticks nearest tickSpacing
 	let mod = result.tick1 % this.tick_space;

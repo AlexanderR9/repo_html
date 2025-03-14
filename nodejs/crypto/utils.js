@@ -21,10 +21,15 @@ function countDecimals(x) //возвращает количество десят
   if (Math.floor(x) === x) return 0;
   return x.toString().split('.')[1].length || 0;
 }
-function varNumber(a) ///проверяет является ли параметр числом (float или int)
+function varNumber(a) ///проверяет является ли параметр числом (float)
 {
     let res = Number.parseFloat(a);
     return Number.isFinite(res);
+}
+function isInt(a) ///проверяет является ли параметр числом (integer)
+{
+    if (Number.isInteger(a)) return true;
+    return false;
 }
 function decimalFactor(decimal0, decimal1) //возвращает кеф для пула с разностью (decimal1 - decimal0)
 {
@@ -59,5 +64,6 @@ function amountToStr(p) //приводит вещественное значен
 
 
 //export funcs
-module.exports = {log, curTime, delay, space, countDecimals, varNumber, decimalFactor, uLog, priceToStr, amountToStr};
+module.exports = {log, curTime, delay, space, countDecimals, varNumber, decimalFactor, uLog, 
+	priceToStr, amountToStr, isInt};
 

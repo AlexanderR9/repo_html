@@ -112,7 +112,7 @@ class WalletObj
 		let asset = new WalletAsset(1);
 		asset.name = m_base.nativeToken();
 		asset.decimal = 18;
-		asset.address = "0x00000000000000000000000000000000000000ff";
+		asset.address = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
 		this.assets[0] = asset;
 	}
 	assetsCount() {return this.assets.length;}
@@ -283,9 +283,112 @@ class WalletObj
     	    const result = await t_obj.allowance(this.address, to_addr);
 	    return m_base.toReadableAmount(result, this.assets[i].decimal);;	    
 	}
+	//функция проверяет результат выполнения транзакции по ее хеш-значению, 
+	//возвращает код текущего состояния транзакции (-1 еще выполняется, 1 выполнена успешно, 0 транзакция завершилась но результат отрицательный)
+	async checkTxByHash(hash_value)
+	{
+	    log("try check TX result by HASH:", hash_value, " .......");
+	    const tx_state = await this.pv.getTransactionReceipt(hash_value);
+	    if (!tx_state) {log("TX is executing else."); return -1;}
+	    else if (tx_state.status == 1) {log("TX executed success"); return 1;}
+
+	    // finished with fail
+    	    log("TX executed with FAULT, status: ", tx_state.status);
+	    log("TX: \n", tx_state);
+	    return 0;
+	}	
 
 
 	/////////////////////////////TRANSACTIONS FUNCS//////////////////////////////////////////
+	//функция конвертирует завернутый нативный токен в нативную монету(внутри кошелька).
+	//для этого в списке токенов кошелька должен присутствовать токен вида  W<NATIVE_TICKER> (example: WPOL)
+	//если такого токена нет, то функция ничего не выполнит. Для такой операции approve не нужно делать предварительно.
+	async unwrapNative(sum)
+	{
+	    log("try unwrap native asset ......");
+	    if (!this.isSigner()) {log("WARNING: wallet object is not SIGNER!!!"); return -1;}
+	    if (!varNumber(sum))  {log("WARNING: approvig SUM is not number_value, sum: ", sum); return -2;}
+	    if (sum < 0.01 || sum > 1000)  {log("WARNING: approvig SUM is not correct, sum:", sum); return -2;}
+	    if (this.assetsCount() < 2) {log("Invalid asset count: ", this.assetsCount()); return -2;}
+	    
+	    const nt = this.assets[0].name;
+	    const wnt = ("W" + nt);
+	    log("Native coin: ", nt, ",   wraped token: ", wnt);
+	    //find wraped native token
+	    let i_wraped = -1;
+    	    for (let i=1; i<this.assets.length; i++)
+		if (this.assets[i].name == wnt) {i_wraped = i; break;}
+	    if (i_wraped < 0) {log("WARNING: wraped native token not found among wallet assets"); return -3;}
+
+    	    //prepare BinNumber sum
+    	    const bi_sum = m_base.fromReadableAmount(sum, this.nativeDecimal());
+    	    log("BI sum format: ", bi_sum, " / ", bi_sum.toString());
+    	    space();
+
+	    //prepare fee params
+            log("set FEE  params .....");
+            let fee_params = {};
+            this.gas.setFeeParams(fee_params);
+            log("fee_params:", fee_params, '\n');
+	    
+	    //prepare WPOL tokenContract
+	    const wpolAbi = [	"function withdraw(uint256 amount) public"    ];
+    	    const t_obj = m_base.getContract(this.assets[i_wraped].address, wpolAbi, this.signer);	    
+
+    	    ///////////////////////////////TX//////////////////////////////////////////
+	    log("index of wraped token: ", i_wraped, ",  send transaction ................................");	    	    
+    	    try 
+	    {
+		const tx = await t_obj.withdraw(bi_sum, fee_params);
+    		log("TX_Response:", tx);      
+	    }
+	    catch(e) {log("ERROR:", e); return -4;}
+	    return true;
+
+	}
+	//функция конвертирует нативный токен в завернутый тот же токен(внутри кошелька).
+	//для этого в списке токенов кошелька должен присутствовать токен вида  W<NATIVE_TICKER> (example: WPOL)
+	//если такого токена нет, то функция ничего не выполнит. Для такой операции approve не нужно делать предварительно.
+	async wrapNative(sum)
+	{
+	    log("try wrap native asset ......");
+	    if (!this.isSigner()) {log("WARNING: wallet object is not SIGNER!!!"); return -1;}
+	    if (!varNumber(sum))  {log("WARNING: approvig SUM is not number_value, sum: ", sum); return -2;}
+	    if (sum < 0.01 || sum > 1000)  {log("WARNING: approvig SUM is not correct, sum:", sum); return -2;}
+	    if (this.assetsCount() < 2) {log("Invalid asset count: ", this.assetsCount()); return -2;}
+	    
+	    const nt = this.assets[0].name;
+	    const wnt = ("W" + nt);
+	    log("Native coin: ", nt, ",   wraped token: ", wnt);
+	    //find wraped native token
+	    let i_wraped = -1;
+    	    for (let i=1; i<this.assets.length; i++)
+		if (this.assets[i].name == wnt) {i_wraped = i; break;}
+	    if (i_wraped < 0) {log("WARNING: wraped native token not found among wallet assets"); return -3;}
+
+    	    //prepare BinNumber sum
+    	    const bi_sum = m_base.fromReadableAmount(sum, this.nativeDecimal());
+    	    log("BI sum format: ", bi_sum, " / ", bi_sum.toString());
+    	    space();
+
+	    //prepare tx params
+            let wrap_params = { value: bi_sum };
+            this.gas.setFeeParams(wrap_params);
+            log("TX_params:", wrap_params, '\n');
+	    
+	    //prepare WPOL tokenContract
+	    const wpolAbi = [	"function deposit() public payable"    ];
+    	    const t_obj = m_base.getContract(this.assets[i_wraped].address, wpolAbi, this.signer);	    
+    	    ///////////////////////////////TX//////////////////////////////////////////
+	    log("index of wraped token: ", i_wraped, ",  send transaction ................................");	    	    
+    	    try 
+	    {
+		const tx = await t_obj.deposit(wrap_params);
+    		log("TX_Response:", tx);      
+	    }
+	    catch(e) {log("ERROR:", e); return -4;}
+	    return true;
+	}
 
 
 	//функция предоставляет актив с указанным индексом контракту to_addr. sum - количество предоставляемого токена.

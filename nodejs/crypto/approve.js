@@ -14,7 +14,8 @@ const {ArgsParser} = require("./argsparser.js");
 
 // user vars
 let APPROVE_SUM = -1;
-const TOKEN_INDEX = 7;
+//const TOKEN_INDEX = 7; //USDC
+const TOKEN_INDEX = 1; //WPOL
 //const TO_ADDR = m_base.SWAP_ROUTER_ADDRESS; //кому одобрить (адрес контракта)
 const TO_ADDR = m_base.POS_MANAGER_ADDRESS; //кому одобрить (адрес контракта)
 

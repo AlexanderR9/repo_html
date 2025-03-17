@@ -17,6 +17,8 @@ const m_pool = require("./pool.js");
 const {space, log, curTime, delay, countDecimals} = require("./utils.js");
 const {ArgsParser} = require("./argsparser.js");
 const m_posManager = require("./posmanager.js");
+const {PositionObj} = require("./position.js");
+
 
 let P_COUNT = false;
 let F_PID = false;
@@ -80,7 +82,27 @@ else if (F_DATA)
 }
 else if (PID_VALUE > 0)
 {
-    pm.getPosData(PID_VALUE).then( (data) => log("POS_DATA:", data) );
+//    pm.getPosData(PID_VALUE).then( (data) => log("POS_DATA:", data) );
+
+const pos = new PositionObj(PID_VALUE, pm.contract);
+pos.updateData().then((result) => {
+    log("result: ", result);
+    space();
+    pos.out();
+    space();
+    log(pos.strTickRange());
+    log(pos.strPriceRange(0));
+    log(pos.strAssetsAmount());
+    log(pos.strDepositedAssets());
+
+    space();
+    pos.updateUnclaimedFees().then((result) => {
+        log("result: ", result);
+        log(pos.strUnclaimedFees());
+        log("finished!!!");
+    });
+});
+
 }
 else
 {

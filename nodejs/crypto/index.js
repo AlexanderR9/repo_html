@@ -16,9 +16,9 @@ const {PositionObj} = require("./position.js");
 
 const POOL_ADDR = "0xb6e57ed85c4c9dbfef2a68711e9d6f36c56e0fcb";  // WPOL/USDC 0.5%
 //константы для определения размера газа перед совершением транзакции
-const GAS_LIMIT = 360000; //единиц газа за транзакцию
-const MAX_FEE = 320;  //Gweis
-const PRIOR_FEE = 60;  //Gweis
+const GAS_LIMIT = 160000; //единиц газа за транзакцию
+const MAX_FEE = 220;  //Gweis
+const PRIOR_FEE = 50;  //Gweis
 
 
 //test debug
@@ -40,13 +40,13 @@ log(curTime());
 
 
 // body
-const pv = m_base.getProvider();
+//const pv = m_base.getProvider();
 //log("provider info:", pv.connection);
 //chainInfo(pv).then((data) => log("CHAIN:", data));
 log("---------------------------------");
 
 
-
+/*
 
 
 ///получение полной инфы о заданной позе
@@ -72,13 +72,23 @@ pos.updateData().then((result) => {
 });
 
 return;
+*/
+
+
+let w_obj = new m_wallet.WalletObj(process.env.WA2, process.env.WKEY);
+w_obj.setGas(GAS_LIMIT, MAX_FEE, PRIOR_FEE);
+//w_obj.txCount().then((data) => log("tx_count: ", data));
+//w_obj.unwrapNative(10.0).then((result) => log("result: ", result));
+//w_obj.wrapNative(10.0).then((result) => log("result: ", result));
+
+
+//w_obj.checkTxByHash("0xc2595299a6f244b9c62bbbd6f2bb5da936a7a9030ecfd36be56e34e44f323473").then((res) => log("HASH checking has done. STATUS ", res));
+//w_obj.checkTxByHash("0x5e1393582a3c6b8018f42ee7b43bd3bc670c82361bf9d5ec67771fb32ddc307b").then((res) => log("HASH checking has done. STATUS ", res));
+w_obj.checkTxByHash("0x7194e8a7de07391e23280b30456eee1b3622bc5672ac4c5a46131b5c3a4402ff").then((res) => log("HASH checking has done. STATUS ", res));
+//w_obj.checkTxByHash("").then((res) => log("HASH checking has done. STATUS ", res));
 
 
 /*
-let w_obj = new m_wallet.WalletObj(process.env.WA2, process.env.WKEY);
-w_obj.setGas(GAS_LIMIT, MAX_FEE, PRIOR_FEE);
-
-
 //LIQ_WORKER
 let liq_worker = new w_liq.LiqWorker(w_obj);
 let pm = new m_posManager.PosManager(w_obj.address);

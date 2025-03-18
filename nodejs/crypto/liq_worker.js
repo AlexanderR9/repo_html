@@ -66,33 +66,15 @@ class LiqWorker
 	    const cur_dt = Math.floor(Date.now()/1000);
 	    return (cur_dt + this.dead_line);
 	}
+
+
+/*
 	//расчет долей активов для указания их в параметрах при чеканке новой позы.
 	//вернет результат в виде объекта с сдвумя полями: t0_size, t1_size, а также еще добавит 2 значения - минимальные объемы t0_min, t1_min
 	//подразумевается что все входные данные корректны. т.е. были проверены заранее
 	_calcMintAmounts(ticks, liq, range_location) //protected metod
 	{
-	    let result = {};
-	    result.t0_size = JSBI_ZERO;		
-	    result.t1_size = JSBI_ZERO;		
-	    result.t0_min = JSBI_ZERO;		
-	    result.t1_min = JSBI_ZERO;		
-	    
-	    if (range_location == "out_left") //текущая цена ниже всего диапазона
-	    {
-		result.t0_size = JSBI.BigInt(liq.token0 * this.pool.T0.decimalFactor());
-		result.t0_min = result.t0_size;
-		return result;
-	    }
-	    if (range_location == "out_right") //текущая цена выше всего диапазона
-	    {
-		result.t1_size = JSBI.BigInt(liq.token1 * this.pool.T1.decimalFactor());
-		result.t1_min = result.t1_size;
-		return result;
-	    }
-	    
-/*
 
-//	    const bi_liq = ethers.utils.parseUnits(liq.toString(), this.wallet.nativeDecimal());
 	    const bi_liq = m_base.fromReadableAmount(liq, this.wallet.nativeDecimal());
 	    const p1X96 = this.pool.priceQ96ByTick(ticks.tick1);
 	    const p2X96 = this.pool.priceQ96ByTick(ticks.tick2);
@@ -139,22 +121,20 @@ class LiqWorker
 	    else result.t0_min = 0;
 	    if (result.t1_size > 0) result.t1_min = JSBI.multiply(JSBI.divide(result.t1_size, JSBI.BigInt(100)), JSBI.BigInt(98));
 	    else result.t1_min = 0;
-*/
 	
 	    return result;
 	}
+*/
+
 	//определяет где находится текущих тик пула относительно указанного диапазона
 	//возвращает следующие значения: out_left, within, out_right, invalid(если диапазон некорректно задан)
 	_locationRange(ticks)
 	{
-//	    log("locationRange, ticks: ", ticks);
-//	    if (!isInt(ticks.tick1)) {log("invalid_1"); return "invalid";}
 	    if (!isInt(ticks.tick1) || !isInt(ticks.tick2)) {log("invalid_int"); return "invalid";}
 	    const d_tick = ticks.tick2 - ticks.tick1;
-//	    log("d_tick ", d_tick);
 	    if (d_tick <= 0) {log("invalid_dTick"); return "invalid";}
-//	    if (ticks.tick1 > ticks.tick2) {log("invalid_2"); return "invalid";}
-	    if ((d_tick % this.pool.tick_space != 0)) {log("invalid_tickSpacing"); return "invalid";}
+	    if ((d_tick % this.pool.tick_space) != 0) {log("invalid_tickSpacing"); return "invalid";}
+
 	    if (this.pool.state.tick < ticks.tick1) return "out_left";
 	    if (this.pool.state.tick >= ticks.tick2) return "out_right";
 	    return "within";
@@ -187,6 +167,49 @@ class LiqWorker
 
 	
 
+        //расчет долей активов для указания их в параметрах при чеканке новой позы.
+        //вернет результат в виде объекта с сдвумя полями: t0_size, t1_size, а также еще добавит 2 значения - минимальные объемы t0_min, t1_min
+        //подразумевается что все входные данные корректны. т.е. были проверены заранее
+        //массив p_arr это реальные пользовательские цены, содержит 3 элемента, p_arr[0] текущая,  p_arr[1] и p_arr[2] диапазон позы
+        _calcMintAmounts(liq, range_location, p_arr) //protected metod
+        {
+            let result = {t0_size: JSBI_ZERO, t0_min: JSBI_ZERO, t1_size: JSBI_ZERO, t1_min: JSBI_ZERO};
+            if (range_location == "out_left") //текущая цена ниже всего диапазона
+            {
+                result.t0_size = JSBI.BigInt(liq.token0 * this.pool.T0.decimalFactor());
+            }
+            else if (range_location == "out_right") //текущая цена выше всего диапазона
+            {
+                result.t1_size = JSBI.BigInt(liq.token1 * this.pool.T1.decimalFactor());
+            }
+            else  //curret price within range
+	    {
+                if (liq.token1 > 0)
+		{
+                    result.t1_size = JSBI.BigInt(liq.token1 * this.pool.T1.decimalFactor());
+                    const L = liq.token1/(Math.sqrt(p_arr[0]) - Math.sqrt(p_arr[1])); //p_arr[0] - current price
+                    const size0 = L*(1/Math.sqrt(p_arr[0]) - 1/Math.sqrt(p_arr[2]));
+                    result.t0_size = JSBI.BigInt(Math.round(size0 * this.pool.T0.decimalFactor()));
+                    log(` TOKENS_SIZE: ${size0.toFixed(1)} / ${liq.token1}`, `  L: ${L}`);
+		}
+		else
+		{
+                    result.t0_size = JSBI.BigInt(liq.token0 * this.pool.T0.decimalFactor());
+                    const L = liq.token0*Math.sqrt(p_arr[0]*p_arr[2])/(Math.sqrt(p_arr[2]) - Math.sqrt(p_arr[0])); //p_arr[0] - current price
+                    const size1 = L*(Math.sqrt(p_arr[0]) - Math.sqrt(p_arr[1]));
+                    result.t1_size = JSBI.BigInt(Math.round(size1 * this.pool.T1.decimalFactor()));
+                    log(` TOKENS_SIZE: ${liq.token0} / ${size1.toFixed(1)}`, `  L: ${L}`);
+		}
+	    }
+                                        ///L = (t_size*qSqrt(cp*p2))/(qSqrt(p2) - qSqrt(cp));
+                                        ///token1_size = out_params.L*(qSqrt(cp) - qSqrt(p1));
+            
+            //calc min sizes
+            if (liq.token1 > 0) result.t1_min = result.t1_size;
+            else result.t0_min = result.t0_size;
+            return result;
+	}
+
 
 	//////////////////////////////////////////////////////
 	//чеканка новой позы, функция сначала обновит данные и состояние пула
@@ -202,54 +225,95 @@ class LiqWorker
 	    if (liq_err != "") {log("WARNING: ", liq_err); return -2;}
 	
 	    log("p1 =", p1, "  p2 =", p2);
-	    log("liq_size", liq_size);
-	    space();
-
-	    try {await this.pool.updateData();}
+	    log("liq_size", liq_size, '\n');
+	    try {await this.pool.updateData();}  //get current pool state params
 	    catch(e) {log("ERROR:", e); return -2;}
-	    space();
-	    this.pool.showPrices();
-	    log("current tick: ", this.pool.state.tick);
-	    log("current sqrtPriceX96: ", this.pool.state.sqrtPrice, " / ", this.pool.state.sqrtPrice.toString());
-	    space();
 
-	    // init mint params
-	    log("prepare mint params ........");
-	    let mint_params = {token0: this.pool.T0.address, token1: this.pool.T1.address, fee: this.pool.fee};
+	    //this.pool.showPrices();
+	    //log("current tick: ", this.pool.state.tick);
+	    //log("current sqrtPriceX96: ", this.pool.state.sqrtPrice, " / ", this.pool.state.sqrtPrice.toString());
+	    //space();
 
+	    //calc ticks's range
 	    const ticks = this.pool.calcTickRange(p1, p2);
 	    const r_loc = this._locationRange(ticks);
 	    log(`TICK_RANGE: [${ticks.tick1} : ${ticks.tick2}]`, "   current tick: ", this.pool.state.tick);
 	    const p1_tick = this.pool.priceByTick(ticks.tick1);
 	    const p2_tick = this.pool.priceByTick(ticks.tick2);
-	    log(`REAL_PRICE_RANGE: [${p1_tick} : ${p2_tick}]`,  "  current price TO: ", this.pool.T0.price.toFixed(4));
-	    log("PRICE_LOCATION: ", r_loc);
+	    log(`REAL_PRICE_RANGE: [${p1_tick.toFixed(4)} : ${p2_tick.toFixed(4)}]`,  `  current price ${this.pool.T0.ticker} : `, this.pool.T0.price.toFixed(4));
+	    log("PRICE_LOCATION: ", r_loc, '\n');
 	    if (r_loc == "invalid") {log("ERROR: invalid ticks range"); return -3;}
-	    
-	    mint_params.tickLower = ticks.tick1;
+
+	    // prepare mint params
+	    let mint_params = {token0: this.pool.T0.address, token1: this.pool.T1.address, fee: this.pool.fee};
+    	    mint_params.tickLower = ticks.tick1;
 	    mint_params.tickUpper = ticks.tick2;
 
-
-	    const amounts = this._calcMintAmounts(ticks, liq_size, r_loc);
+	    //calc token's sizes
+	    const p_arr = [this.pool.T0.price, p1_tick, p2_tick];
+            const amounts = this._calcMintAmounts(liq_size, r_loc, p_arr);
 	    if (amounts.t0_size < 0 || amounts.t1_size < 0) {log("ERROR: invalid calculation amounts token"); return -3;}
 	    mint_params.amount0Desired = amounts.t0_size.toString();
 	    mint_params.amount1Desired = amounts.t1_size.toString();
 	    mint_params.amount0Min = amounts.t0_min.toString();
 	    mint_params.amount1Min = amounts.t1_min.toString();
-
 	    mint_params.recipient = this.wallet.address;
             mint_params.deadline = this._deadLine();
-	    log("MINT_PARAMS:", mint_params);
-	    space();
-
+	    log("MINT_PARAMS:", mint_params, '\n');
 
 	    /////////////////////SEND TX///////////////////////////////////
 	    const result = await this._sendTx(mint_params, "mint");
 	    return result;
 	}
+	//добавление ликвидности в указанную позу(уже существующую). 
+	//в папаметрах нужно указать PID позы и размер добавляемой ликвидности.
+	//liq_size - добавляемая ликвидность, задается как объект с двумя полями {token0, token1}, один из которых должен быть -1, 
+	//перед добавлением ликвидности функция сначала обновит данные и состояние пула для точного определения 2-го размера токена.
+	async tryIncrease(pid, ticks, liq_size)
+	{
+	    log("try increase liquidity to pos", pid, " ............");
+	    if (this._invalid()) return -1;
+    	    if (!varNumber(pid) || pid <= 0)  {log("WARNING: position PID is not correct, PID: ", pid); return -2;}
+	    const liq_err = this._checkLiqSizeObj(liq_size);
+	    if (liq_err != "") {log("WARNING: ", liq_err); return -2;}
+
+	    log("adding liquidity size: ", liq_size);
+	    try {await this.pool.updateData();}  //get current pool state params
+	    catch(e) {log("ERROR:", e); return -2;}
+
+	    //определения нахождения текущей цены относительно диапазона существующей позы
+	    const r_loc = this._locationRange(ticks);
+	    log(`POSITION TICK_RANGE: [${ticks.tick1} : ${ticks.tick2}]`, "   current tick: ", this.pool.state.tick);
+	    const p1_tick = this.pool.priceByTick(ticks.tick1);
+	    const p2_tick = this.pool.priceByTick(ticks.tick2);
+	    log(`REAL_PRICE_RANGE: [${p1_tick.toFixed(4)} : ${p2_tick.toFixed(4)}]`,  `  current price ${this.pool.T0.ticker} : `, this.pool.T0.price.toFixed(4));
+	    log("PRICE_LOCATION: ", r_loc, '\n');
+	    if (r_loc == "invalid") {log("ERROR: invalid ticks range"); return -3;}
+
+	    //calc token's sizes
+	    const p_arr = [this.pool.T0.price, p1_tick, p2_tick];
+            const amounts = this._calcMintAmounts(liq_size, r_loc, p_arr);
+	    if (amounts.t0_size < 0 || amounts.t1_size < 0) {log("ERROR: invalid calculation amounts token"); return -3;}
+
+	    //prepare params		    
+    	    let add_params = {tokenId: pid};
+	    add_params.amount0Desired = amounts.t0_size.toString();
+	    add_params.amount1Desired = amounts.t1_size.toString();
+	    add_params.amount0Min = amounts.t0_min.toString();
+	    add_params.amount1Min = amounts.t1_min.toString();
+            add_params.deadline = this._deadLine();;
+	    log("INCREASE_PARAMS:", add_params);
+	    space();
+
+	    /////////////////////SEND TX///////////////////////////////////
+	    const result = await this._sendTx(add_params, "increase");
+	    return result;
+	}
+	
+
 	//удаление ликвидности из указанной позы, текущая ликвидность в позе должна быть > 0. 
 	//в папаметрах нужно указать PID позы и размер удаляемой ликвидности из этой позы.
-	//можно удалять всю и ликвидность и только часть, в этом случае в liq_size нужно указать требуемый размер(долю от полной ликвидности позы).
+	//можно удалять всю ликвидность и только часть, в этом случае в liq_size нужно указать требуемый размер(долю от полной ликвидности позы).
 	//из опыта выяснилось что удаленная ликвидность переходит в невостребованные комиссии(добавляется к ним), а не на кошелек,
 	//поэтому после этой функции нужно выполнить tryCollect() чтобы вывести все токены (включая комиссии на кошелек).
 	async tryDecrease(pid, liq_size)
@@ -257,8 +321,7 @@ class LiqWorker
 	    log("try decrease liquidity from pos", pid, " ............");
 	    log("removing liquidity size:, ", liq_size);
 	    if (this._invalid(false)) return -1;
-    	    //if (!this.wallet.isSigner()) {log("WARNING: wallet object is not SIGNER!!!"); return -1;}
-    	    if (!varNumber(pid))  {log("WARNING: swapping PID is not correct"); return -2;}
+    	    if (!varNumber(pid) || pid <= 0)  {log("WARNING: position PID is not correct, PID: ", pid); return -2;}
 
 	    //prepare params		    
     	    let remove_params = {tokenId: pid};
@@ -269,78 +332,34 @@ class LiqWorker
 	    log("REMOVE_PARAMS:", remove_params);
 	    space();
 
-/*
-    	    let fee_params = {};
-    	    this.wallet.gas.setFeeParams(fee_params);
-    	    log("fee_params:", fee_params);
-    	    space();
-	    //return 0;
-*/
-
 	    /////////////////////SEND TX///////////////////////////////////
 	    const result = await this._sendTx(remove_params, "decrease");
 	    return result;
-
-/*
-	    const pm_conn = this.pm_contract.connect(this.wallet.signer);
-	    log("send transaction ....");
-	    try
-            {
-                const tx = await pm_conn.decreaseLiquidity(remove_params , fee_params );
-                log("TX_REPLY:", tx);
-            }
-            catch(e) {log("ERROR:", e); return -4;}
-	    return true;
-*/
-
 	}
 	//вывод токенов-комиссий у заданной позы на кошелек.
 	async tryCollect(pid)
 	{
 	    log("try collect liquidity from pos", pid, " to own wallet ............");
 	    if (this._invalid(false)) return -1;
-    	    //if (!this.wallet.isSigner()) {log("WARNING: wallet object is not SIGNER!!!"); return -1;}
-    	    if (!varNumber(pid))  {log("WARNING: swapping PID is not correct"); return -2;}
+    	    if (!varNumber(pid) || pid <= 0)  {log("WARNING: position PID is not correct, PID: ", pid); return -2;}
 
 	    //collect params		    
     	    let collect_params = {tokenId: pid};
 	    collect_params.recipient = this.wallet.address;
-//            collect_params.deadline = Math.floor(Date.now()/1000) + 120;
 	    collect_params.amount0Max = m_base.MAX_BIG128;
 	    collect_params.amount1Max = m_base.MAX_BIG128;	    
             collect_params.deadline = this._deadLine();
 	    log("COLLECT_PARAMS:", collect_params);
 	    space();
 
-/*
-
-    	    let fee_params = {};
-    	    this.wallet.gas.setFeeParams(fee_params);
-    	    log("fee_params:", fee_params);
-    	    space();
-*/
-
 	    /////////////////////SEND TX///////////////////////////////////
 	    const result = await this._sendTx(collect_params, "collect");
 	    return result;
-
-/*
-	    const pm_conn = this.pm_contract.connect(this.wallet.signer);
-	    log("send transaction ....");
-	    try
-            {
-                const tx = await pm_conn.collect(collect_params , fee_params );
-                log("TX_REPLY:", tx);
-            }
-            catch(e) {log("ERROR:", e); return -4;}
-	    return true;
-*/
 	}
         /////////////////////SEND TX///////////////////////////////////
 	async _sendTx(operation_params, operation_name) //protected metod
 	{
     	    //prepare fee params
-    	    log("set FEE  params .....");
     	    let fee_params = {};
     	    this.wallet.gas.setFeeParams(fee_params);
 	    log("fee_params:", fee_params, '\n');
@@ -354,6 +373,11 @@ class LiqWorker
 	    if (operation_name == "mint")
 	    {
 		try { tx_reply = await pm_conn.mint(operation_params, fee_params); }
+                catch(e) {log("ERROR:", e); return -4;}		
+	    }
+	    else if (operation_name == "increase")
+	    {
+		try { tx_reply = await pm_conn.increaseLiquidity(operation_params, fee_params); }
                 catch(e) {log("ERROR:", e); return -4;}		
 	    }
 	    else if (operation_name == "decrease")
@@ -370,7 +394,7 @@ class LiqWorker
 
 	    //result operation OK
             log("TX_REPLY:", tx_reply);
-	    return true;
+	    return {code: true, tx_hash: tx_reply.hash};
 	}
 
 };

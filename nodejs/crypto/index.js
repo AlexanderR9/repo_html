@@ -76,15 +76,16 @@ return;
 
 
 let w_obj = new m_wallet.WalletObj(process.env.WA2, process.env.WKEY);
-w_obj.setGas(GAS_LIMIT, MAX_FEE, PRIOR_FEE);
+//w_obj.setGas(GAS_LIMIT, MAX_FEE, PRIOR_FEE);
 //w_obj.txCount().then((data) => log("tx_count: ", data));
 //w_obj.unwrapNative(10.0).then((result) => log("result: ", result));
 //w_obj.wrapNative(10.0).then((result) => log("result: ", result));
 
 
-//w_obj.checkTxByHash("0xc2595299a6f244b9c62bbbd6f2bb5da936a7a9030ecfd36be56e34e44f323473").then((res) => log("HASH checking has done. STATUS ", res));
-//w_obj.checkTxByHash("0x5e1393582a3c6b8018f42ee7b43bd3bc670c82361bf9d5ec67771fb32ddc307b").then((res) => log("HASH checking has done. STATUS ", res));
-w_obj.checkTxByHash("0x7194e8a7de07391e23280b30456eee1b3622bc5672ac4c5a46131b5c3a4402ff").then((res) => log("HASH checking has done. STATUS ", res));
+//w_obj.checkTxByHash("0xc2595299a6f244b9c62bbbd6f2bb5da936a7a9030ecfd36be56e34e44f323473").then((res) => log("HASH checking has done. STATUS ", res)); ?????
+
+//w_obj.checkTxByHash("0x180ca24ca8dd7ec2af9ec933bde6c4c900593b9b11d5b95ee6ff775cb4350920").then((res) => log("HASH checking has done. STATUS ", res));
+w_obj.checkTxByHash("0x35aba286c441243224c97e07beb10ec62d3f21d3e5e16a4ae05dabce89075505").then((res) => log("HASH checking has done. STATUS ", res));
 //w_obj.checkTxByHash("").then((res) => log("HASH checking has done. STATUS ", res));
 
 

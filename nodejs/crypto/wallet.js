@@ -54,18 +54,18 @@ class WalletAsset
 //перед проведенной транзакцией
 class TxGas
 {
-    //настройки по умолчанию стоят минимальные, но этого хватает чтобы например сделать approve
+    //настройки по умолчанию стоят минимальные, но этого хватает чтобы например сделать approve or wrap/unwrap
     constructor() 
     {
-	this.gas_limit = 145000; //максимально единиц газа за транзакцию
-	this.max_fee = 160; //максимальная цена за единицу газа, gwei
-	this.priority = 70; //пожертвование за приоритет, gwei	
+	this.gas_limit = 185000; //максимально единиц газа за транзакцию
+	this.max_fee = 180; //максимальная цена за единицу газа, gwei
+	this.priority = 55; //пожертвование за приоритет, gwei	
     }
-    update(g, m, p)
+    update(g, m, p = -1)
     {
 	this.gas_limit = g;
 	this.max_fee = m;
-	this.priority = p;
+	if (p > 0) this.priority = p;
     }
     //установить в объект транзакции текщие значения комиссий
     setFeeParams(txp) 
@@ -106,7 +106,7 @@ class WalletObj
   	}
 	//установка параметров трат коммисии на газ за предстоящую транзакцию.
 	//функция выполнится только если кошелек находится в режиме SIGNER.	
-	setGas(g, m, p) {if (this.gas) this.gas.update(g,m,p);}
+	setGas(g, m, p = -1) {if (this.gas) this.gas.update(g,m,p);}
 	initNativeToken()
 	{
 		let asset = new WalletAsset(1);
@@ -344,7 +344,6 @@ class WalletObj
 	    }
 	    catch(e) {log("ERROR:", e); return -4;}
 	    return true;
-
 	}
 	//функция конвертирует нативный токен в завернутый тот же токен(внутри кошелька).
 	//для этого в списке токенов кошелька должен присутствовать токен вида  W<NATIVE_TICKER> (example: WPOL)
@@ -403,8 +402,7 @@ class WalletObj
 	    
 	    log("ASSET:", this.assets[i].name, "/" ,this.assets[i].address);
 	    log("TO_CONTRACT:", to_addr);
-	    log("APPROVING_AMOUNT:", sum);
-	    space();
+	    log("APPROVING_AMOUNT:", sum, '\n');
 
     	    //prepare sum
     	    const bi_sum = m_base.fromReadableAmount(sum, this.assets[i].decimal);
@@ -413,26 +411,21 @@ class WalletObj
     	    space();
 
 	    //prepare tx_params
-    	    //log("set option params .....");
     	    let tx_params = {};
     	    this.gas.setFeeParams(tx_params);
     	    const tx_count = await this.txCount();
-    	    log("tx_count:", tx_count);
     	    tx_params.nonce = tx_count;
-    	    log("tx_params:", tx_params);
-    	    space();
- 
-    	    ///////////////////////////////TX//////////////////////////////////////////
-    	    log("try approve .....");
+    	    log("tx_params:", tx_params, "\n");
+
+    	    log("send transaction .....");
     	    const t_obj = m_base.getTokenContract(this.assets[i].address, this.signer);	    
-    	    try 
-	    {
-		const approvalResponse = await t_obj.approve(to_addr, approvalAmount, tx_params);
-    		log("approvalResponse:", approvalResponse);      
-	    }
+    	    ///////////////////////////////TX//////////////////////////////////////////
+            let tx_reply = {};
+    	    try { tx_reply = await t_obj.approve(to_addr, approvalAmount, tx_params); }
 	    catch(e) {log("ERROR:", e); return -5;}
 
-	    return true;
+    	    log("Approval reply:", tx_reply);      
+	    return {code: true, tx_hash: tx_reply.hash};
 	}
 
 
@@ -449,13 +442,11 @@ class WalletObj
 
 	    log("SENDING ASSET:", this.assets[i].name, "/" ,this.assets[i].address);
 	    log("TO_WALLET:", to_addr);
-	    log("ASSET_AMOUNT:", sum);
-	    space();
+	    log("ASSET_AMOUNT:", sum, '\n');
 
     	    //prepare sum
     	    const bi_sum = m_base.fromReadableAmount(sum, this.assets[i].decimal);
-    	    log("BI sum format: ", bi_sum);
-    	    space();
+    	    log("BI sum format: ", bi_sum, '\n');
 
 	    //prepare tx_params
     	    const tx_count = await this.txCount();
@@ -463,9 +454,8 @@ class WalletObj
 
 	    //transfer token
 	    let result = -9999;
-	    if (i == 0) result = await this.sendNativeToken(to_addr, bi_sum, tx_count)
-	    else result = await this.sendAnyToken(i, to_addr, bi_sum, tx_count)
-
+	    if (i == 0) result = await this.sendNativeToken(to_addr, bi_sum, tx_count);
+	    else result = await this.sendAnyToken(i, to_addr, bi_sum, tx_count);
 	    return result;
 	}
 	async sendNativeToken(to_addr, bi_sum, tx_count) //private
@@ -473,8 +463,7 @@ class WalletObj
 	    log("IS A NATIVE TOKEN");
     	    let tx_params = {to: to_addr, nonce: tx_count, value: bi_sum};
     	    this.gas.setFeeParams(tx_params);
-    	    log("tx_params:", tx_params);
-    	    space();
+    	    log("tx_params:", tx_params, '\n');
 	    ////////////////TX///////////////
     	    log("send transaction ....");
             try
@@ -489,8 +478,7 @@ class WalletObj
 	{
     	    let tx_params = {nonce: tx_count};
     	    this.gas.setFeeParams(tx_params);
-    	    log("tx_params:", tx_params);
-    	    space();
+    	    log("tx_params:", tx_params, '\n');
 	    ////////////////TX///////////////
             const t_obj = m_base.getTokenContract(this.assets[i].address, this.signer);
     	    log("send transaction ....");

@@ -160,6 +160,15 @@ class PosManager
 	    if (i<0 || i>=this.posDataCount())  return null;
 	    return this.pos_list[i];
 	}
+	posByPID(pid)  //вернет элемент из контейнера pos_list или null
+	{
+	    if (this.posEmpty() || pid <= 0) return null;
+
+	    const n = this.pos_list.length;
+	    for (let i=0; i<n; i++)
+		if (this.pos_list[i].pid == pid) return this.pos_list[i];
+	    return null;
+	}
 	activeCount() //количество открытых поз, т.е. у которых добавлена ликвидность
 	{
 	    let n = 0;

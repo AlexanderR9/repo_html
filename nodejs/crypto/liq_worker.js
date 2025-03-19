@@ -66,66 +66,6 @@ class LiqWorker
 	    const cur_dt = Math.floor(Date.now()/1000);
 	    return (cur_dt + this.dead_line);
 	}
-
-
-/*
-	//расчет долей активов для указания их в параметрах при чеканке новой позы.
-	//вернет результат в виде объекта с сдвумя полями: t0_size, t1_size, а также еще добавит 2 значения - минимальные объемы t0_min, t1_min
-	//подразумевается что все входные данные корректны. т.е. были проверены заранее
-	_calcMintAmounts(ticks, liq, range_location) //protected metod
-	{
-
-	    const bi_liq = m_base.fromReadableAmount(liq, this.wallet.nativeDecimal());
-	    const p1X96 = this.pool.priceQ96ByTick(ticks.tick1);
-	    const p2X96 = this.pool.priceQ96ByTick(ticks.tick2);
-
-	    //to JSBI
-	    const jsbi_p1 = JSBI.BigInt(p1X96.toString());
-	    const jsbi_p2 = JSBI.BigInt(p2X96.toString());
-	    const jsbi_pcur = JSBI.BigInt(this.pool.state.sqrtPrice.toString());
-	    const jsbi_liq = JSBI.BigInt(bi_liq.toString());
-
-	    space();
-	    const cur_tick = this.pool.state.tick;
-	    log("pool.tick", cur_tick);
-	    log("range.tick1", ticks.tick1);
-	    log("range.tick2", ticks.tick2);
-	    log("jsbi_p1: ", jsbi_p1, "/", jsbi_p1.toString());
-	    log("jsbi_p2: ", jsbi_p2, "/", jsbi_p2.toString());
-	    log("jsbi_pcur: ", jsbi_pcur, "/", jsbi_pcur.toString());
-	    log("jsbi_liq: ", jsbi_liq, "/", jsbi_liq.toString());
-	    log("-----------------------------------------")
-	    
-	    //calc
-	    if (cur_tick < ticks.tick1)
-	    {
-		log("current tick BELOW range");
-		result.t0_size = this.getAmount0Mint(jsbi_p1, jsbi_p2, jsbi_liq);
-		result.t1_size = JSBI_ZERO;		
-	    }
-	    else if (cur_tick < ticks.tick2)
-	    {
-		log("current tick INSIDE range");
-		result.t0_size = this.getAmount0Mint(jsbi_pcur, jsbi_p2, jsbi_liq);
-		result.t1_size = this.getAmount1Mint(jsbi_p1, jsbi_pcur, jsbi_liq);
-	    }
-	    else
-	    {
-		log("current tick UPPER range");
-		result.t0_size = JSBI_ZERO;		
-		result.t1_size = this.getAmount1Mint(jsbi_p1, jsbi_p2, jsbi_liq);
-	    }
-
-	    //calc min
-	    if (result.t0_size > 0) result.t0_min = JSBI.multiply(JSBI.divide(result.t0_size, JSBI.BigInt(100)), JSBI.BigInt(98));
-	    else result.t0_min = 0;
-	    if (result.t1_size > 0) result.t1_min = JSBI.multiply(JSBI.divide(result.t1_size, JSBI.BigInt(100)), JSBI.BigInt(98));
-	    else result.t1_min = 0;
-	
-	    return result;
-	}
-*/
-
 	//определяет где находится текущих тик пула относительно указанного диапазона
 	//возвращает следующие значения: out_left, within, out_right, invalid(если диапазон некорректно задан)
 	_locationRange(ticks)
@@ -163,7 +103,53 @@ class LiqWorker
 	}
 	static jsbiZero() {return JSBI_ZERO;}
 	static jsbiQ96() {return JSBI_Q96;}
-	
+	//умножение числа JSBI на вещественное положительное число , вернет результат умножения, float_b must > 0
+	static jsbiMulFloat(jsbi_a, float_b)
+	{
+	    if (float_b <= 0) return JSBI_ZERO;
+
+	    const int_part = Math.floor(float_b);	    
+	    const f_part = float_b - int_part; // f_part >= 0 and < 1
+	    //log(`int_part=${int_part}  f_part=${f_part}`);
+	    let result = JSBI_ZERO;
+	    //log("result: ", result.toString());
+	    if (int_part > 0) result = JSBI.multiply(jsbi_a, JSBI.BigInt(int_part)); 
+	    //log("result: ", result.toString());
+	    if (f_part > 0)
+	    {
+		let degree = 100;		
+		for (var i=0; i<10; i++)
+		{
+		    if (isInt(f_part*degree)) break;
+		    degree *= 10;		    
+		}	
+		const f_int = Math.round(f_part*degree);
+		log("degree: ", degree, "  f_int: ", f_int);
+		let ja = JSBI.multiply(jsbi_a, JSBI.BigInt(f_int)); 
+		//log("ja after mul f_int: ", ja.toString());
+		ja = JSBI.divide(ja, JSBI.BigInt(degree)); 
+		//log("ja after divide degree: ", ja.toString());
+		result = JSBI.add(result, ja); 
+	    }
+	    return result;
+	}
+	//для выполнения опрераций с позициями необходимо задавать ценовой диапазон в виде 2-х значений p1, p2.
+	//эти значения цен должны быть указаны для Токена_0 в единицах Токена_1,
+	//эта функция придназначена для того чтобы иметь возможность задавать диапазон в для Токена_1.
+	//т.е. если у нас есть такой диапазон, то эта функция конвертирует его в диапазон для Токена_0, после чего уже можно вызывать например 'tryMint'.
+	//на вход подается объект с двумя полями {p1, p2}, и возвращает такой же объект, но уже инвертированный приведенный к Токена_0.
+	static invertPrices(p_range)
+	{
+	    let result = {p1: -1, p2: -1};
+	    const p1 = p_range.p1;
+	    const p2 = p_range.p2;
+	    if (!varNumber(p1) || !varNumber(p2)) return result;
+	    if (p1 <= 0 || p2 <= 0) return result;
+	    
+	    result.p1 = 1/p2;
+	    result.p2 = 1/p1;
+	    return result;
+	}
 
 	
 
@@ -201,12 +187,19 @@ class LiqWorker
                     log(` TOKENS_SIZE: ${liq.token0} / ${size1.toFixed(1)}`, `  L: ${L}`);
 		}
 	    }
-                                        ///L = (t_size*qSqrt(cp*p2))/(qSqrt(p2) - qSqrt(cp));
-                                        ///token1_size = out_params.L*(qSqrt(cp) - qSqrt(p1));
             
             //calc min sizes
-            if (liq.token1 > 0) result.t1_min = result.t1_size;
-            else result.t0_min = result.t0_size;
+	    const f_mul = 0.994;
+            if (liq.token1 > 0) 
+	    {
+		if (this.pool.T1.decimal == 6) result.t1_min = result.t1_size;
+		else result.t1_min = LiqWorker.jsbiMulFloat(result.t1_size, f_mul)
+	    }
+            else 
+	    {
+		if (this.pool.T0.decimal == 6) result.t0_min = result.t0_size;
+		else result.t0_min = LiqWorker.jsbiMulFloat(result.t0_size, f_mul)
+	    }
             return result;
 	}
 
@@ -228,11 +221,7 @@ class LiqWorker
 	    log("liq_size", liq_size, '\n');
 	    try {await this.pool.updateData();}  //get current pool state params
 	    catch(e) {log("ERROR:", e); return -2;}
-
-	    //this.pool.showPrices();
-	    //log("current tick: ", this.pool.state.tick);
-	    //log("current sqrtPriceX96: ", this.pool.state.sqrtPrice, " / ", this.pool.state.sqrtPrice.toString());
-	    //space();
+	    this.pool.showPrices();
 
 	    //calc ticks's range
 	    const ticks = this.pool.calcTickRange(p1, p2);

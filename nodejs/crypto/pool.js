@@ -96,7 +96,7 @@ class PoolObj
 	    if (!fs.existsSync(POOL_FILE)) {log("WARNING: pools file not found - ", POOL_FILE); return;}
 	    
 	    const p_addr = this.address.trim().toLowerCase();	    
-	    const f_arr = this.lookPoolsFile();
+	    const f_arr = PoolObj.lookPoolsFile();
             for (let i=0; i<f_arr.length; i++)
 	    {
 		if (f_arr[i].addr == p_addr)
@@ -165,6 +165,7 @@ class PoolObj
 		this.T1.address = data.t1_addr;		
 		this.fee = data.fee;
 		this.tick_space = data.tspace;
+		if (this.tick_space == 1) this.tick_space = 2;
 		await Promise.all([this.T0.update(this.pv), this.T1.update(this.pv)]);
 		if (with_state) await this.updateState();
 		log("done!");

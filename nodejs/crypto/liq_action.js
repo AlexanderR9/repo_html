@@ -4,6 +4,7 @@
 //если 1-м аргументом задать ключ take то скрипт попытается вывести на кошелек все невостребуванные токены-комиссии позы POS_PID.    
 //если 1-м аргументом задать ключ add то скрипт попытается добавить ликвидность в уже существующую позу POS_PID.    
 //2-м аргументом задается POS_PID, нужен только для операций 'add', 'remove', 'take'
+//последним аргументов (2-м или 3-м) можно задать ключ 'no-simulate', в это случае транзакция реально будет отправлена
 //если не выполнить скрипт без аргументов, то скрипт просто запросит количество совершенных транзакций кошелька.
 
 
@@ -19,6 +20,8 @@ const {ArgsParser} = require("./argsparser.js");
 let NONE_ARGS = false;
 let LIQ_MODE = 0; // 1-mit_pos, 2-decrease_liq, 3-collect_fees, -1-error
 let POS_PID = -1; //PID позиции с которой совершаются некие действия
+let IS_SUMULATE = true; //поумолчанию скрипт только имитирует выполнение операции
+
 
 //read input args
 let a_parser = new ArgsParser(process.argv);
@@ -30,27 +33,36 @@ if (!a_parser.isEmpty())
     else if (a_parser.at(0) == "add") LIQ_MODE = 4;
     else {log("ERROR: invalid argument ", a_parser.at(0)); LIQ_MODE = -1;}
 
-    if (a_parser.count() > 1)
+    if (a_parser.count() > 1 && LIQ_MODE != 1)
     {
         POS_PID = Number.parseInt(a_parser.at(1));
         if (!isInt(POS_PID)) {log("WARNING: pos PID is not integer, ", POS_PID); return -1;}
     }    
+
+    for (var i=1; i<a_parser.count(); i++)
+	if (a_parser.at(i) == "no-simulate") IS_SUMULATE = false;
 }
 else NONE_ARGS = true;
 if (LIQ_MODE < 0) return;
 
 //константы для определения размера газа перед совершением транзакции
 const GAS_LIMIT = 360000; //единиц газа за транзакцию
-const MAX_FEE = 280;  //Gweis
+const MAX_FEE = 220;  //Gweis
 //const PRIOR_FEE = 50;  //Gweis
-//адрес пула в котором добавляется/удаляется ликвидность
-let POOL_ADDR = "0xb6e57ed85c4c9dbfef2a68711e9d6f36c56e0fcb";  // WPOL/USDC 0.5%
+
+//адрес пула в котором добавляется/удаляется ликвидность (нужен только для операций 'mint' , 'add')
+//let POOL_ADDR = "0xb6e57ed85c4c9dbfef2a68711e9d6f36c56e0fcb";  // WPOL/USDC 0.5%
+let POOL_ADDR = "0x3d0acd52ee4a9271a0ffe75f9b91049152bac64b";  // USDC(PoS):LDO:0.3%
+//let POOL_ADDR = "0xd36ec33c8bed5a9f7b6630855f1533455b98a418"; // USDC(PoS):USDC:0.01% 
+
 
 //test debug
 log("INFURA RPC_URL:", process.env.INFURA_URL.toString());
 log("Current chain:", m_base.currentChain(), ` / NATIVE_TOKEN (${m_base.nativeToken()})`);
+log("Simulate mode: ", (IS_SUMULATE ? "YES" : "NO"));
 space();    
 
+//return 0;
 //////////////// BODY ///////////////////////////
 
 // init walet object
@@ -69,7 +81,7 @@ else
 
     //init LIQ_WORKER
     let liq_worker = new w_liq.LiqWorker(w_obj, POOL_ADDR);    
-    liq_worker.setSimulateMode(false); //TURN ON/ALL SIMULATE_MODE	 !!!!!!!!!!!!!!!!!!
+    liq_worker.setSimulateMode(IS_SUMULATE); //TURN ON/OFF SIMULATE_MODE
 
     //try some operation with position
     switch (LIQ_MODE)
@@ -77,12 +89,27 @@ else
 	case 1: 
 	{
 	    log("----------- MODE: mint new position --------------");
-	    const p1 = 0.202;
-	    const p2 = 0.234;
-	    const liq = {token0: 60, token1: -1};
-//	    const liq = {token0: -1, token1: 5.9};
-	    w_obj.setGas(2*GAS_LIMIT, 2*MAX_FEE);
+	    w_obj.setGas(3*GAS_LIMIT, 2*MAX_FEE);
+
+	    const p_range1 = {p1: 0.956, p2: 0.974};
+	    const p_range0 = w_liq.LiqWorker.invertPrices(p_range1);
+	    log("p_range1: ", p_range1);
+	    log("p_range0: ", p_range0);
+
+	    
+//	    const p1 = 0.9999; const p2 = 1.0000;
+	    const p1 = p_range0.p1; const p2 = p_range0.p2;
+	    const liq = {token0: -1, token1: 12};
 	    liq_worker.tryMint(p1, p2, liq).then((data) => { log("minting pos result: ", data); });
+	    break;
+	}
+	case 4: 
+	{
+	    log("----------- MODE: add liquidity to position --------------");
+	    const liq = {token0: 20, token1: -1};
+	    const tick_range = {tick1: pos.l_tick, tick2: pos.u_tick}; //position ticks range
+	    w_obj.setGas(2*GAS_LIMIT, 2*MAX_FEE);
+	    liq_worker.tryIncrease(POS_PID, tick_range, liq).then((data) => { log("adding liq_pos result: ", data); });
 	    break;
 	}
 	case 2:
@@ -97,16 +124,6 @@ else
 	    log("----------- MODE: collect tokens from position --------------");
 	    if (!pos) log(`WARNING: not found position record by PID(${POS_PID})`);
 	    else liq_worker.tryCollect(POS_PID).then((data) => log("collection pos result: ", data));
-	    break;
-	}
-	case 4: 
-	{
-	    log("----------- MODE: add liquidity to position --------------");
-	    const liq = {token0: 10, token1: -1};
-	    const tick_range = {tick1: pos.l_tick, tick2: pos.u_tick}; //position ticks range
-//	    const liq = {token0: -1, token1: 5.9};
-	    w_obj.setGas(2*GAS_LIMIT, 2*MAX_FEE);
-	    liq_worker.tryIncrease(POS_PID, tick_range, liq).then((data) => { log("adding liq_pos result: ", data); });
 	    break;
 	}
 	default: {log("ERROR: Invalid mode ", LIQ_MODE); break;}

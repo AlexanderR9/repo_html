@@ -26,17 +26,27 @@ const PRIOR_FEE = 50;  //Gweis
 log("INFURA RPC_URL:", m_base.RPC_URL() );
 log("Current chain:", m_base.currentChain());
 log(`NATIVE_TOKEN (${m_base.nativeToken()})`);
-//log("Q96");
-log(curTime());
 
 
-//let w_obj = new m_wallet.WalletObj(process.env.WA2, process.env.WKEY);
-//let w_obj = new m_wallet.WalletObj(process.env.WA2);
-//w_obj.txCount().then((data) => log("tx_count: ", data));
-//w_obj.txHistory().then((data) => log("tx_history: ", data));
+//const cur_dt = Math.floor(Date.now()/1000);
+//dl = cur_dt + 150;
+//log("cur_dt = ", cur_dt, "  dl = ", dl);
+
+const a = 20;
+const df = Math.pow(10, 9);
+log("a = ", a, "  df = ", df);
+let ja = JSBI.BigInt(a * df);
+ja = JSBI.multiply(ja , JSBI.BigInt(df));
+log("ja = ", ja.toString());
+
+let jb = w_liq.LiqWorker.jsbiMulFloat(ja, 0.99);
+log("jb = ", jb.toString());
 
 
-//return 0;
+
+
+
+return 0;
 
 
 // body
@@ -46,33 +56,7 @@ log(curTime());
 log("---------------------------------");
 
 
-/*
 
-
-///получение полной инфы о заданной позе
-const pid = 2453392;
-const pm =  m_base.getPosManagerContract(pv);
-const pos = new PositionObj(pid, pm);
-pos.updateData().then((result) => {
-    log("result: ", result);
-    space();
-    pos.out();
-    space();
-    log(pos.strTickRange());
-    log(pos.strPriceRange(0));
-    log(pos.strAssetsAmount());
-    log(pos.strDepositedAssets());
-
-    space();
-    pos.updateUnclaimedFees().then((result) => {
-	log("result: ", result);
-	log(pos.strUnclaimedFees());
-	log("finished!!!");
-    });
-});
-
-return;
-*/
 
 
 let w_obj = new m_wallet.WalletObj(process.env.WA2, process.env.WKEY);
@@ -80,48 +64,6 @@ let w_obj = new m_wallet.WalletObj(process.env.WA2, process.env.WKEY);
 //w_obj.txCount().then((data) => log("tx_count: ", data));
 //w_obj.unwrapNative(10.0).then((result) => log("result: ", result));
 //w_obj.wrapNative(10.0).then((result) => log("result: ", result));
-
-
-//w_obj.checkTxByHash("0xc2595299a6f244b9c62bbbd6f2bb5da936a7a9030ecfd36be56e34e44f323473").then((res) => log("HASH checking has done. STATUS ", res)); ?????
-
-//w_obj.checkTxByHash("0x180ca24ca8dd7ec2af9ec933bde6c4c900593b9b11d5b95ee6ff775cb4350920").then((res) => log("HASH checking has done. STATUS ", res));
-w_obj.checkTxByHash("0x35aba286c441243224c97e07beb10ec62d3f21d3e5e16a4ae05dabce89075505").then((res) => log("HASH checking has done. STATUS ", res));
-//w_obj.checkTxByHash("").then((res) => log("HASH checking has done. STATUS ", res));
-
-
-/*
-//LIQ_WORKER
-let liq_worker = new w_liq.LiqWorker(w_obj);
-let pm = new m_posManager.PosManager(w_obj.address);
-pm.loadPosDataFromFile();
-const pos = pm.posAt(0);
-if (!pos) {log("WARNING: posAt(0) is null"); return;}
-log("POS_0 DATA:", pos.out());
-log("-----------------------------------")
-*/
-
-//DECREACE
-//liq_worker.tryDecrease(pos.pid, pos.liq).then((code) => { log("removing pos result: ", code); log("finished!!!"); });
-
-
-//COLLECT
-//liq_worker.tryCollect(pos.pid).then((code) => {  log("collection pos result: ", code);  log("finished!!!"); });
-
-
-//MINT
-/*
-let liq_worker = new w_liq.LiqWorker(w_obj, POOL_ADDR);
-const p1 = 0.22;
-const p2 = 0.32;
-const liq = 8.5;
-liq_worker.tryMint(p1, p2, liq).then((code) => {
-    log("minting pos result: ", code);
-    log("finished!!!");
-});
-*/
-
-
-
 
 
 

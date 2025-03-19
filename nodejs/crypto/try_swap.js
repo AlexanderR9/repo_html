@@ -15,7 +15,7 @@ const {ArgsParser} = require("./argsparser.js");
 //константы для определения размера газа перед совершением транзакции
 const GAS_LIMIT = 265000; //единиц газа за транзакцию
 const MAX_FEE = 320;  //Gweis
-const PRIOR_FEE = 60;  //Gweis
+//const PRIOR_FEE = 60;  //Gweis
 
 //params of exchange
 let INPUT_SUM = -1;
@@ -34,13 +34,14 @@ log("INPUT_SUM:", INPUT_SUM, "   INPUT_TOKEN:", INPUT_T);
 //const POOL_ADDR = "0xdac8a8e6dbf8c690ec6815e0ff03491b2770255d"; // USDT/USDC 0.01%
 //const POOL_ADDR = "0x3d0acd52ee4a9271a0ffe75f9b91049152bac64b"; // USDC/LDO 0.3%
 //const POOL_ADDR = "0x2db87c4831b2fec2e35591221455834193b50d1b"; // WPOL/USDC 0.3%
-const POOL_ADDR = "0xb6e57ed85c4c9dbfef2a68711e9d6f36c56e0fcb"; // WPOL/USDC 0.05%
+//const POOL_ADDR = "0xb6e57ed85c4c9dbfef2a68711e9d6f36c56e0fcb"; // WPOL/USDC 0.05%
+const POOL_ADDR = "0xd36ec33c8bed5a9f7b6630855f1533455b98a418"; // USDC(PoS):USDC:0.01% 
     
 // BODY SCRIPT
 //by SwapperObj
 log("//////////////////WITH SWAPPER_OJ/////////////////////////");
 let w_obj = new m_wallet.WalletObj(process.env.WA2, process.env.WKEY);
-w_obj.setGas(GAS_LIMIT, MAX_FEE, PRIOR_FEE);
+w_obj.setGas(GAS_LIMIT, MAX_FEE);
 
 let s_obj = new m_swapper.SwapperObj(w_obj);
 s_obj.setPoolAddr(POOL_ADDR);

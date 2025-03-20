@@ -1,4 +1,5 @@
 //вспомогательные функции не связанные с ethers, которые подойдут к любому проекту
+const fs = require("fs");
 
 const space = () => {console.log("");} //debug space
 const log = (s, s1, s2, s3, s4) => {
@@ -31,6 +32,23 @@ function isInt(a) ///проверяет является ли параметр �
     if (Number.isInteger(a)) return true;
     return false;
 }
+function isJson(a) ///проверяет является ли переменная объектом json
+{
+    if (a == null || a == undefined) return false;
+    if (Array.isArray(a)) return false;
+
+//    try { JSON.stringify(a); return true; } 
+//    catch (ex) { return false; }
+
+    if (typeof a === 'object') return true;
+    return false;
+}
+function hasField(a, key_name) ///проверяет есть указанное поле у объекта a json
+{
+    if (!isJson(a)) return false;
+    if (a.hasOwnProperty(key_name)) return true;
+    return false;
+}
 function decimalFactor(decimal0, decimal1) //возвращает кеф для пула с разностью (decimal1 - decimal0)
 {
     if (decimal0 <= 0 || decimal1 <= 0) return -1;
@@ -61,9 +79,25 @@ function amountToStr(p) //приводит вещественное значен
     if (p < 100) return p.toFixed(2);
     return p.toFixed(1);
 }
+function fileExist(f_full_path)
+{
+    if (fs.existsSync(f_full_path)) return true;
+    return false;
+}
+function jsonFromFile(f_json) //функция пытается считать файл и преобразовать данные в JSOM-obj, в случае ошибки вернет null
+{
+    if (!fileExist(f_json)) {log(`WARNING: file [${f_json}] not found`); return null;}
+
+    let result = null;	
+    const f_data = fs.readFileSync(f_json).toString();
+    //log(f_data);
+    try  { result = JSON.parse(f_data); }
+    catch (err) {console.log("Error parsing JSON string:", err); return null;}
+    return result;
+}
 
 
 //export funcs
 module.exports = {log, curTime, delay, space, countDecimals, varNumber, decimalFactor, uLog, 
-	priceToStr, amountToStr, isInt};
+	priceToStr, amountToStr, isInt, isJson, hasField, fileExist, jsonFromFile};
 

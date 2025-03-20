@@ -9,9 +9,11 @@ const m_pool = require("./pool.js");
 const w_liq = require("./liq_worker.js");
 const m_wallet = require("./wallet.js");
 const m_posManager = require("./posmanager.js");
-const {space, log, curTime, delay, countDecimals, uLog} = require("./utils.js");
+const {space, log, curTime, delay, countDecimals, uLog, isJson, hasField} = require("./utils.js");
 const JSBI= require("jsbi");
 const {PositionObj} = require("./position.js");
+const params = require('./params.json');
+console.log(params);
 
 
 const POOL_ADDR = "0xb6e57ed85c4c9dbfef2a68711e9d6f36c56e0fcb";  // WPOL/USDC 0.5%
@@ -32,18 +34,20 @@ log(`NATIVE_TOKEN (${m_base.nativeToken()})`);
 //dl = cur_dt + 150;
 //log("cur_dt = ", cur_dt, "  dl = ", dl);
 
-const a = 20;
-const df = Math.pow(10, 9);
-log("a = ", a, "  df = ", df);
-let ja = JSBI.BigInt(a * df);
-ja = JSBI.multiply(ja , JSBI.BigInt(df));
-log("ja = ", ja.toString());
 
-let jb = w_liq.LiqWorker.jsbiMulFloat(ja, 0.99);
-log("jb = ", jb.toString());
-
-
-
+/*
+async function main()
+{
+    for (var i=0; i<15; i++)
+    {
+	await delay(1200);	
+	log("i=",i);
+	if (i == a) break;
+    }
+    log("finished");
+}
+*/
+//main();
 
 
 return 0;
@@ -59,7 +63,7 @@ log("---------------------------------");
 
 
 
-let w_obj = new m_wallet.WalletObj(process.env.WA2, process.env.WKEY);
+//let w_obj = new m_wallet.WalletObj(process.env.WA2, process.env.WKEY);
 //w_obj.setGas(GAS_LIMIT, MAX_FEE, PRIOR_FEE);
 //w_obj.txCount().then((data) => log("tx_count: ", data));
 //w_obj.unwrapNative(10.0).then((result) => log("result: ", result));

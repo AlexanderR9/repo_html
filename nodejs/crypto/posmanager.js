@@ -25,7 +25,7 @@ class PosPool
     invalid() {return (this.address.length < 40);}
     toStr() 
     {
-	let s = "POOL_INFO(";
+	let s = "POOL(";
 	if (this.invalid()) {s += "???"; return s;}
 
 	s += (this.address + " / " + this.info + ")");
@@ -70,10 +70,10 @@ class PosData
     toStr()
     {
 	let s = ("PID=" + this.pid + "  ");
-	s += ("liq_size=" + this.liq + "  ");	
-	s += (this.strTickRange() + "  ");	
+	s += (this.pool.toStr() + "  ");	
 	s += (this.strPricesRange() + "  ");	
-	s += (this.pool.toStr());	
+	s += (this.strTickRange() + "  ");	
+	s += ("liq_size=" + this.liq + "  ");	
 	return s;
     }
     out()

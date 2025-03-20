@@ -2,6 +2,7 @@
 //если 1-м аргументом задать ключ mint то скрипт попытается создать новую позу в пуле POOL_ADDR.    
 //если 1-м аргументом задать ключ remove то скрипт попытается удалить ликвидность из позы POS_PID.    
 //если 1-м аргументом задать ключ take то скрипт попытается вывести на кошелек все невостребуванные токены-комиссии позы POS_PID.    
+//если 1-м аргументом задать ключ take_full то скрипт выполнит 2 операции сразу (последовательно) для ключей 'remove' и 'take'.    
 //если 1-м аргументом задать ключ add то скрипт попытается добавить ликвидность в уже существующую позу POS_PID.    
 //2-м аргументом задается POS_PID, нужен только для операций 'add', 'remove', 'take'
 //последним аргументов (2-м или 3-м) можно задать ключ 'no-simulate', в это случае транзакция реально будет отправлена
@@ -30,6 +31,7 @@ if (!a_parser.isEmpty())
     if (a_parser.at(0) == "mint") LIQ_MODE = 1;
     else if (a_parser.at(0) == "remove") LIQ_MODE = 2;
     else if (a_parser.at(0) == "take") LIQ_MODE = 3;
+    else if (a_parser.at(0) == "take_full") LIQ_MODE = 5;
     else if (a_parser.at(0) == "add") LIQ_MODE = 4;
     else {log("ERROR: invalid argument ", a_parser.at(0)); LIQ_MODE = -1;}
 
@@ -124,6 +126,13 @@ else
 	    log("----------- MODE: collect tokens from position --------------");
 	    if (!pos) log(`WARNING: not found position record by PID(${POS_PID})`);
 	    else liq_worker.tryCollect(POS_PID).then((data) => log("collection pos result: ", data));
+	    break;
+	}
+	case 5:
+	{
+	    log("----------- MODE: duplex operation (decrease and collect tokens from position) --------------");
+	    if (!pos) log(`WARNING: not found position record by PID(${POS_PID})`);
+	    else liq_worker.takeFull(POS_PID, pos.liq).then((data) => { log("removing pos result: ", data); });
 	    break;
 	}
 	default: {log("ERROR: Invalid mode ", LIQ_MODE); break;}

@@ -2,7 +2,7 @@
 
 //классы для совершения операций с позициями пулов ликвидности
 const m_base = require("./base.js");
-const {space, log, curTime, varNumber, isInt} = require("./utils.js");
+const {space, log, delay, varNumber, isInt, hasField, isJson} = require("./utils.js");
 const {poolData, poolState, tokenData} = require("./asyncbase.js");
 const m_wallet = require("./wallet.js");
 const m_pool = require("./pool.js");
@@ -345,6 +345,50 @@ class LiqWorker
 	    const result = await this._sendTx(collect_params, "collect");
 	    return result;
 	}
+	//данная функция просто сочетает в себе 2 фунции tryDecrease и tryCollect (что бы не делать 2 итерации).
+	//функция выполняет последовательно tryDecrease и tryCollect, в случае ошибки 1-й итерации прерывается.
+	async takeFull(pid, liq_size)
+	{
+	    let tx_reply = null;
+    	    try { tx_reply = await this.tryDecrease(pid, liq_size); }
+            catch(e) {log("ERROR:", e); return -11;}		
+	
+	    if (!hasField(tx_reply, "tx_hash")) {log("STAGE_1: result fault"); return -12;}
+	    log("STAGE_1: TX sended, tx_hash =", tx_reply.tx_hash);
+	
+	    
+	    // check hash of TX stage1
+	    let can_collect = false;	    
+	    for (var i=0; i<5; i++)
+	    {
+		log("wait dalay ..");
+    		await delay(7000);	
+		const tx_res = await this.wallet.checkTxByHash(tx_reply.tx_hash);
+		if (isInt(tx_res))
+		{
+		    if (tx_res == 0) {log("STAGE_1: transaction was fail"); return -13;}
+		    if (tx_res == 1) {log("STAGE_1: transaction SUCCESSED"); can_collect=true; break;}
+		}
+	    }
+	    if (!can_collect) {log("STAGE_1: transaction over timeout"); return -14;}
+	    space();	
+
+    
+	    //go to next stage, collect
+    	    await delay(2000);	
+	    log("go to next stage [COLLECT] ..........");
+    	    await delay(3000);	
+	    let result = {code: true, tx_hash1: tx_reply.tx_hash};
+	    tx_reply = null;
+    	    try { tx_reply = await this.tryCollect(pid); }
+            catch(e) {log("ERROR:", e); return -15;}		
+
+	    if (!hasField(tx_reply, "tx_hash")) {log("STAGE_2: result fault"); return -16;}
+	    log("STAGE_2: TX sended, tx_hash =", tx_reply.tx_hash);
+	    result.tx_hash2 = tx_reply.tx_hash;
+	    return result;
+
+	}	
         /////////////////////SEND TX///////////////////////////////////
 	async _sendTx(operation_params, operation_name) //protected metod
 	{

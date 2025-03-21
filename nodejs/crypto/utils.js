@@ -95,9 +95,34 @@ function jsonFromFile(f_json) //функция пытается считать �
     catch (err) {console.log("Error parsing JSON string:", err); return null;}
     return result;
 }
+function jsonKeys(a) //функция возвращает строковы массив имен полей json, если json пуст или невалиден вернет пустой массив
+{
+    let arr= [];
+    if (!isJson(a)) return arr;
+
+    for (const key in a) arr.push(key);
+    return arr;
+}
+function mergeJson(a, b) //слияние двух json, все поля b перетекают в a, если в а уже были какие-то поля, то они перезапишутся
+{
+    if (!isJson(a) || !isJson(b)) return false;
+
+    const b_keys = jsonKeys(b);
+    const n = b_keys.length;
+    if (n > 0)
+    {
+	for (var i=0; i<n; i++)
+	{
+	    const field = b_keys[i];
+	    //log("field: ", field);
+	    a[field] = b[field];
+	}
+    }
+    return true;
+}
 
 
 //export funcs
 module.exports = {log, curTime, delay, space, countDecimals, varNumber, decimalFactor, uLog, 
-	priceToStr, amountToStr, isInt, isJson, hasField, fileExist, jsonFromFile};
+	priceToStr, amountToStr, isInt, isJson, hasField, fileExist, jsonFromFile, jsonKeys, mergeJson};
 

@@ -300,7 +300,7 @@ class WalletObj
 
 
 	/////////////////////////////TRANSACTIONS FUNCS//////////////////////////////////////////
-	//функция конвертирует завернутый нативный токен в нативную монету(внутри кошелька).
+	//TX_1. функция конвертирует завернутый нативный токен в нативную монету(внутри кошелька).
 	//для этого в списке токенов кошелька должен присутствовать токен вида  W<NATIVE_TICKER> (example: WPOL)
 	//если такого токена нет, то функция ничего не выполнит. Для такой операции approve не нужно делать предварительно.
 	async unwrapNative(sum)
@@ -334,7 +334,6 @@ class WalletObj
 	    //prepare WPOL tokenContract
 	    const wpolAbi = [	"function withdraw(uint256 amount) public"    ];
     	    const t_obj = m_base.getContract(this.assets[i_wraped].address, wpolAbi, this.signer);	    
-
     	    ///////////////////////////////TX//////////////////////////////////////////
 	    log("index of wraped token: ", i_wraped, ",  send transaction ................................");	    	    
     	    try 
@@ -345,7 +344,7 @@ class WalletObj
 	    catch(e) {log("ERROR:", e); return -4;}
 	    return true;
 	}
-	//функция конвертирует нативный токен в завернутый тот же токен(внутри кошелька).
+	//TX_2. функция конвертирует нативный токен в завернутый тот же токен(внутри кошелька).
 	//для этого в списке токенов кошелька должен присутствовать токен вида  W<NATIVE_TICKER> (example: WPOL)
 	//если такого токена нет, то функция ничего не выполнит. Для такой операции approve не нужно делать предварительно.
 	async wrapNative(sum)
@@ -388,9 +387,7 @@ class WalletObj
 	    catch(e) {log("ERROR:", e); return -4;}
 	    return true;
 	}
-
-
-	//функция предоставляет актив с указанным индексом контракту to_addr. sum - количество предоставляемого токена.
+	//TX_3. функция предоставляет актив с указанным индексом контракту to_addr. sum - количество предоставляемого токена.
 	//кошелек должен находится в режиме SIGNER.	
 	async tryApprove(i, to_addr, sum)
 	{
@@ -418,8 +415,8 @@ class WalletObj
     	    log("tx_params:", tx_params, "\n");
 
     	    log("send transaction .....");
-    	    const t_obj = m_base.getTokenContract(this.assets[i].address, this.signer);	    
     	    ///////////////////////////////TX//////////////////////////////////////////
+    	    const t_obj = m_base.getTokenContract(this.assets[i].address, this.signer);	    
             let tx_reply = {};
     	    try { tx_reply = await t_obj.approve(to_addr, approvalAmount, tx_params); }
 	    catch(e) {log("ERROR:", e); return -5;}
@@ -427,10 +424,7 @@ class WalletObj
     	    log("Approval reply:", tx_reply);      
 	    return {code: true, tx_hash: tx_reply.hash};
 	}
-
-
-
-	//функция отправляет актив с указанным индексом на другой кошелек to_addr. sum - количество переводимого токена.
+	//TX_4. функция отправляет актив с указанным индексом на другой кошелек to_addr. sum - количество переводимого токена.
 	//кошелек должен находится в режиме SIGNER.	
 	async trySend(i, to_addr, sum)
 	{
@@ -490,6 +484,68 @@ class WalletObj
             catch(e) {log("ERROR:", e); return -5;}
             return true;
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        /////////////////////SEND TX///////////////////////////////////
+        async _sendTx(operation_params, operation_name) //protected metod
+        {
+            //prepare fee params
+            let fee_params = {};
+            this.gas.setFeeParams(fee_params);
+            log("fee_params:", fee_params, '\n');
+
+
+            // send tx
+            let tx_reply = {};
+            if (operation_name == "wrap")
+            {
+                try { tx_reply = await pm_conn.mint(operation_params, fee_params); }
+                catch(e) {log("ERROR:", e); return -4;}
+            }
+
+/*
+            const pm_conn = this.pm_contract.connect(this.wallet.signer);
+            if (operation_name == "mint")
+            {
+                try { tx_reply = await pm_conn.mint(operation_params, fee_params); }
+                catch(e) {log("ERROR:", e); return -4;}
+            }
+            else if (operation_name == "increase")
+            {
+                try { tx_reply = await pm_conn.increaseLiquidity(operation_params, fee_params); }
+                catch(e) {log("ERROR:", e); return -4;}
+            }
+            else if (operation_name == "decrease")
+            {
+                try { tx_reply = await pm_conn.decreaseLiquidity(operation_params, fee_params); }
+                catch(e) {log("ERROR:", e); return -4;}
+            }
+            else if (operation_name == "collect")
+            {
+                try { tx_reply = await pm_conn.collect(operation_params, fee_params); }
+                catch(e) {log("ERROR:", e); return -4;}
+            }
+*/
+            else {log("ERROR: invalid operation_name ", operation_name); return -99;}
+            
+            //result operation OK
+            log("TX_REPLY:", tx_reply);
+            return {code: true, tx_hash: tx_reply.hash};
+        }
+
 
 };
 

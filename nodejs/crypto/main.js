@@ -2,7 +2,7 @@
 // json файл должен лежать на том же уровне.
 // json файл описывает инструкции, какие операции скрипт должен выполнить.
 
-const {space, log, curTime, delay, fileExist, jsonFromFile, isJson} = require("./utils.js");
+const {space, log, curTime, delay, fileExist, jsonFromFile, isJson, jsonKeys, mergeJson} = require("./utils.js");
 const {ArgsParser} = require("./argsparser.js");
 const fs = require("fs");
 const { exec } = require("child_process");
@@ -19,11 +19,23 @@ log("JSON-file: ", F_JSON);
 const j_params  = jsonFromFile(F_JSON);
 if (!isJson(j_params)) {log("WARNING: can't readed JSON data"); return -1;}
 
+j_params.key1 = 777;
+
 log("JSON parsed OK! \n DATA:", j_params);
 
 space();
 //exec.fork("pos_info.js");
 //log(res);
+
+//const j_keys = jsonKeys(j_params);
+
+let jb = {"key1" : 5, "key2" : 55};
+log("JB1: ", jb);
+space();
+mergeJson(jb, j_params);
+space();
+log("JB2: ", jb);
+
 
 
 /*

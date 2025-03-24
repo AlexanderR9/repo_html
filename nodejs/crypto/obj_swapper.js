@@ -1,8 +1,8 @@
 const {space, log, curTime, varNumber} = require("./utils.js");
 const m_base = require("./base.js");
 const {poolData, poolState, tokenData, balanceAt} = require("./asyncbase.js");
-const m_wallet = require("./wallet.js");
-const m_pool = require("./pool.js");
+const m_wallet = require("./obj_wallet.js");
+const m_pool = require("./obj_pool.js");
 
 
 //класс для совершения обмена токенов в кошельке, используя пулы

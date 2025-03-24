@@ -7,9 +7,9 @@
 
 //including
 const m_base = require("./base.js");
-const m_pool = require("./pool.js");
+const m_pool = require("./obj_pool.js");
 const {space, log, curTime, delay, countDecimals} = require("./utils.js");
-const {ArgsParser} = require("./argsparser.js");
+const {ArgsParser} = require("./obj_argsparser.js");
 
 let WITH_STATE = false;
 let F_ADD = false;

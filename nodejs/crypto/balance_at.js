@@ -8,8 +8,8 @@
 //include
 const m_base = require("./base.js");
 const {space, log, curTime, delay, countDecimals} = require("./utils.js");
-const m_wallet = require("./wallet.js");
-const {ArgsParser} = require("./argsparser.js");
+const m_wallet = require("./obj_wallet.js");
+const {ArgsParser} = require("./obj_argsparser.js");
 
 
 // user vars

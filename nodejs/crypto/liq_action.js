@@ -11,11 +11,11 @@
 
 //including
 const m_base = require("./base.js");
-const m_wallet = require("./wallet.js");
-const m_posManager = require("./posmanager.js");
-const w_liq = require("./liq_worker.js");
+const m_wallet = require("./obj_wallet.js");
+const m_posManager = require("./obj_posmanager.js");
+const w_liq = require("./obj_liqworker.js");
 const {space, log, curTime, isInt} = require("./utils.js");
-const {ArgsParser} = require("./argsparser.js");
+const {ArgsParser} = require("./obj_argsparser.js");
 
 // USER VARS
 let NONE_ARGS = false;

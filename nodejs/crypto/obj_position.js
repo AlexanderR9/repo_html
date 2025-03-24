@@ -2,17 +2,11 @@
 //классы для работы с 1 экзепляром позиции ликвидности
 //const ethers = require("ethers");
 const {space, log, curTime, varNumber, priceToStr, amountToStr} = require("./utils.js");
-const m_base = require("./base.js");
-const w_liq = require("./liq_worker.js");
-
 const {poolData, poolState, tokenData} = require("./asyncbase.js");
-//const m_wallet = require("./wallet.js");
-const {PoolObj} = require("./pool.js");
+const m_base = require("./base.js");
+const w_liq = require("./obj_liqworker.js");
+const {PoolObj} = require("./obj_pool.js");
 const JSBI= require("jsbi");
-
-//const fs = require("fs");
-//const PID_FILE="pid_list.txt";
-//const POS_DATA_FILE="pos_data.txt";
 
 
 //класс, содержит данные по одной позе

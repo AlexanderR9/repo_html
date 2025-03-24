@@ -4,8 +4,8 @@
 const {space, log, curTime, varNumber} = require("./utils.js");
 const m_base = require("./base.js");
 const {poolData, poolState, tokenData} = require("./asyncbase.js");
-const m_wallet = require("./wallet.js");
-const m_pool = require("./pool.js");
+const m_wallet = require("./obj_wallet.js");
+const m_pool = require("./obj_pool.js");
 
 const fs = require("fs");
 const PID_FILE="pid_list.txt";
@@ -91,7 +91,7 @@ class PosData
     {
 	if (this.invalid()) return;
 	//this.out();
-	space();
+//	space();
         for (let i=0; i<fdata_pools.length; i++)
         {
 	    const rec = fdata_pools[i];
@@ -333,17 +333,14 @@ class PosManager
 		pos_obj.fromFileLine(fline);
 		if (!pos_obj.invalid())
 	    	{
-		    //const np = this.pos_list.length;
-		    //this.pos_list[i] = pos_obj;
 		    this.recalcPosRange(pos_obj);
 		    this.pos_list.push(pos_obj);
 		}
 	    }	
 	    const np = this.posDataCount();
-	    log("posDataCount: ", np, ", active: ", this.activeCount());
-	    this.outActive();
-
-	    this.syncByPoolsFile();
+//	    log("posDataCount: ", np, ", active: ", this.activeCount());
+//	    this.outActive();
+//	    this.syncByPoolsFile();
 	    return np;	    
 	}
 	//загрузить файл pools.txt и синхронизировать данные поз с данными пулов, т.е. найти для каждой позы свой пул
@@ -372,16 +369,19 @@ class PosManager
 	outActive()
 	{
 	    const a = this.activeCount();
-	    space();
+//	    space();
 	    log("Active positions: ", a);
 	    if (a == 0) return;
 	    	
+	    var i = 1;
 	    this.pos_list.forEach((p) => 
 	    {
 		if (p.isActive())
 		{	
-		    let s = p.pid.toString() + "  " +this.poolByPos(p) + "  " + p.strPricesRange();	
+		    let s = i.toString() + ". PID=" + p.pid.toString() + "  ";
+		    s += (p.strPricesRange() + "    POOL: " + this.poolByPos(p));	
 		    log(s);    
+		    i++;
 		}
 	    });		
 	}

@@ -4,8 +4,8 @@
 const m_base = require("./base.js");
 const {space, log, delay, varNumber, isInt, hasField, isJson} = require("./utils.js");
 const {poolData, poolState, tokenData} = require("./asyncbase.js");
-const m_wallet = require("./wallet.js");
-const m_pool = require("./pool.js");
+const m_wallet = require("./obj_wallet.js");
+const m_pool = require("./obj_pool.js");
 const JSBI= require("jsbi");
 
 const JSBI_Q96 = JSBI.exponentiate(JSBI.BigInt(2), JSBI.BigInt(96));

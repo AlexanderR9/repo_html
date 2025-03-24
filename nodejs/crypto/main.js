@@ -3,9 +3,9 @@
 // json файл описывает инструкции, какие операции скрипт должен выполнить.
 
 const {space, log, curTime, delay, fileExist, jsonFromFile, isJson, jsonKeys, mergeJson} = require("./utils.js");
-const {ArgsParser} = require("./argsparser.js");
+const {ArgsParser} = require("./obj_argsparser.js");
 const fs = require("fs");
-const { exec } = require("child_process");
+//const { exec } = require("child_process");
 
 
 let F_JSON = "";
@@ -19,10 +19,18 @@ log("JSON-file: ", F_JSON);
 const j_params  = jsonFromFile(F_JSON);
 if (!isJson(j_params)) {log("WARNING: can't readed JSON data"); return -1;}
 
-j_params.key1 = 777;
 
+
+j_params.key1 = 777;
+log("JSON parsed OK! \n\n DATA:", j_params);
+
+space();
+delete j_params.tx_type;
+delete j_params.token1;
 log("JSON parsed OK! \n DATA:", j_params);
 
+
+/*
 space();
 //exec.fork("pos_info.js");
 //log(res);
@@ -35,7 +43,7 @@ space();
 mergeJson(jb, j_params);
 space();
 log("JB2: ", jb);
-
+*/
 
 
 /*

@@ -120,9 +120,14 @@ function mergeJson(a, b) //слияние двух json, все поля b пе�
     }
     return true;
 }
+function charRepeat(c, n) //строка из n одинаковых символов
+{
+    return c.repeat(n);
+}
 
 
 //export funcs
 module.exports = {log, curTime, delay, space, countDecimals, varNumber, decimalFactor, uLog, 
-	priceToStr, amountToStr, isInt, isJson, hasField, fileExist, jsonFromFile, jsonKeys, mergeJson};
+	priceToStr, amountToStr, isInt, isJson, hasField, fileExist, jsonFromFile, jsonKeys, mergeJson,
+	charRepeat};
 

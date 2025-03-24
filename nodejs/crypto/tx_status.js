@@ -3,9 +3,9 @@
 
 
 //including
-const m_wallet = require("./wallet.js");
+const m_wallet = require("./obj_wallet.js");
 const {space, log} = require("./utils.js");
-const {ArgsParser} = require("./argsparser.js");
+const {ArgsParser} = require("./obj_argsparser.js");
 
 
 let TX_HASH = "";

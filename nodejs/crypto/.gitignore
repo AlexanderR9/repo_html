@@ -7,3 +7,4 @@ pid_list.txt
 pos_data.txt
 saved
 params.json
+*.log

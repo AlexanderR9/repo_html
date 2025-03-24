@@ -213,9 +213,10 @@ class PoolObj
 
     //возвращает предполагаемую сумму обмена выходного токена при заданных входных параметрах.
     //функция только проводит предварительный расчет, никаких изменений не вносит.      
+    //перед расчетом функция выполнит updateState(); 
     //sum_in - сумма выделенная на обмен входного токена.
     //t_in - индекс входного токена в паре пула, может принимать значения 0 и 1, поумолчанию 0 .
-    async tokenSizeBySwapping(sum_in, t_in = 0) //getting out_sum(t1) by in_sum(t0) from object quotesContract
+    async tokenSizeBySwapping(sum_in, t_in = 0, need_update_state = true) //getting out_sum(t1) by in_sum(t0) from object quotesContract
     {
         log("Try calc out token by swap ...");
         if (!varNumber(sum_in))  {log("WARNING: input SUM is not number_value, sum: ", sum_in); return -1;}
@@ -224,12 +225,10 @@ class PoolObj
 	if (this.invalidPoolData())
 	{
 	    await this.updateData();
-	    this.out();
+	    //this.out();
 	}
-	else 
-	{
-	    await this.updateState();
-	}
+	else if (need_update_state) { await this.updateState(); }
+
 	let s = "TOKEN_IN: " + ((t_in == 0) ? this.T0.ticker : this.T1.ticker) + ";";
 	s += "  SUM_IN = " + sum_in;
 	log("Swap conditionals: ", s);

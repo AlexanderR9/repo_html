@@ -14,14 +14,14 @@
 
 //including
 const m_base = require("./base.js");
-const m_wallet = require("./wallet.js");
+const m_wallet = require("./obj_wallet.js");
 const {space, log, curTime, delay, countDecimals} = require("./utils.js");
-const {ArgsParser} = require("./argsparser.js");
+const {ArgsParser} = require("./obj_argsparser.js");
 
 //константы для определения размера газа перед совершением транзакции
-const GAS_LIMIT = 165000; //единиц газа за транзакцию
+const GAS_LIMIT = 265000; //единиц газа за транзакцию
 const MAX_FEE = 220;  //Gweis
-//const PRIOR_FEE = 60;  //Gweis
+const PRIOR_FEE = -1;  //Gweis
 
 // user vars
 let TRANSFER_SUM = -1;
@@ -49,7 +49,7 @@ else
 
 //WALLET DATA
 let w_obj = new m_wallet.WalletObj(W_OWN_ADDR, process.env.WKEY);
-w_obj.setGas(GAS_LIMIT, MAX_FEE);
+w_obj.setGas(GAS_LIMIT, MAX_FEE, PRIOR_FEE);
 w_obj.trySend(TOKEN_INDEX, W_TO_ADDR, TRANSFER_SUM).then((data) => log("result: ", data));
 
 

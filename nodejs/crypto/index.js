@@ -5,22 +5,23 @@
 const ethers = require("ethers");
 const {chainInfo} = require("./asyncbase.js");
 const m_base = require("./base.js");
-const m_pool = require("./pool.js");
-const w_liq = require("./liq_worker.js");
-const m_wallet = require("./wallet.js");
-const m_posManager = require("./posmanager.js");
+const m_pool = require("./obj_pool.js");
+//const w_liq = require("./liq_worker.js");
+const m_wallet = require("./obj_wallet.js");
+const m_posManager = require("./obj_posmanager.js");
 const {space, log, curTime, delay, countDecimals, uLog, isJson, hasField} = require("./utils.js");
 const JSBI= require("jsbi");
-const {PositionObj} = require("./position.js");
-const params = require('./params.json');
-console.log(params);
+const {PositionObj} = require("./obj_position.js");
+//const params = require('./params.json');
+//console.log(params);
+const {TxWorkerObj} = require("./obj_txworker.js");
 
 
 const POOL_ADDR = "0xb6e57ed85c4c9dbfef2a68711e9d6f36c56e0fcb";  // WPOL/USDC 0.5%
 //константы для определения размера газа перед совершением транзакции
 const GAS_LIMIT = 160000; //единиц газа за транзакцию
 const MAX_FEE = 220;  //Gweis
-const PRIOR_FEE = 50;  //Gweis
+//const PRIOR_FEE = 50;  //Gweis
 
 
 //test debug
@@ -28,11 +29,6 @@ const PRIOR_FEE = 50;  //Gweis
 log("INFURA RPC_URL:", m_base.RPC_URL() );
 log("Current chain:", m_base.currentChain());
 log(`NATIVE_TOKEN (${m_base.nativeToken()})`);
-
-
-//const cur_dt = Math.floor(Date.now()/1000);
-//dl = cur_dt + 150;
-//log("cur_dt = ", cur_dt, "  dl = ", dl);
 
 
 /*
@@ -50,7 +46,7 @@ async function main()
 //main();
 
 
-return 0;
+//return 0;
 
 
 // body
@@ -61,31 +57,15 @@ log("---------------------------------");
 
 
 
+//const tx_obj = new TxWorkerObj(null);
+//const tx_reply = {hash: "sdjkhfgdkfgjhdkfgh"};
+//tx_obj.addTxLog(tx_reply, "wrap");
 
 
-//let w_obj = new m_wallet.WalletObj(process.env.WA2, process.env.WKEY);
+let w_obj = new m_wallet.WalletObj(process.env.WA2, process.env.WKEY);
 //w_obj.setGas(GAS_LIMIT, MAX_FEE, PRIOR_FEE);
 //w_obj.txCount().then((data) => log("tx_count: ", data));
-//w_obj.unwrapNative(10.0).then((result) => log("result: ", result));
-//w_obj.wrapNative(10.0).then((result) => log("result: ", result));
-
-
-
-/*
-let p_obj = new m_pool.PoolObj(POOL_ADDR);  // WPOL/USDC 0.5%
-p_obj.updateData().then(() => {
-
-    const t_range = p_obj.calcTickRange(0.22, 0.25);
-    log("TICK_RANGE: ", t_range);    
-
-    space();
-    const p96 = p_obj.priceQ96ByTick(-289044);
-    log("p96 by tick: ", p96);
-    log("cur pool priceX96: ", p_obj.state.sqrtPrice, "/",  p_obj.state.sqrtPrice.toString());
-    log("finished!!!");
-
-});
-
-*/
+w_obj.unwrapNative(2.55).then((result) => log("result: ", result));
+//w_obj.wrapNative(4.0).then((result) => log("result: ", result));
 
 

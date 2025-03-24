@@ -1,25 +1,37 @@
-const {space, log, curTime, varNumber} = require("./utils.js");
+const {space, log, curTime, varNumber, charRepeat} = require("./utils.js");
 const m_base = require("./base.js");
 const {poolData, poolState, tokenData, balanceAt} = require("./asyncbase.js");
 const m_wallet = require("./obj_wallet.js");
 const m_pool = require("./obj_pool.js");
+const {TxWorkerObj} = require("./obj_txworker.js");
 
 
 //класс для совершения обмена токенов в кошельке, используя пулы
 class SwapperObj
 {
     //передать объект WalletObj, активы которого будут меняться друг на друга.
-    constructor(w_obj)
+    constructor(w_obj, p_addr = "")
     {
         log("Create swapper object: ");
 	this.wallet = w_obj; //WalletObj instance
 	this.router_contract = m_base.getRouterContract(this.wallet.pv); //swap router contract object
 	this.quoter_contract = m_base.getQuoterContract(this.wallet.pv); //quoter contract object
-	this.pool_addr = ""; //current pool address
+	this.pool_addr = p_addr; //current pool address
 	log("ROUTER_CONTRACT: ", this.router_contract.address); 
 	log("QOUTER_CONTRACT: ", this.quoter_contract.address); 
+
+        this.tx_worker = null; //объект для отправки подготовленных транзакций в сеть
+        if (w_obj.isSigner()) this.tx_worker = new TxWorkerObj(w_obj);
+
+
+        //признак того что все опрерации будутвыполняться в режиме эмуляции (поумолчанию режим включен), 
+        // т.е. когда будет доходить дело в отправки реальной транзакции будет происходить выход из функции.
+        //для вкл/откл режма надо выполнить функцию setSimulateMode
+        this.simulate_mode = true;
     }
     setPoolAddr(p_addr) {this.pool_addr = p_addr;}
+    setSimulateMode(m) {this.simulate_mode = m;} //set simulate_mode value
+
 
     //возвращает предполагаемую сумму обмена выходного токена при заданных входных параметра.
     //функция только проводит предварительный расчет, никаких изменений не вносит.	
@@ -87,10 +99,13 @@ class SwapperObj
 	log(curTime(), "try get pool data", ".....");
 	log("POOL ADDRESS:", this.pool_addr);
 	let p_obj = new m_pool.PoolObj(this.pool_addr);
-	await p_obj.updateData(); 
-	p_obj.out(); 
-	//p_obj.outState(); 
-	p_obj.showPrices();
+	try 
+	{
+	    await p_obj.updateData(); 
+	    //p_obj.out(); 
+	    p_obj.showPrices();
+	}
+	catch(e) {log("ERROR:", e); return -3;}
 
 	//get pool tokens data
 	log("get tokens data .....");
@@ -104,11 +119,16 @@ class SwapperObj
 	log(s);
 	space();
 
+	p_obj.tokenSizeBySwapping(sum_in, input_t, false);
+	log(charRepeat("-", 50));
+	space();
+
 	log("prepare sum ...")
         const bi_sum = m_base.fromReadableAmount(sum_in, t_in.decimal);
         log("input sum ", sum_in, " | BIG: ", bi_sum.toString());       
 	space();
 
+/*
 	//prepare TX params
         log("set TX option params .....");
         let tx_params = {};
@@ -119,9 +139,10 @@ class SwapperObj
         log("tx_params:", tx_params);
         space();
 
+*/
 
         //prpare swap params
-        const swap_params = {tokenIn: t_in.addr, tokenOut: t_out.addr, fee: p_obj.fee};
+        const swap_params = {tx_kind: "swap", tokenIn: t_in.addr, tokenOut: t_out.addr, fee: p_obj.fee};
         swap_params.recipient = this.wallet.address;
         swap_params.deadline = Math.floor(Date.now()/1000) + dead_line;
         swap_params.amountIn = bi_sum;
@@ -129,6 +150,26 @@ class SwapperObj
         swap_params.sqrtPriceLimitX96 = 0;
         log("SWAP PARAMS:", swap_params);
         space();
+
+        //prepare fee params
+        if (this.simulate_mode)
+        {
+            let fee_params = {};
+            this.wallet.gas.setFeeParams(fee_params);
+            log("fee_params:", fee_params, '\n');
+            log("send transaction .................................................");
+            log("simulate_mode: ON");
+            return 9999;
+        }
+
+        /////////////////////SEND TX///////////////////////////////////
+        const result = await this.tx_worker.sendTx(swap_params);
+        return result;
+
+
+
+/*
+
 
         log("try swap ......");
        ////////////////TX///////////////
@@ -141,6 +182,7 @@ class SwapperObj
         }
         catch(e) {log("ERROR:", e); return -5;}
         return true;
+*/
     }
         
 };

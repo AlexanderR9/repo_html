@@ -7,6 +7,8 @@ const {poolData, poolState, tokenData} = require("./asyncbase.js");
 const m_wallet = require("./obj_wallet.js");
 const m_pool = require("./obj_pool.js");
 const JSBI= require("jsbi");
+const {TxWorkerObj} = require("./obj_txworker.js");
+
 
 const JSBI_Q96 = JSBI.exponentiate(JSBI.BigInt(2), JSBI.BigInt(96));
 const JSBI_ZERO = JSBI.BigInt(0);
@@ -26,6 +28,11 @@ class LiqWorker
 
 	    this.pool = null;
 	    if (pool_addr.length > 20) this.pool = new m_pool.PoolObj(pool_addr);
+
+	    
+            this.tx_worker = null; //объект для отправки подготовленных транзакций в сеть
+	    if (w_obj.isSigner()) this.tx_worker = new TxWorkerObj(w_obj);
+
 
 	    //признак того что все опрерации будутвыполняться в режиме эмуляции (поумолчанию режим включен), 
 	    // т.е. когда будет доходить дело в отправки реальной транзакции будет происходить выход из функции.
@@ -393,12 +400,24 @@ class LiqWorker
 	async _sendTx(operation_params, operation_name) //protected metod
 	{
     	    //prepare fee params
-    	    let fee_params = {};
-    	    this.wallet.gas.setFeeParams(fee_params);
-	    log("fee_params:", fee_params, '\n');
-    
-	    log("send transaction .................................................");
-	    if (this.simulate_mode)  {log("simulate_mode: ON"); return 9999;}
+	    if (this.simulate_mode)
+	    {
+    		let fee_params = {};
+    		this.wallet.gas.setFeeParams(fee_params);
+		log("fee_params:", fee_params, '\n');
+		log("send transaction .................................................");
+	        log("simulate_mode: ON"); 
+		return 9999;
+	    }
+
+
+            operation_params.tx_kind = operation_name;
+            /////////////////////SEND TX///////////////////////////////////
+            const result = await this.tx_worker.sendTx(operation_params);
+            return result;
+
+
+/*
 
 	    // send tx
 	    let tx_reply = {};
@@ -428,6 +447,7 @@ class LiqWorker
 	    //result operation OK
             log("TX_REPLY:", tx_reply);
 	    return {code: true, tx_hash: tx_reply.hash};
+*/
 	}
 
 };

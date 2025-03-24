@@ -11,16 +11,22 @@
 
 //including
 const m_base = require("./base.js");
-const m_wallet = require("./wallet.js");
 const {space, log, curTime, delay, isInt} = require("./utils.js");
-const {ArgsParser} = require("./argsparser.js");
+const m_wallet = require("./obj_wallet.js");
+const {ArgsParser} = require("./obj_argsparser.js");
+
+//константы для определения размера газа перед совершением транзакции
+const GAS_LIMIT = 260000; //единиц газа за транзакцию
+const MAX_FEE = 220;  //Gweis
+const PRIOR_FEE = -1;  //Gweis
+
 
 // user vars
 let APPROVE_SUM = -1;
 let TOKEN_INDEX = 7; //USDC
 //let TOKEN_INDEX = 1; //WPOL
-//const TO_ADDR = m_base.SWAP_ROUTER_ADDRESS; //кому одобрить (адрес контракта)
-const TO_ADDR = m_base.POS_MANAGER_ADDRESS; //кому одобрить (адрес контракта)
+const TO_ADDR = m_base.SWAP_ROUTER_ADDRESS; //кому одобрить (адрес контракта)
+//const TO_ADDR = m_base.POS_MANAGER_ADDRESS; //кому одобрить (адрес контракта)
 
 //read input args
 let a_parser = new ArgsParser(process.argv);
@@ -37,6 +43,7 @@ log("TOKEN_INDEX: ", TOKEN_INDEX, "  CONTRACT: ", TO_ADDR);
 
 //WALLET DATA
 let w_obj = new m_wallet.WalletObj(process.env.WA2, process.env.WKEY);
+w_obj.setGas(GAS_LIMIT, MAX_FEE, PRIOR_FEE);
 if (APPROVE_SUM <= 0) w_obj.checkApproved(TOKEN_INDEX, TO_ADDR).then((data) => log("supplied: ", data));
 else w_obj.tryApprove(TOKEN_INDEX, TO_ADDR, APPROVE_SUM).then((data) => log("result: ", data));
 

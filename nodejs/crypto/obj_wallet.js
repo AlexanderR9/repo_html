@@ -4,6 +4,7 @@ const TOKENS_FILE="token.txt";
 const {space, log, curTime, varNumber} = require("./utils.js");
 const m_base = require("./base.js");
 const {poolData, poolState, tokenData, balanceAt} = require("./asyncbase.js");
+const {TxWorkerObj} = require("./obj_txworker.js");
 
 
 //вспомогательный класс контейнер для одного актива
@@ -58,8 +59,8 @@ class TxGas
     constructor() 
     {
 	this.gas_limit = 185000; //максимально единиц газа за транзакцию
-	this.max_fee = 180; //максимальная цена за единицу газа, gwei
-	this.priority = 55; //пожертвование за приоритет, gwei	
+	this.max_fee = 130; //максимальная цена за единицу газа, gwei
+	this.priority = 45; //пожертвование за приоритет, gwei	
     }
     update(g, m, p = -1)
     {
@@ -103,6 +104,9 @@ class WalletObj
 		    this.signer = m_base.getWallet(private_key, this.pv);
 		    this.gas = new TxGas();
 		}
+
+		this.tx_worker = null;
+		if (this.isSigner()) this.tx_worker = new TxWorkerObj(this);
   	}
 	//установка параметров трат коммисии на газ за предстоящую транзакцию.
 	//функция выполнится только если кошелек находится в режиме SIGNER.	
@@ -323,7 +327,20 @@ class WalletObj
     	    //prepare BinNumber sum
     	    const bi_sum = m_base.fromReadableAmount(sum, this.nativeDecimal());
     	    log("BI sum format: ", bi_sum, " / ", bi_sum.toString());
+	    log("index of wraped token: ", i_wraped);	    	    
     	    space();
+
+
+	    //prepare tx params
+            let tx_params = {tx_kind: "unwrap", value: bi_sum.toString()};
+	    tx_params.token_address = this.assets[i_wraped].address;        
+            /////////////////////SEND TX///////////////////////////////////
+            const result = await this.tx_worker.sendTx(tx_params);
+            return result;
+
+
+
+/*
 
 	    //prepare fee params
             log("set FEE  params .....");
@@ -343,6 +360,7 @@ class WalletObj
 	    }
 	    catch(e) {log("ERROR:", e); return -4;}
 	    return true;
+*/
 	}
 	//TX_2. функция конвертирует нативный токен в завернутый тот же токен(внутри кошелька).
 	//для этого в списке токенов кошелька должен присутствовать токен вида  W<NATIVE_TICKER> (example: WPOL)
@@ -367,24 +385,32 @@ class WalletObj
     	    //prepare BinNumber sum
     	    const bi_sum = m_base.fromReadableAmount(sum, this.nativeDecimal());
     	    log("BI sum format: ", bi_sum, " / ", bi_sum.toString());
+	    log("index of wraped token: ", i_wraped);	    	    
     	    space();
 
 	    //prepare tx params
-            let wrap_params = { value: bi_sum };
-            this.gas.setFeeParams(wrap_params);
-            log("TX_params:", wrap_params, '\n');
+            let wrap_params = {tx_kind: "wrap", value: bi_sum};
+	    wrap_params.token_address = this.assets[i_wraped].address;        
+            /////////////////////SEND TX///////////////////////////////////
+            const result = await this.tx_worker.sendTx(wrap_params);
+            return result;
+ 
+	    
+            //this.gas.setFeeParams(wrap_params);
+            //log("TX_params:", wrap_params, '\n');
 	    
 	    //prepare WPOL tokenContract
-	    const wpolAbi = [	"function deposit() public payable"    ];
-    	    const t_obj = m_base.getContract(this.assets[i_wraped].address, wpolAbi, this.signer);	    
+	    //const wpolAbi = [	"function deposit() public payable"    ];
+    	    //const t_obj = m_base.getContract(this.assets[i_wraped].address, wpolAbi, this.signer);	    
     	    ///////////////////////////////TX//////////////////////////////////////////
-	    log("index of wraped token: ", i_wraped, ",  send transaction ................................");	    	    
+/*
     	    try 
 	    {
 		const tx = await t_obj.deposit(wrap_params);
     		log("TX_Response:", tx);      
 	    }
 	    catch(e) {log("ERROR:", e); return -4;}
+*/
 	    return true;
 	}
 	//TX_3. функция предоставляет актив с указанным индексом контракту to_addr. sum - количество предоставляемого токена.
@@ -403,11 +429,19 @@ class WalletObj
 
     	    //prepare sum
     	    const bi_sum = m_base.fromReadableAmount(sum, this.assets[i].decimal);
-    	    const approvalAmount = bi_sum.toString();
-    	    log("BI sum format: ", bi_sum, "approvalAmount: ", approvalAmount);
+    	    log("BI sum format: ", bi_sum, " / ", bi_sum.toString());
     	    space();
 
 	    //prepare tx_params
+            let tx_params = {tx_kind: "approve", value: bi_sum.toString()};
+	    tx_params.token_address = this.assets[i].address;        
+	    tx_params.target_address = to_addr;        
+            /////////////////////SEND TX///////////////////////////////////
+            const result = await this.tx_worker.sendTx(tx_params);
+            return result;
+
+
+/*
     	    let tx_params = {};
     	    this.gas.setFeeParams(tx_params);
     	    const tx_count = await this.txCount();
@@ -423,6 +457,7 @@ class WalletObj
 
     	    log("Approval reply:", tx_reply);      
 	    return {code: true, tx_hash: tx_reply.hash};
+*/
 	}
 	//TX_4. функция отправляет актив с указанным индексом на другой кошелек to_addr. sum - количество переводимого токена.
 	//кошелек должен находится в режиме SIGNER.	
@@ -435,12 +470,25 @@ class WalletObj
 	    if (i >= this.assetsCount() || i < 0) {log("Invalid asset index ", i, ", assets count: ", this.assetsCount()); return -4;}
 
 	    log("SENDING ASSET:", this.assets[i].name, "/" ,this.assets[i].address);
+	    if (i==0) log("IS A NATIVE TOKEN");
 	    log("TO_WALLET:", to_addr);
 	    log("ASSET_AMOUNT:", sum, '\n');
 
     	    //prepare sum
     	    const bi_sum = m_base.fromReadableAmount(sum, this.assets[i].decimal);
-    	    log("BI sum format: ", bi_sum, '\n');
+    	    log("BI sum format: ", bi_sum, " / ", bi_sum.toString());
+    	    space();
+
+	    //prepare tx_params
+            let tx_params = {tx_kind: "transfer", value: bi_sum.toString()};
+	    tx_params.token_address = ""; //native coin
+	    if (i>0) tx_params.token_address = this.assets[i].address;  // any token       
+	    tx_params.target_address = to_addr;        
+            /////////////////////SEND TX///////////////////////////////////
+            const result = await this.tx_worker.sendTx(tx_params);
+            return result;
+
+/*
 
 	    //prepare tx_params
     	    const tx_count = await this.txCount();
@@ -451,7 +499,10 @@ class WalletObj
 	    if (i == 0) result = await this.sendNativeToken(to_addr, bi_sum, tx_count);
 	    else result = await this.sendAnyToken(i, to_addr, bi_sum, tx_count);
 	    return result;
+*/
+
 	}
+/*
 	async sendNativeToken(to_addr, bi_sum, tx_count) //private
 	{
 	    log("IS A NATIVE TOKEN");
@@ -484,68 +535,7 @@ class WalletObj
             catch(e) {log("ERROR:", e); return -5;}
             return true;
 	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        /////////////////////SEND TX///////////////////////////////////
-        async _sendTx(operation_params, operation_name) //protected metod
-        {
-            //prepare fee params
-            let fee_params = {};
-            this.gas.setFeeParams(fee_params);
-            log("fee_params:", fee_params, '\n');
-
-
-            // send tx
-            let tx_reply = {};
-            if (operation_name == "wrap")
-            {
-                try { tx_reply = await pm_conn.mint(operation_params, fee_params); }
-                catch(e) {log("ERROR:", e); return -4;}
-            }
-
-/*
-            const pm_conn = this.pm_contract.connect(this.wallet.signer);
-            if (operation_name == "mint")
-            {
-                try { tx_reply = await pm_conn.mint(operation_params, fee_params); }
-                catch(e) {log("ERROR:", e); return -4;}
-            }
-            else if (operation_name == "increase")
-            {
-                try { tx_reply = await pm_conn.increaseLiquidity(operation_params, fee_params); }
-                catch(e) {log("ERROR:", e); return -4;}
-            }
-            else if (operation_name == "decrease")
-            {
-                try { tx_reply = await pm_conn.decreaseLiquidity(operation_params, fee_params); }
-                catch(e) {log("ERROR:", e); return -4;}
-            }
-            else if (operation_name == "collect")
-            {
-                try { tx_reply = await pm_conn.collect(operation_params, fee_params); }
-                catch(e) {log("ERROR:", e); return -4;}
-            }
 */
-            else {log("ERROR: invalid operation_name ", operation_name); return -99;}
-            
-            //result operation OK
-            log("TX_REPLY:", tx_reply);
-            return {code: true, tx_hash: tx_reply.hash};
-        }
-
 
 };
 

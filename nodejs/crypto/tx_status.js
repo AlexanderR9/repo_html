@@ -6,6 +6,7 @@
 const m_wallet = require("./obj_wallet.js");
 const {space, log} = require("./utils.js");
 const {ArgsParser} = require("./obj_argsparser.js");
+const {TxWorkerObj} = require("./obj_txworker.js");
 
 
 let TX_HASH = "";
@@ -20,5 +21,6 @@ log(`TX_HASH = [${TX_HASH}]`);
 
 //body
 let w_obj = new m_wallet.WalletObj(process.env.WA2);
-w_obj.checkTxByHash(TX_HASH).then((res) => log("HASH checking has done. STATUS ", res));
+let tx_obj = new TxWorkerObj(w_obj);
+tx_obj.checkTxByHash(TX_HASH).then((res) => log("HASH checking has done. STATUS ", res));
 

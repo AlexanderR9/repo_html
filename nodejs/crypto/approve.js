@@ -25,8 +25,8 @@ const PRIOR_FEE = -1;  //Gweis
 let APPROVE_SUM = -1;
 let TOKEN_INDEX = 7; //USDC
 //let TOKEN_INDEX = 1; //WPOL
-const TO_ADDR = m_base.SWAP_ROUTER_ADDRESS; //кому одобрить (адрес контракта)
-//const TO_ADDR = m_base.POS_MANAGER_ADDRESS; //кому одобрить (адрес контракта)
+//const TO_ADDR = m_base.SWAP_ROUTER_ADDRESS; //кому одобрить (адрес контракта)
+const TO_ADDR = m_base.POS_MANAGER_ADDRESS; //кому одобрить (адрес контракта)
 
 //read input args
 let a_parser = new ArgsParser(process.argv);

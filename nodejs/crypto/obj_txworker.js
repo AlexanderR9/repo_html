@@ -52,6 +52,42 @@ class TxWorkerObj
 	fline += tx_reply.hash + " / " + tx_kind;
         fs.appendFileSync(F_LOG, (fline+'\n'));		
     }
+    //функция проверяет результат выполнения транзакции по ее хеш-значению, 
+    //возвращает код текущего состояния транзакции (-1 еще выполняется, 1 выполнена успешно, 0 транзакция завершилась но результат отрицательный)
+    async checkTxByHash(hash_value)
+    {
+        log("try check TX result by HASH:", hash_value, " .......");
+        const tx_state = await this.wallet.pv.getTransactionReceipt(hash_value);
+        if (!tx_state) {log("TX is executing else."); return -1;} //tx running else
+
+	//calc gas	
+	const gas_used = tx_state.gasUsed;
+	var gas_price = 0;
+	if (hasField(tx_state, "effectiveGasPrice")) gas_price = tx_state.effectiveGasPrice;
+	else
+	{
+    	    const tx = await this.wallet.pv.getTransaction(hash_value);
+	    gas_price = tx.gasPrice;
+    	    //log("TX: \n", tx);
+	    //space();    
+	}
+	gas_price = m_base.fromGwei(gas_price.toString());	
+	var gas_fee = gas_used*gas_price;
+	log("gas_used =", gas_used.toString());
+	log("gas_price =", gas_price, "  Gwei/ps");
+	log("gas_fee =", gas_fee, " Gwei");
+	log("gas_fee =", m_base.fromGwei(gas_fee).toString().slice(0,8), m_base.nativeToken());
+
+
+        if (tx_state.status == 1) {log("TX executed success"); return 1;}
+    
+        // finished with fail
+        log("TX executed with FAULT, status: ", tx_state.status);
+        log("TX: \n", tx_state);
+        return 0;
+    }       
+
+
     // признак того что тип транзакции относится PosManager operations
     _isPosManagerKind(tx_kind) //protected
     {
@@ -80,19 +116,20 @@ class TxWorkerObj
 
         log("try send transaction .................................................");
 	let tx_result = null;
-	if (params.tx_kind == "wrap") { tx_result = await this._wrap(params, fee_params);}
-	else if (params.tx_kind == "unwrap") { tx_result = await this._unwrap(params, fee_params);}
-	else if (params.tx_kind == "approve") { tx_result = await this._approve(params, fee_params);}
-	else if (params.tx_kind == "transfer") { tx_result = await this._transfer(params, fee_params);}
-	else if (this._isPosManagerKind(params.tx_kind)) { tx_result = await this._pmTx(params, fee_params);}
-	else if (params.tx_kind == "swap") { tx_result = await this._swap(params, fee_params);}
-	else {log("TxWorkerObj WARNING: invalid TX kind - ", params.tx_kind); return -103;}
+	let tx_kind = params.tx_kind;
+	if (tx_kind == "wrap") { tx_result = await this._wrap(params, fee_params);}
+	else if (tx_kind == "unwrap") { tx_result = await this._unwrap(params, fee_params);}
+	else if (tx_kind == "approve") { tx_result = await this._approve(params, fee_params);}
+	else if (tx_kind == "transfer") { tx_result = await this._transfer(params, fee_params);}
+	else if (this._isPosManagerKind(tx_kind)) { tx_result = await this._pmTx(params, fee_params);}
+	else if (tx_kind == "swap") { tx_result = await this._swap(params, fee_params);}
+	else {log("TxWorkerObj WARNING: invalid TX kind - ", tx_kind); return -103;}
 
 	if (!isJson(tx_result)) {log("TxWorkerObj WARNING: invalid TX result, code ", tx_result); return tx_result;} //TX sending fault
 
         //TX sent OK
         if (this.tx_debug) log("TX_REPLY:", tx_result);
-	this.addTxLog(tx_result, params.tx_kind); //add log record
+	this.addTxLog(tx_result, tx_kind); //add log record
         return {code: true, tx_hash: tx_result.hash};
     };
     ///////////////////PROTECTED SEND_TX METODS///////////////////////

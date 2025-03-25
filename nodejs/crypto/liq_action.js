@@ -94,7 +94,7 @@ else
 	    w_obj.setGas(3*GAS_LIMIT, 2*MAX_FEE);
 
 	    const p_index = 0; //при индексе 1 требуется конвертация ценового диапазона
-	    let p_range = {p1: 0.182, p2: 0.204};
+	    let p_range = {p1: 0.201, p2: 0.209};
 	    if (p_index == 1)
 	    {
 		const p_range0 = w_liq.LiqWorker.invertPrices(p_range);
@@ -105,7 +105,7 @@ else
 	    }
 
 	    
-	    const liq = {token0: -1, token1: 15};
+	    const liq = {token0: -1, token1: 20};
 	    liq_worker.tryMint(p_range.p1, p_range.p2, liq).then((data) => { log("minting pos result: ", data); });
 	    break;
 	}

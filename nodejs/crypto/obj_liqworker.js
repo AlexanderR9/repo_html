@@ -368,9 +368,9 @@ class LiqWorker
 	    let can_collect = false;	    
 	    for (var i=0; i<5; i++)
 	    {
-		log("wait dalay ..");
+		log("wait delay ..");
     		await delay(7000);	
-		const tx_res = await this.wallet.checkTxByHash(tx_reply.tx_hash);
+		const tx_res = await this.tx_worker.checkTxByHash(tx_reply.tx_hash);
 		if (isInt(tx_res))
 		{
 		    if (tx_res == 0) {log("STAGE_1: transaction was fail"); return -13;}
@@ -380,7 +380,6 @@ class LiqWorker
 	    if (!can_collect) {log("STAGE_1: transaction over timeout"); return -14;}
 	    space();	
 
-    
 	    //go to next stage, collect
     	    await delay(2000);	
 	    log("go to next stage [COLLECT] ..........");
@@ -410,44 +409,10 @@ class LiqWorker
 		return 9999;
 	    }
 
-
             operation_params.tx_kind = operation_name;
             /////////////////////SEND TX///////////////////////////////////
             const result = await this.tx_worker.sendTx(operation_params);
             return result;
-
-
-/*
-
-	    // send tx
-	    let tx_reply = {};
-	    const pm_conn = this.pm_contract.connect(this.wallet.signer);
-	    if (operation_name == "mint")
-	    {
-		try { tx_reply = await pm_conn.mint(operation_params, fee_params); }
-                catch(e) {log("ERROR:", e); return -4;}		
-	    }
-	    else if (operation_name == "increase")
-	    {
-		try { tx_reply = await pm_conn.increaseLiquidity(operation_params, fee_params); }
-                catch(e) {log("ERROR:", e); return -4;}		
-	    }
-	    else if (operation_name == "decrease")
-	    {
-		try { tx_reply = await pm_conn.decreaseLiquidity(operation_params, fee_params); }
-                catch(e) {log("ERROR:", e); return -4;}		
-	    }
-	    else if (operation_name == "collect")
-	    {
-		try { tx_reply = await pm_conn.collect(operation_params, fee_params); }
-                catch(e) {log("ERROR:", e); return -4;}		
-	    }
-	    else {log("ERROR: invalid operation_name ", operation_name); return -99;}
-
-	    //result operation OK
-            log("TX_REPLY:", tx_reply);
-	    return {code: true, tx_hash: tx_reply.hash};
-*/
 	}
 
 };

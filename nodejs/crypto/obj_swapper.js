@@ -45,21 +45,16 @@ class SwapperObj
         if (!varNumber(sum_in))  {log("WARNING: input SUM is not number_value, sum: ", sum_in); return -1;}
         if (sum_in < 0.01 || sum_in > 100000)  {log("WARNING: input SUM is not correct, sum:", sum_in); return -1;}
 
-
 	log(curTime(), "try get pool data", ".....");
 	log("POOL ADDRESS:", this.pool_addr);
 	const pool = m_base.getPoolContract(this.pool_addr, this.wallet.pv);
 	const p_data = await poolData(pool);
-        log("INFO: ", p_data);
-        space();
+        log("INFO: ", p_data, '\n');
 
 	log("get tokens data .....");
 	const t0 = await this.wallet.findAsset(p_data.t0_addr);
-	//log("T0:", t0);
 	const t1 = await this.wallet.findAsset(p_data.t1_addr);
-	//log("T1:", t1);
 	if (t0.decimal <= 0 || t1.decimal <= 0) {log("WARNING: can't token data on wallet"); return -1;}
-
 	
         const t_in = ((input_t == 0) ? t0 : t1);
         const t_out = ((input_t == 1) ? t0 : t1);
@@ -128,19 +123,6 @@ class SwapperObj
         log("input sum ", sum_in, " | BIG: ", bi_sum.toString());       
 	space();
 
-/*
-	//prepare TX params
-        log("set TX option params .....");
-        let tx_params = {};
-        this.wallet.gas.setFeeParams(tx_params);
-        const tx_count = await this.wallet.txCount();
-        log("tx_count:", tx_count);
-        tx_params.nonce = tx_count;
-        log("tx_params:", tx_params);
-        space();
-
-*/
-
         //prpare swap params
         const swap_params = {tx_kind: "swap", tokenIn: t_in.addr, tokenOut: t_out.addr, fee: p_obj.fee};
         swap_params.recipient = this.wallet.address;
@@ -165,24 +147,6 @@ class SwapperObj
         /////////////////////SEND TX///////////////////////////////////
         const result = await this.tx_worker.sendTx(swap_params);
         return result;
-
-
-
-/*
-
-
-        log("try swap ......");
-       ////////////////TX///////////////
-        const router_conn = this.router_contract.connect(this.wallet.signer);
-        log("send transaction ....");
-        try
-        {
-    	    const tx = await router_conn.exactInputSingle(swap_params, tx_params);
-            log("TX:", tx);
-        }
-        catch(e) {log("ERROR:", e); return -5;}
-        return true;
-*/
     }
         
 };

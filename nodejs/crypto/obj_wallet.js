@@ -48,7 +48,6 @@ class WalletAsset
 		log("   DECIMAL: ", this.decimal)
 		log("   BALANCE: ", this.balance)
 	}
-
 }
 
 //вспомогательный класс, служит для установки количества газа и максимального объема комисий
@@ -60,7 +59,7 @@ class TxGas
     {
 	this.gas_limit = 185000; //максимально единиц газа за транзакцию
 	this.max_fee = 130; //максимальная цена за единицу газа, gwei
-	this.priority = 45; //пожертвование за приоритет, gwei	
+	this.priority = 42; //пожертвование за приоритет, gwei	
     }
     update(g, m, p = -1)
     {
@@ -76,8 +75,6 @@ class TxGas
         txp.maxPriorityFeePerGas = m_base.toGwei(this.priority);
     }
 }
-
-
 
 //класс для работы с кошельком
 //сначала загружает информацию о токенах из файла token.txt, файл должен быть заранее подготовлен
@@ -96,7 +93,6 @@ class WalletObj
 		this.initNativeToken();
 		this.readFileTokens();
 	
-
 		this.signer = null;
 		this.gas = null;
 		if (private_key.length > 10)  
@@ -105,7 +101,7 @@ class WalletObj
 		    this.gas = new TxGas();
 		}
 
-		this.tx_worker = null;
+		this.tx_worker = null; //отправитель/обработчик транзакций
 		if (this.isSigner()) this.tx_worker = new TxWorkerObj(this);
   	}
 	//установка параметров трат коммисии на газ за предстоящую транзакцию.
@@ -251,7 +247,6 @@ class WalletObj
 	findAsset(t_addr)
 	{
 	    let result = {addr: t_addr.trim().toLowerCase(), ticker: "", decimal: -1};
-//	    log("find asset by address: ", result.addr, " .........");	    
 	    if (result.addr.length < 10) {log("Invalid input address"); return result;}
 	    if (this.assetsCount() <= 0) {log("Invalid assets container"); return result;}
     	    
@@ -266,9 +261,6 @@ class WalletObj
 	    }
 	    return result;
 	}
-
-
-
 	//функция определяет сколько единиц актива с индексом i предоставлено контракту to_addr.
 	//результат возвращается в нормализованных единицах.
 	async checkApproved(i, to_addr)
@@ -287,20 +279,6 @@ class WalletObj
     	    const result = await t_obj.allowance(this.address, to_addr);
 	    return m_base.toReadableAmount(result, this.assets[i].decimal);;	    
 	}
-	//функция проверяет результат выполнения транзакции по ее хеш-значению, 
-	//возвращает код текущего состояния транзакции (-1 еще выполняется, 1 выполнена успешно, 0 транзакция завершилась но результат отрицательный)
-	async checkTxByHash(hash_value)
-	{
-	    log("try check TX result by HASH:", hash_value, " .......");
-	    const tx_state = await this.pv.getTransactionReceipt(hash_value);
-	    if (!tx_state) {log("TX is executing else."); return -1;}
-	    else if (tx_state.status == 1) {log("TX executed success"); return 1;}
-
-	    // finished with fail
-    	    log("TX executed with FAULT, status: ", tx_state.status);
-	    log("TX: \n", tx_state);
-	    return 0;
-	}	
 
 
 	/////////////////////////////TRANSACTIONS FUNCS//////////////////////////////////////////
@@ -330,37 +308,12 @@ class WalletObj
 	    log("index of wraped token: ", i_wraped);	    	    
     	    space();
 
-
 	    //prepare tx params
             let tx_params = {tx_kind: "unwrap", value: bi_sum.toString()};
 	    tx_params.token_address = this.assets[i_wraped].address;        
             /////////////////////SEND TX///////////////////////////////////
             const result = await this.tx_worker.sendTx(tx_params);
             return result;
-
-
-
-/*
-
-	    //prepare fee params
-            log("set FEE  params .....");
-            let fee_params = {};
-            this.gas.setFeeParams(fee_params);
-            log("fee_params:", fee_params, '\n');
-	    
-	    //prepare WPOL tokenContract
-	    const wpolAbi = [	"function withdraw(uint256 amount) public"    ];
-    	    const t_obj = m_base.getContract(this.assets[i_wraped].address, wpolAbi, this.signer);	    
-    	    ///////////////////////////////TX//////////////////////////////////////////
-	    log("index of wraped token: ", i_wraped, ",  send transaction ................................");	    	    
-    	    try 
-	    {
-		const tx = await t_obj.withdraw(bi_sum, fee_params);
-    		log("TX_Response:", tx);      
-	    }
-	    catch(e) {log("ERROR:", e); return -4;}
-	    return true;
-*/
 	}
 	//TX_2. функция конвертирует нативный токен в завернутый тот же токен(внутри кошелька).
 	//для этого в списке токенов кошелька должен присутствовать токен вида  W<NATIVE_TICKER> (example: WPOL)
@@ -394,24 +347,6 @@ class WalletObj
             /////////////////////SEND TX///////////////////////////////////
             const result = await this.tx_worker.sendTx(wrap_params);
             return result;
- 
-	    
-            //this.gas.setFeeParams(wrap_params);
-            //log("TX_params:", wrap_params, '\n');
-	    
-	    //prepare WPOL tokenContract
-	    //const wpolAbi = [	"function deposit() public payable"    ];
-    	    //const t_obj = m_base.getContract(this.assets[i_wraped].address, wpolAbi, this.signer);	    
-    	    ///////////////////////////////TX//////////////////////////////////////////
-/*
-    	    try 
-	    {
-		const tx = await t_obj.deposit(wrap_params);
-    		log("TX_Response:", tx);      
-	    }
-	    catch(e) {log("ERROR:", e); return -4;}
-*/
-	    return true;
 	}
 	//TX_3. функция предоставляет актив с указанным индексом контракту to_addr. sum - количество предоставляемого токена.
 	//кошелек должен находится в режиме SIGNER.	
@@ -439,25 +374,6 @@ class WalletObj
             /////////////////////SEND TX///////////////////////////////////
             const result = await this.tx_worker.sendTx(tx_params);
             return result;
-
-
-/*
-    	    let tx_params = {};
-    	    this.gas.setFeeParams(tx_params);
-    	    const tx_count = await this.txCount();
-    	    tx_params.nonce = tx_count;
-    	    log("tx_params:", tx_params, "\n");
-
-    	    log("send transaction .....");
-    	    ///////////////////////////////TX//////////////////////////////////////////
-    	    const t_obj = m_base.getTokenContract(this.assets[i].address, this.signer);	    
-            let tx_reply = {};
-    	    try { tx_reply = await t_obj.approve(to_addr, approvalAmount, tx_params); }
-	    catch(e) {log("ERROR:", e); return -5;}
-
-    	    log("Approval reply:", tx_reply);      
-	    return {code: true, tx_hash: tx_reply.hash};
-*/
 	}
 	//TX_4. функция отправляет актив с указанным индексом на другой кошелек to_addr. sum - количество переводимого токена.
 	//кошелек должен находится в режиме SIGNER.	
@@ -487,55 +403,7 @@ class WalletObj
             /////////////////////SEND TX///////////////////////////////////
             const result = await this.tx_worker.sendTx(tx_params);
             return result;
-
-/*
-
-	    //prepare tx_params
-    	    const tx_count = await this.txCount();
-    	    log("tx_count:", tx_count);
-
-	    //transfer token
-	    let result = -9999;
-	    if (i == 0) result = await this.sendNativeToken(to_addr, bi_sum, tx_count);
-	    else result = await this.sendAnyToken(i, to_addr, bi_sum, tx_count);
-	    return result;
-*/
-
 	}
-/*
-	async sendNativeToken(to_addr, bi_sum, tx_count) //private
-	{
-	    log("IS A NATIVE TOKEN");
-    	    let tx_params = {to: to_addr, nonce: tx_count, value: bi_sum};
-    	    this.gas.setFeeParams(tx_params);
-    	    log("tx_params:", tx_params, '\n');
-	    ////////////////TX///////////////
-    	    log("send transaction ....");
-            try
-            {
-                const tx = await this.signer.sendTransaction(tx_params);
-                log("TX:", tx);
-            }
-            catch(e) {log("ERROR:", e); return -5;}
-            return true;
-	}
-	async sendAnyToken(i, to_addr, bi_sum, tx_count) //private
-	{
-    	    let tx_params = {nonce: tx_count};
-    	    this.gas.setFeeParams(tx_params);
-    	    log("tx_params:", tx_params, '\n');
-	    ////////////////TX///////////////
-            const t_obj = m_base.getTokenContract(this.assets[i].address, this.signer);
-    	    log("send transaction ....");
-            try
-            {
-                const tx = await t_obj.transfer(to_addr, bi_sum, tx_params);
-                log("TX:", tx);
-            }
-            catch(e) {log("ERROR:", e); return -5;}
-            return true;
-	}
-*/
 
 };
 

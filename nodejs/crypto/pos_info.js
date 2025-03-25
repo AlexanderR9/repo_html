@@ -92,7 +92,12 @@ else if (COMPLEX)
 	    //next stage
 	    pm.loadPidListFromFile();
 	    pm.updateArrPosData().then((result) => {	  
-		if (result) {pm.loadPosDataFromFile(); pm.outFull();}   
+		if (result) 
+		{
+		    pm.loadPosDataFromFile(); 
+		    pm.syncByPoolsFile();
+		    pm.outFull();
+		}   
 		else log("ERROR: can't getting pos data from chain");
 	    });  
 	}
@@ -118,6 +123,7 @@ else if (PID_VALUE > 0)
 	pos.out();  space();
 	log(pos.strTickRange());
 	log(pos.strPriceRange(0));
+	log(pos.strPriceRange(1));
 	log(pos.strAssetsAmount());
 	log(pos.strDepositedAssets(), '\n');
 

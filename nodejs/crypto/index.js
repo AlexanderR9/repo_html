@@ -15,6 +15,7 @@ const {PositionObj} = require("./obj_position.js");
 //const params = require('./params.json');
 //console.log(params);
 const {TxWorkerObj} = require("./obj_txworker.js");
+const {DateTimeObj} = require("./obj_dt.js");
 
 
 const POOL_ADDR = "0xb6e57ed85c4c9dbfef2a68711e9d6f36c56e0fcb";  // WPOL/USDC 0.5%
@@ -29,6 +30,38 @@ const MAX_FEE = 220;  //Gweis
 log("INFURA RPC_URL:", m_base.RPC_URL() );
 log("Current chain:", m_base.currentChain());
 log(`NATIVE_TOKEN (${m_base.nativeToken()})`);
+
+let dt = new DateTimeObj;
+dt.toDebug();
+log("year", dt.year(), "  month", dt.month());
+log("day", dt.monthDay(), "  left_days_year", dt.leftDaysYear());
+log("hour ", dt.hour());
+log("minute ", dt.minute());
+log("sec ", dt.second());
+
+/*
+const dt = new Date();
+log(dt);
+log("year: ", dt.getFullYear());
+log("month: ", dt.getMonth()+1);
+log("day: ", dt.getDate());
+log(dt.getHours(), dt.getMinutes(), dt.getSeconds(), dt.getMilliseconds());
+*/
+
+const dt2001 = new Date(2001, 0, 01, 03);
+const dt2025 = new Date(2025, 0, 01, 03);
+log(dt2001);
+log(dt2025);
+const d = (dt2025 - dt2001)/1000; //secs
+log(d/(3600*24));
+
+
+
+
+
+
+//log(dt.getFullYear());
+
 
 
 /*
@@ -62,10 +95,10 @@ log("---------------------------------");
 //tx_obj.addTxLog(tx_reply, "wrap");
 
 
-let w_obj = new m_wallet.WalletObj(process.env.WA2, process.env.WKEY);
+//let w_obj = new m_wallet.WalletObj(process.env.WA2, process.env.WKEY);
 //w_obj.setGas(GAS_LIMIT, MAX_FEE, PRIOR_FEE);
 //w_obj.txCount().then((data) => log("tx_count: ", data));
-w_obj.unwrapNative(2.55).then((result) => log("result: ", result));
+//w_obj.unwrapNative(2.55).then((result) => log("result: ", result));
 //w_obj.wrapNative(4.0).then((result) => log("result: ", result));
 
 

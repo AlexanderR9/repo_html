@@ -1,8 +1,10 @@
 
 //include modules
-const {space, log, curTime, varNumber, mergeJson, isJson, hasField, fileExist} = require("./utils.js");
+const {space, log, curTime, varNumber, isInt, mergeJson, isJson, hasField, fileExist, charRepeat} = require("./utils.js");
 const m_base = require("./base.js");
 const m_wallet = require("./obj_wallet.js");
+const {DateTimeObj} = require("./obj_dt.js");
+
 
 const fs = require("fs");
 const F_LOG = "tx.log";
@@ -11,13 +13,72 @@ const F_LOG = "tx.log";
 //вспомогательный класс для хранения данный одной транзакции
 class TxRecord
 {
-    constructor(hash)
+    constructor(hash = "")
     {
 	this.hash = hash; //основное поле - значение хеш транзакции
-	this.fee = -1;  //уплаченная комиссия за выполнение транзакции, Gwei
-	//this.date
+	this.dt = new  DateTimeObj(); //время отправки транзакции, инициализируется текущими DT
+//	this.dt.reset();
+	this.type = "---"; //тип операции, например approve
+	this.result = "?"; //результат выполнения, может принимать значения OK/FAULT/?, ? значит неизвестно или до сих пор выполняется 
+	this.chain = ""; //сеть в которой выполняется транзакция
+	this.fee = -1;  //полная уплаченная комиссия за выполнение транзакции, Gweis (-1 значит пока неизвестно, еще предстоит получить)
+//	this.fee_token = ""; //токен, которым платится комиссия за газ
+    }
+    invalid() {return (this.hash.length < 40 || this.dt.year() < 2024);}
+    //вернет строку для записи в файл логов
+    toFileLine()
+    {
+	let fline = this.dt.strDate() + " / " + this.dt.strTime(true) + " / ";
+	fline += (this.hash + " / " + this.chain + " / " + this.type + " / " + this.result + " / ");
+	fline += this.fee.toString();
+	if (this.fee > 0) 
+	    fline += ("(" + this.floatFee().toString() + m_base.feeTokenByChain(this.chain)  + ")");
+	return fline;    
+    }
+    //спарсит строку файла и записать значения структуры
+    fromFileLine(f_line)
+    {
+        let arr = f_line.split('/');
+        if (arr.length != 7) {log("WARNING: invalid fields count of TX record data:", f_line); return;}
+	
+	const sdt = arr[0].trim() + "  " + arr[1].trim();
+	this.dt.fromString(sdt);
+	this.hash = arr[2].trim();
+	this.chain = arr[3].trim();
+	this.type = arr[4].trim();
+	this.result = arr[5].trim();
+	this.fee = this._parseFee(arr[6]);
+	
+/*
+	const s_date = arr[0].trim();
+	const dt_arr = s_date.split(' ');	
+	this.dt.parseDate_invert(dt_arr[0]);
+	this.dt.fromString(dt_arr[dt_arr.length-1]);
+			
+	this.chain = m_base.currentChain();
+	//this.fee = 65465465;
+*/
 
     }
+    //реальное значении комисии в количестве токена сети
+    floatFee()
+    {
+	return (this.fee/(10**9)).toFixed(6); 
+    }
+    _parseFee(f_cell)
+    {
+	let s = f_cell.trim();
+	if (s.includes('('))
+	{
+	    const pos = s.indexOf('(');
+	    if (pos > 0) s = s.slice(0, pos);
+	}
+
+	const res = Number.parseInt(s);
+	if (isInt(res)) return res;
+	return -1;
+    }
+
 
 };
 
@@ -43,10 +104,51 @@ class TxWorkerObj
     {
 	this.wallet = w_obj;
 	this.tx_debug = true; //выводить полученный ответ из сети после отправки транзакции в debug
+	this.tx_list = []; //контейнер для загрузки/выгрузки лог файла записей транзакции типа TxRecord
     }
 
-    invalid() {return (this.wallet == null);}
+    invalid() {return (this.wallet == null);}	
+    txCount() {return this.tx_list.length;}
+    txEmpty() {return (this.txCount() == 0);}
     setTxDebug(b) {this.tx_debug = b;}
+
+    //загрузка записей транзакций из лог файла в контейнер tx_list
+    loadTxFile()
+    {
+	this.tx_list = [];
+        log("try get TX records from file [tx.log] ......");
+        if (!fs.existsSync(F_LOG)) {log("WARNING: pools file not found - ", F_LOG); return false;}
+
+        const data = fs.readFileSync(F_LOG);
+        let f_list = data.toString().split("\n");
+        for (let i=0; i<f_list.length; i++)
+        {
+	    const f_line = f_list[i].trim();
+	    if (f_line.length < 50) continue;
+	    if (f_line[0] == '#') continue;
+	    
+	    //log("f_line: ", f_line);
+	    let rec = new TxRecord();
+	    rec.fromFileLine(f_line);
+	    if (rec.invalid())
+	    {
+		log("TxWorkerObj: WARNING invalid parsing TX file line: ", f_line);
+		rec = null;
+	    }
+	    else this.tx_list.push(rec);
+	}
+	return (this.tx_list.length > 0);
+    }
+    //вывести в debug список TX записей
+    showTXList()
+    {
+	log(charRepeat('=', 30), " TX records ", charRepeat('=', 30));
+	if (this.txEmpty()) {log("TX list is empty!"); return;}
+
+	const n = this.txCount();
+	for (var i=0; i<n; i++)
+	    log(`${i+1}. `, this.tx_list[i].toFileLine());
+    }
 
     //после успешной отправки транзакции и получения ее хеша можно добавить соответствующую запись в файл логов
     addTxLog(tx_reply, tx_kind) 
@@ -55,16 +157,41 @@ class TxWorkerObj
 	if (!fileExist(F_LOG))
 	{
 	    log("TXWorker: log file [", F_LOG, "] not found");
-	    fline = "### DateTime / TX_hash / TX_kind";
+	    fline = "### Date / Time / TX_hash / Chain / TX_kind / Result / Gas fee";
 	    fs.writeFileSync(F_LOG, (fline+'\n'));
 	}
 
 	//add new record
+        let rec = new TxRecord(tx_reply.hash);
+	rec.chain = m_base.currentChain();
+	rec.type = tx_kind;
+        if (rec.invalid())
+	{
+	    log("TxWorkerObj: WARNING invalid TX record, can't write log_file ");
+	    rec = null;
+	    return;	
+	}
+
+/*
+	    rec.fromFileLine(f_line);
+	    if (rec.invalid())
+	    {
+		log("TxWorkerObj: WARNING invalid parsing TX file line: ", f_line);
+		rec = null;
+	    }
+	    else this.tx_list.push(rec);
+*/
+
+/*
         const dt = new Date(Date.now()); 	
 //	log(dt.toISOString().replace('T', ' ').split('.')[0]);
 	fline = dt.toISOString().replace('T', ' ').split('.')[0] + " / ";
 	fline += tx_reply.hash + " / " + tx_kind;
-        fs.appendFileSync(F_LOG, (fline+'\n'));		
+*/
+
+	fline = rec.toFileLine() + '\n'
+        fs.appendFileSync(F_LOG, fline);
+	rec = null;
     }
     //функция проверяет результат выполнения транзакции по ее хеш-значению, 
     //возвращает код текущего состояния транзакции (-1 еще выполняется, 1 выполнена успешно, 0 транзакция завершилась но результат отрицательный)
@@ -260,6 +387,21 @@ class TxWorkerObj
     }
     
 
+    //PROTECTED METOD
+    _saveTXListToFile()
+    {
+	log("try save TX list to log_file .......");
+	if (this.txEmpty()) {log("TX list is empty!"); return;}
+
+	const n = this.txCount();
+	for (var i=0; i<n; i++)
+	{
+	    const fline = this.tx_list[i].toFileLine() + '\n';
+	    if (i == 0) fs.writeFileSync("1.txt", fline);
+            else fs.appendFileSync("1.txt", fline);
+	}
+	log(`done, writed ${n} TX records!`);
+    }
 
 };
 

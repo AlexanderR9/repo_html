@@ -33,21 +33,18 @@ log(`NATIVE_TOKEN (${m_base.nativeToken()})`);
 
 let dt = new DateTimeObj;
 dt.toDebug();
-log("year", dt.year(), "  month", dt.month());
+//log("year", dt.year(), "  month", dt.month());
 log("day", dt.monthDay(), "  left_days_year", dt.leftDaysYear());
-log("hour ", dt.hour());
-log("minute ", dt.minute());
-log("sec ", dt.second());
+log(dt.strDate(), " / ", dt.strTime());
+//dt.setDate(2006, -1,  -1);
+//dt.setTime(17, -1, -1);
+//log(dt.strDate(), " / ", dt.strTime(true));
 
-/*
-const dt = new Date();
-log(dt);
-log("year: ", dt.getFullYear());
-log("month: ", dt.getMonth()+1);
-log("day: ", dt.getDate());
-log(dt.getHours(), dt.getMinutes(), dt.getSeconds(), dt.getMilliseconds());
-*/
+const mask = "25.5.2019    18:08";
+dt.fromString(mask);
+log(dt.strDate(), " / ", dt.strTime(true));
 
+space();
 const dt2001 = new Date(2001, 0, 01, 03);
 const dt2025 = new Date(2025, 0, 01, 03);
 log(dt2001);

@@ -30,14 +30,21 @@ function nativeToken() //for current chain
 }
 function currentChain()
 {
-	let s = nativeToken();
-	if (s == "POL") return "polygon";
-	if (s == "ARB") return "arbitrum";
-	if (s == "OP") return "optimism";
-	if (s == "BASE") return "base";
-	return "etherium"
+    let s = nativeToken();
+    if (s == "POL") return "polygon";
+    if (s == "ARB") return "arbitrum";
+    if (s == "OP") return "optimism";
+    if (s == "BASE") return "base";
+    return "etherium"
 }
-
+function feeTokenByChain(chain_name)
+{
+    const s = chain_name.toLowerCase().trim();
+    if (s == "polygon") return "POL";
+    if (s == "bnb") return "BNB";
+    if (s == "optimism" || s == "arbitrum") return "ETH";
+    return "none";
+}
 
 
 //standard funcs
@@ -116,6 +123,7 @@ module.exports = {
 	RPC_URL,
 	nativeToken,
 	currentChain,
+	feeTokenByChain,
 	fromGwei,
 	toBig,
 	MAX_BIG128,

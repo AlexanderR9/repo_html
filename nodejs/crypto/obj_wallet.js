@@ -153,7 +153,9 @@ class WalletObj
 			if (i==0) isnat = "(is_native)";
 			const t_len = this.assets[i].name.length;
 
-			let s = this.assets[i].number.toString()+".  ";			
+			let s = this.assets[i].number.toString()+".";			
+			s += Array(5-s.length).join(" ");			
+
 			if (with_addrs) s += (this.assets[i].address + "  ");
 			s += this.assets[i].name;
 			s += Array(16-t_len).join("_");			

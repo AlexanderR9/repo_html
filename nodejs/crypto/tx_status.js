@@ -27,15 +27,9 @@ else
 {
     const a = a_parser.at(0).trim();
     log("a = ", a);
-//    if (isInt(a))
-    {
-//	log("integer");
-	if (a == -1 || a == -2) LAST_NUMBER = Number.parseInt(a);
-	else TX_HASH = a;
-    }
-//    else TX_HASH = a;
+    if (a == -1 || a == -2) LAST_NUMBER = Number.parseInt(a);
+    else TX_HASH = a;
 }
-
 if (!SHOW_TX_LIST && LAST_NUMBER == 0)
 {
     //check hash correct value

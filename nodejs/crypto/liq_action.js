@@ -22,6 +22,7 @@ let NONE_ARGS = false;
 let LIQ_MODE = 0; // 1-mit_pos, 2-decrease_liq, 3-collect_fees, -1-error
 let POS_PID = -1; //PID позиции с которой совершаются некие действия
 let IS_SUMULATE = true; //поумолчанию скрипт только имитирует выполнение операции
+let IS_HELP = false;
 
 
 //read input args
@@ -32,6 +33,7 @@ if (!a_parser.isEmpty())
     else if (a_parser.at(0) == "remove") LIQ_MODE = 2;
     else if (a_parser.at(0) == "take") LIQ_MODE = 3;
     else if (a_parser.at(0) == "take_full") LIQ_MODE = 5;
+    else if (a_parser.at(0) == "-h") IS_HELP = true;
     else if (a_parser.at(0) == "add") LIQ_MODE = 4;
     else {log("ERROR: invalid argument ", a_parser.at(0)); LIQ_MODE = -1;}
 
@@ -45,6 +47,21 @@ if (!a_parser.isEmpty())
 	if (a_parser.at(i) == "no-simulate") IS_SUMULATE = false;
 }
 else NONE_ARGS = true;
+
+if (IS_HELP)
+{
+    log("------------script manual--------------");
+//    log("USER WALLET: ", WALLET)
+    log("KEY: mint", "   ACTION: create new position");
+    log("KEY: remove <pid_value>  [no-simulate]", "   ACTION: remove liquidity from position to unclaimed fees");
+    log("KEY: take <pid_value>  [no-simulate]", "   ACTION: take assets from unclaimed fees to user_wallet");
+    log("KEY: add <pid_value>  [no-simulate]", "   ACTION: add liquidity to position");
+    log("KEY: take_full <pid_value>  [no-simulate]", "   ACTION: take_full = remove + take");
+    log("KEY: [empty]", "   ACTION: getting all TX_count of wallet from chain");
+    return;
+}
+
+
 if (LIQ_MODE < 0) return;
 
 //константы для определения размера газа перед совершением транзакции
@@ -54,9 +71,9 @@ const MAX_FEE = 220;  //Gweis
 
 //адрес пула в котором добавляется/удаляется ликвидность (нужен только для операций 'mint' , 'add')
 //let POOL_ADDR = "0xb6e57ed85c4c9dbfef2a68711e9d6f36c56e0fcb";  // WPOL/USDC 0.5%
-let POOL_ADDR = "0x3d0acd52ee4a9271a0ffe75f9b91049152bac64b";  // USDC(PoS):LDO:0.3%
+//let POOL_ADDR = "0x3d0acd52ee4a9271a0ffe75f9b91049152bac64b";  // USDC(PoS):LDO:0.3%
 //let POOL_ADDR = "0xd36ec33c8bed5a9f7b6630855f1533455b98a418"; // USDC(PoS):USDC:0.01% 
-//let POOL_ADDR = "0xd866fac7db79994d08c0ca2221fee08935595b4b"; // WPOL:LDO:0.3%
+let POOL_ADDR = "0xd866fac7db79994d08c0ca2221fee08935595b4b"; // WPOL:LDO:0.3%
 
 //test debug
 log("INFURA RPC_URL:", process.env.INFURA_URL.toString());
@@ -93,8 +110,8 @@ else
 	    log("----------- MODE: mint new position --------------");
 	    w_obj.setGas(3*GAS_LIMIT, 2*MAX_FEE);
 
-	    const p_index = 1; //при индексе 1 требуется конвертация ценового диапазона
-	    let p_range = {p1: 1.06, p2: 1.12};
+	    const p_index = 0; //при индексе 1 требуется конвертация ценового диапазона
+	    let p_range = {p1: 0.211, p2: 0.265};
 	    if (p_index == 1)
 	    {
 		const p_range0 = w_liq.LiqWorker.invertPrices(p_range);
@@ -105,7 +122,7 @@ else
 	    }
 
 	    
-	    const liq = {token0: -1, token1: 30};
+	    const liq = {token0: -1, token1: 10};
 	    liq_worker.tryMint(p_range.p1, p_range.p2, liq).then((data) => { log("minting pos result: ", data); });
 	    break;
 	}

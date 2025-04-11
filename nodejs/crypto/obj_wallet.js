@@ -201,11 +201,13 @@ class WalletObj
 			for (let i=0; i<n; i++)
 				this.assets[i].balance = result[i];
 			log("tokens balance updated!!");
+			return true;
 		}
 		else 
 		{
 			log("error updating");
 			log("result", result, "   size=", result.length);
+			return false;
 		}
 		
 	}
@@ -263,6 +265,18 @@ class WalletObj
 	    }
 	    return result;
 	}
+	//функция ищет по адресу контракта актив кошелька из контейнера this.assets.
+	//возвращает индекс найденого актива в массиве this.assets, или -1.
+	assetIndexOf(t_addr)
+	{
+	    t_addr = t_addr.trim().toLowerCase();
+	    for (let i=0; i<this.assets.length; i++)
+	    {
+		const i_addr = this.assets[i].address.trim().toLowerCase();
+		if (i_addr == t_addr) return i;
+	    }
+	    return -1;
+	}
 	//функция определяет сколько единиц актива с индексом i предоставлено контракту to_addr.
 	//результат возвращается в нормализованных единицах.
 	async checkApproved(i, to_addr)
@@ -278,7 +292,10 @@ class WalletObj
 	    
 	    //try send request 
     	    const t_obj = m_base.getTokenContract(this.assets[i].address, this.pv);
-    	    const result = await t_obj.allowance(this.address, to_addr);
+
+	    let result = -1;
+            try {  result = await t_obj.allowance(this.address, to_addr); }
+            catch(e) {log("ERROR:", e); return -1;}
 	    return m_base.toReadableAmount(result, this.assets[i].decimal);;	    
 	}
 

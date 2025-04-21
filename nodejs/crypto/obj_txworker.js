@@ -197,35 +197,43 @@ class TxWorkerObj
     //возвращает код текущего состояния транзакции (-1 еще выполняется, 1 выполнена успешно, 0 транзакция завершилась но результат отрицательный)
     async checkTxByHash(hash_value)
     {
+	let result = {status: -1, finished: false};
         log("try check TX result by HASH:", hash_value, " .......");
         const tx_state = await this.wallet.pv.getTransactionReceipt(hash_value);
-        if (!tx_state) {log("TX is executing else."); return -1;} //tx running else
+        if (!tx_state) {log("TX is executing else."); return result;} //tx running else
+	else result.finished = true;
 
 	//calc gas	
 	const gas_used = tx_state.gasUsed;
 	var gas_price = 0;
-	if (hasField(tx_state, "effectiveGasPrice")) gas_price = tx_state.effectiveGasPrice;
+	if (hasField(tx_state, "effectiveGasPrice")) 	
+	{
+	    gas_price = tx_state.effectiveGasPrice;
+	}
 	else
 	{
     	    const tx = await this.wallet.pv.getTransaction(hash_value);
 	    gas_price = tx.gasPrice;
-    	    //log("TX: \n", tx);
-	    //space();    
 	}
 	gas_price = m_base.fromGwei(gas_price.toString());	
 	var gas_fee = gas_used*gas_price;
 	log("gas_used =", gas_used.toString());
 	log("gas_price =", gas_price, "  Gwei/ps");
-	log("gas_fee =", gas_fee, " Gwei");
-	log("gas_fee =", m_base.fromGwei(gas_fee).toString().slice(0,8), m_base.nativeToken());
+	log("gas_fee =", gas_fee, " Gwei"); // fee in gweis
+	gas_fee = m_base.fromGwei(gas_fee).toString().slice(0,8), m_base.nativeToken();
+	log("gas_fee =", gas_fee); // fee in native tokens
 
-
-        if (tx_state.status == 1) {log("TX executed success"); return 1;}
+	result.fee = gas_fee;
+        result.status = ((tx_state.status == 1) ? 1 : 0);
     
         // finished with fail
-        log("TX executed with FAULT, status: ", tx_state.status);
-        log("TX: \n", tx_state);
-        return 0;
+	if (result.status == 0)
+	{
+    	    log("TX executed with FAULT, status: ", tx_state.status);
+            log("TX: \n", tx_state);
+	}
+	else log("TX executed success"); 
+        return result;
     }       
 
 

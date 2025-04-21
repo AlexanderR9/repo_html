@@ -73,7 +73,8 @@ const MAX_FEE = 220;  //Gweis
 //let POOL_ADDR = "0xb6e57ed85c4c9dbfef2a68711e9d6f36c56e0fcb";  // WPOL/USDC 0.5%
 //let POOL_ADDR = "0x3d0acd52ee4a9271a0ffe75f9b91049152bac64b";  // USDC(PoS):LDO:0.3%
 //let POOL_ADDR = "0xd36ec33c8bed5a9f7b6630855f1533455b98a418"; // USDC(PoS):USDC:0.01% 
-let POOL_ADDR = "0xd866fac7db79994d08c0ca2221fee08935595b4b"; // WPOL:LDO:0.3%
+//let POOL_ADDR = "0xd866fac7db79994d08c0ca2221fee08935595b4b"; // WPOL:LDO:0.3%
+let POOL_ADDR = "0x4d05f2a005e6f36633778416764e82d1d12e7fbb"; // WPOL:CRV:0.3%
 
 //test debug
 log("INFURA RPC_URL:", process.env.INFURA_URL.toString());
@@ -111,7 +112,7 @@ else
 	    w_obj.setGas(3*GAS_LIMIT, 2*MAX_FEE);
 
 	    const p_index = 0; //при индексе 1 требуется конвертация ценового диапазона
-	    let p_range = {p1: 0.211, p2: 0.265};
+	    let p_range = {p1: 0.3, p2: 0.335};
 	    if (p_index == 1)
 	    {
 		const p_range0 = w_liq.LiqWorker.invertPrices(p_range);
@@ -122,7 +123,7 @@ else
 	    }
 
 	    
-	    const liq = {token0: -1, token1: 10};
+	    const liq = {token0: 100, token1: -1};
 	    liq_worker.tryMint(p_range.p1, p_range.p2, liq).then((data) => { log("minting pos result: ", data); });
 	    break;
 	}

@@ -27,8 +27,8 @@ const m_pool = require("./obj_pool.js");
 const m_swapper = require("./obj_swapper.js");
 
 //константы для определения размера газа перед совершением транзакции
-const GAS_LIMIT = 365000; //единиц газа за транзакцию
-const MAX_FEE = 280;  //Gweis
+const GAS_LIMIT = 490000; //единиц газа за транзакцию
+const MAX_FEE = 340;  //Gweis
 const PRIOR_FEE = -1;  //Gweis
 
 

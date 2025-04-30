@@ -371,11 +371,19 @@ class LiqWorker
 		log("wait delay ..");
     		await delay(7000);	
 		const tx_res = await this.tx_worker.checkTxByHash(tx_reply.tx_hash);
+		if (!tx_res.finished) {log("transaction not finished yet"); conitnue;}
+
+		if (tx_res.status == 0) {log("STAGE_1: transaction was fail"); return -13;}
+		if (tx_res.status == 1) {log("STAGE_1: transaction SUCCESSED"); can_collect=true; break;}
+
+
+/*
 		if (isInt(tx_res))
 		{
 		    if (tx_res == 0) {log("STAGE_1: transaction was fail"); return -13;}
 		    if (tx_res == 1) {log("STAGE_1: transaction SUCCESSED"); can_collect=true; break;}
 		}
+*/
 	    }
 	    if (!can_collect) {log("STAGE_1: transaction over timeout"); return -14;}
 	    space();	

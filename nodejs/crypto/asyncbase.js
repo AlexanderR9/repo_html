@@ -54,17 +54,13 @@ async function tokenData(t_addr, pv)
 async function feeGas(provider)
 {
         let result = { };
+//	log("stage 1");
         const data = await provider.getFeeData();
-//	log("provider.getFeeData:", data);
-//	result.baseFeePerGas = data.lastBaseFeePerGas.toNumber().toString()+" GWei"; //базовая транзакция в последнем блоке
-//	result.maxFeePerGas = data.maxFeePerGas.toNumber();
-//	result.maxPriorityFeePerGas = data.maxPriorityFeePerGas.toNumber();
 
 	result.baseFeePerGas = data.lastBaseFeePerGas.toString()+" GWei"; //базовая транзакция в последнем блоке
 	result.maxFeePerGas = data.maxFeePerGas.toString();
 	result.maxPriorityFeePerGas = data.maxPriorityFeePerGas.toString();
-
-//	result.gasPrice = data.gasPrice.toNumber();
+//	log("stage 3");
         return result;
 }
 ///информация о сети к которой подключен провайдер

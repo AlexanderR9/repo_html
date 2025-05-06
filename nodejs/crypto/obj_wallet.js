@@ -180,6 +180,7 @@ class WalletObj
 		if (i == 0)
 		{	
 			const result = await this.balanceNative();
+			log("balanceNative: ", result);
 			return result;		
 		}
 		if (i >= this.assetsCount() || i < 0)
@@ -401,7 +402,7 @@ class WalletObj
 	    log("try transfer asset ......");
 	    if (!this.isSigner()) {log("WARNING: wallet object is not SIGNER!!!"); return -1;}
 	    if (!varNumber(sum))  {log("WARNING: transfer SUM is not number_value, sum: ", sum); return -2;}
-	    if (sum < 0.01 || sum > 1000)  {log("WARNING: transfer SUM is not correct, sum:", sum); return -3;}
+	    if (sum < 0.0001 || sum > 1000)  {log("WARNING: transfer SUM limit is not correct, sum:", sum); return -3;}
 	    if (i >= this.assetsCount() || i < 0) {log("Invalid asset index ", i, ", assets count: ", this.assetsCount()); return -4;}
 
 	    log("SENDING ASSET:", this.assets[i].name, "/" ,this.assets[i].address);

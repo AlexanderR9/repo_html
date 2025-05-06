@@ -19,9 +19,18 @@ const m_wallet = require("./obj_wallet.js");
 const {ArgsParser} = require("./obj_argsparser.js");
 
 //константы для определения размера газа перед совершением транзакции
+//  for POLYGON
 const GAS_LIMIT = 265000; //единиц газа за транзакцию
 const MAX_FEE = 220;  //Gweis
 const PRIOR_FEE = -1;  //Gweis
+
+//  for ARBITRUM
+/*
+const GAS_LIMIT = 65000; //единиц газа за транзакцию
+const MAX_FEE = 0.012;  //Gweis
+const PRIOR_FEE = 0.004;  //Gweis
+*/
+
 
 
 // user vars

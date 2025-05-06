@@ -11,14 +11,39 @@ const {abi: ROUTER_ABI} = require("./abi/ISwapRouter.json");
 const {abi: POS_MANAGER_ABI} = require("./abi/INonfungiblePositionManager.json");
 const ERC20_ABI = require("./abi/erc20.abi.json");
 
-const READABLE_FORM_LEN = 8;
+const READABLE_FORM_LEN = 12;
 const TICK_QUANTUM = 1.0001;	
 const SWAP_ROUTER_ADDRESS='0xE592427A0AEce92De3Edee1F18E0157C05861564';
 const POS_MANAGER_ADDRESS='0xC36442b4a4522E871399CD717aBDD847Ab11FE88';
 const QUOTER_CONTRACT_ADDRESS='0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6';
 
 
-const RPC_URL = () => (process.env.INFURA_URL.toString() + "/" + process.env.INFURA_KEY.toString()); 
+function currentChain()
+{
+    let s = process.env.INFURA_URL.toString().toLowerCase();
+    if (s.includes("polygon")) return "polygon";
+    if (s.includes("optimism")) return "optimism";
+    if (s.includes("arbitrum")) return "arbitrum";
+    if (s.includes("base")) return "base";
+    if (s.includes("binance")) return "bnb";
+    return "etherium"
+}
+function nativeToken() //for current chain, fee pay token
+{
+	let s = currentChain();
+	if (s == "polygon") return "POL";
+	if (s == "bnb") return "BNB";
+	return "ETH";	
+}
+function RPC_URL()
+{
+    const serv = process.env.INFURA_URL.toString();
+    let s = currentChain();
+    if (s == "bnb") return serv;
+    return (serv + "/" + process.env.INFURA_KEY.toString()); 
+}
+
+/*
 function nativeToken() //for current chain
 {
 	let s = RPC_URL().toLowerCase();
@@ -45,6 +70,7 @@ function feeTokenByChain(chain_name)
     if (s == "optimism" || s == "arbitrum") return "ETH";
     return "none";
 }
+*/
 
 
 //standard funcs
@@ -123,7 +149,7 @@ module.exports = {
 	RPC_URL,
 	nativeToken,
 	currentChain,
-	feeTokenByChain,
+//	feeTokenByChain,
 	fromGwei,
 	toBig,
 	MAX_BIG128,

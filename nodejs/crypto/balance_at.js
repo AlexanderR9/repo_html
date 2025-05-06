@@ -16,6 +16,11 @@ const {ArgsParser} = require("./obj_argsparser.js");
 let WALLET_NUMBER = 2;
 let WITH_ADDRS = false;
 
+log("INFURA RPC_URL:", m_base.RPC_URL() );
+log("Current chain:", m_base.currentChain());
+log(`NATIVE_TOKEN (${m_base.nativeToken()})`);
+
+
 //read input args
 let a_parser = new ArgsParser(process.argv);
 if (!a_parser.isEmpty() && a_parser.isNumber(0))  

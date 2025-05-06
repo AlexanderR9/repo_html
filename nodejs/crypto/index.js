@@ -16,6 +16,8 @@ const {PositionObj} = require("./obj_position.js");
 //console.log(params);
 const {TxWorkerObj} = require("./obj_txworker.js");
 const {DateTimeObj} = require("./obj_dt.js");
+const {tokenData} = require("./asyncbase.js");
+
 
 
 const POOL_ADDR = "0xb6e57ed85c4c9dbfef2a68711e9d6f36c56e0fcb";  // WPOL/USDC 0.5%
@@ -33,6 +35,18 @@ log(`NATIVE_TOKEN (${m_base.nativeToken()})`);
 
 let dt = new DateTimeObj;
 dt.toDebug();
+space();
+
+
+let w_obj = new m_wallet.WalletObj(process.env.WA2);
+w_obj.out();
+
+tokenData(w_obj.assets[8].address, w_obj.pv).then((data) => log(data));
+
+
+
+return 1;
+
 //log("year", dt.year(), "  month", dt.month());
 log("day", dt.monthDay(), "  left_days_year", dt.leftDaysYear());
 log(dt.strDate(), " / ", dt.strTime());

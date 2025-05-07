@@ -217,11 +217,15 @@ class TxWorkerObj
 	}
 	gas_price = m_base.fromGwei(gas_price.toString());	
 	var gas_fee = gas_used*gas_price;
-	log("gas_used =", gas_used.toString());
-	log("gas_price =", gas_price, "  Gwei/ps");
-	log("gas_fee =", gas_fee, " Gwei"); // fee in gweis
-	gas_fee = m_base.fromGwei(gas_fee).toString().slice(0,8), m_base.nativeToken();
-	log("gas_fee =", gas_fee); // fee in native tokens
+	log("gas_used =", gas_used.toString()); //общее количество потраченного газа (единиц)
+	log("gas_price =", gas_price, "  Gwei/ps"); //цена за 1 единицу газа (в гвейях)
+
+	result.fee_gw = gas_fee.toFixed(2);
+	log("gas_fee =", result.fee_gw, " Gweis"); // цена газа (в гвейях) за всю транзакцию
+
+//	gas_fee = m_base.fromGwei(gas_fee).toString().slice(0,8), m_base.nativeToken();
+	gas_fee = m_base.fromGwei(result.fee_gw).toString().slice(0,12);
+	log("gas_fee =", gas_fee, m_base.nativeToken()); // fee in native tokens
 
 	result.fee = gas_fee;
         result.status = ((tx_state.status == 1) ? 1 : 0);

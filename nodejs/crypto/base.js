@@ -123,7 +123,7 @@ function toReadableAmount(rawAmount, decimals = 18)
   return ethers.utils.formatUnits(rawAmount, decimals).slice(0, READABLE_FORM_LEN);
 }
 const toGwei = (float_num) => { return float_num*(10**9); } 
-const fromGwei = (int_num) => { return int_num/(10**9); }
+const fromGwei = (float_num) => { return (float_num/(10**9)); }
 const toBig = (sum) => {return ethers.BigNumber.from(sum.toString());}
 
 // MAX_VALUE UINT128, to Collect All value

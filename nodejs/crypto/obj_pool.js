@@ -105,7 +105,7 @@ class PoolObj
 		    return;
 		}
 	    }
-            let fline = p_addr  + " / " + this.baseInfo();
+            let fline = m_base.currentChain() + " / " + p_addr  + " / " + this.baseInfo();
 	    fline += " / " + this.T0.address.toLowerCase() + " / " + this.T1.address.toLowerCase() + " / " + this.fee;
 	    fs.appendFileSync(POOL_FILE, (fline + '\n'));
 	    log("done!");
@@ -126,14 +126,16 @@ class PoolObj
                 if (fline.slice(0, 1) == "#") continue;
 
                 let row_list = fline.toString().split("/");
-                if (row_list.length != 5) continue;
+                if (row_list.length != 6) continue;
 
+		var k = 0;    
 		let p_data = {};
-		p_data.addr = row_list[0].trim();
-		p_data.info = row_list[1].trim();
-		p_data.t0_addr = row_list[2].trim();
-		p_data.t1_addr = row_list[3].trim();
-		p_data.fee = parseInt(row_list[4].trim());
+		p_data.chain = row_list[k].trim(); k++;
+		p_data.addr = row_list[k].trim(); k++;
+		p_data.info = row_list[k].trim(); k++;
+		p_data.t0_addr = row_list[k].trim(); k++;
+		p_data.t1_addr = row_list[k].trim(); k++;
+		p_data.fee = parseInt(row_list[k].trim()); k++;
 		result.push(p_data);
 
             }

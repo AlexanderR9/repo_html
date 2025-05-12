@@ -1,5 +1,6 @@
 
 //скрипт возвращает текущее состояние пула, номер тика и цены активов относительно друг друга token0/token1
+//а так же TVL в виде двух значений: количество внесенных tvl0/tvl1
 //ARG_1
 // один обязательный аргумент - json file со следующими полями:
 //EXAMPLE
@@ -9,7 +10,8 @@
     "fee": 3000,
     "tick_space": 60,
     "token0": "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
-    "token1": "0xd6df932a45c0f255f85145f286ea0b292b21c90b"
+    "token1": "0xd6df932a45c0f255f85145f286ea0b292b21c90b",
+    
 }
 */
 
@@ -97,7 +99,17 @@ try
 	result.tick = p_obj.state.tick;
 	result.price0 = p_obj.T0.price.toFixed(8);
 	result.price1 = p_obj.T1.price.toFixed(8);
-	sendResult();
+
+	//get TVL
+	p_obj.updateTVL().then(() => 
+	{
+	    space(); 
+	    p_obj.showTVL();
+	    result.tvl0 = p_obj.T0.tvl;
+	    result.tvl1 = p_obj.T1.tvl;
+	    sendResult();
+	});
+
     });
 
 }

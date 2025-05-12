@@ -15,6 +15,7 @@ class TokenObj
 		this.decimal = -1;
 		this.ticker = "none";
 		this.price = 0; //price of this token in term other token
+		this.tvl = 0; //хранит привычный пользовательский float
   	}
 	invalid()
 	{
@@ -136,6 +137,8 @@ class PoolObj
 		p_data.t0_addr = row_list[k].trim(); k++;
 		p_data.t1_addr = row_list[k].trim(); k++;
 		p_data.fee = parseInt(row_list[k].trim()); k++;
+		if (p_data.chain != m_base.currentChain()) continue;
+
 		result.push(p_data);
 
             }
@@ -171,6 +174,21 @@ class PoolObj
 		await Promise.all([this.T0.update(this.pv), this.T1.update(this.pv)]);
 		if (with_state) await this.updateState();
 		log("done!");
+	}
+	//функция извлекает текущий TVL каждого из пары токенов в пуле.
+	async updateTVL()
+	{
+	    log("PoolObj: try get TVL ...........");
+            const t_obj0 = m_base.getTokenContract(this.T0.address, this.pv);
+            const t_obj1 = m_base.getTokenContract(this.T1.address, this.pv);
+	    const [tvl0, tvl1] = await Promise.all([ t_obj0.balanceOf(this.address), t_obj1.balanceOf(this.address) ]);
+	    this.T0.tvl = m_base.toReadableAmount(tvl0, this.T0.decimal);
+	    this.T0.tvl = Number.parseFloat(this.T0.tvl).toFixed(2);
+	    this.T1.tvl = m_base.toReadableAmount(tvl1, this.T1.decimal);
+	    this.T1.tvl = Number.parseFloat(this.T1.tvl).toFixed(2);
+	    //log("T0.tvl=", this.T0.tvl,this.T0.ticker);
+	    //log("T1.tvl=",this.T1.tvl,this.T1.ticker);
+	    log("done!");
 	}
 	recalcPrices()
 	{
@@ -209,6 +227,45 @@ class PoolObj
 		log(s);
 		s = "Token_1:  1 " + this.T1.ticker + " = " + this.T1.strPrice() + " " + this.T0.ticker;
 		log(s);
+	}
+	showTVL()
+	{
+		var sum_tvl_st = Number.parseFloat(-1);
+		log("////////// Current TVL sizes of pool //////////////")
+		let s = "T0.tvl=" + this.T0.tvl.toString() + " " +  this.T0.ticker;
+
+//		log("sum_tvl_st1 = ", sum_tvl_st);
+
+		if (!this.T0.isStable() && this.T1.isStable())		
+		{
+		    const tvl0_st = this.T0.tvl*this.T0.price;
+		    s += (" (" + tvl0_st.toFixed(1).toString() + " " +  this.T1.ticker + ")");
+		    sum_tvl_st = Number.parseFloat(tvl0_st);
+//		log("sum_tvl_st2 = ", sum_tvl_st);
+
+		}
+		else if (this.T0.isStable()) sum_tvl_st = this.T0.tvl;		
+		log(s);
+
+    
+//		log("sum_tvl_st3 = ", sum_tvl_st);
+
+		s = "T1.tvl=" + this.T1.tvl.toString() + " " + this.T1.ticker;
+		if (!this.T1.isStable() && this.T0.isStable())		
+		{
+		    const tvl1_st = this.T1.tvl*this.T1.price;
+		    s += (" (" + tvl1_st.toFixed(1).toString() + " " +  this.T0.ticker + ")");
+		    sum_tvl_st = Number.parseFloat(sum_tvl_st) + Number.parseFloat(tvl1_st);
+
+//		log("sum_tvl_st4 = ", sum_tvl_st);
+
+		}
+		else if (this.T1.isStable()) sum_tvl_st = Number.parseFloat(sum_tvl_st) + Number.parseFloat(this.T1.tvl);		
+		log(s);
+
+		sum_tvl_st/=1000;
+		//log("sum_tvl_st = ", sum_tvl_st);
+		if (sum_tvl_st > 1) log("TOTAL_TVL: ", sum_tvl_st.toFixed(1), "k_USD")
 	}
 
 

@@ -41,7 +41,7 @@ space();
 let w_obj = new m_wallet.WalletObj(process.env.WA2);
 w_obj.out();
 
-tokenData(w_obj.assets[8].address, w_obj.pv).then((data) => log(data));
+tokenData(w_obj.assets[4].address, w_obj.pv).then((data) => log(data));
 
 
 

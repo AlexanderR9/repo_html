@@ -115,8 +115,9 @@ else
 	    log("----------- MODE: mint new position --------------");
 	    w_obj.setGas(3*GAS_LIMIT, 2*MAX_FEE);
 
+	    //ВНИМАНИЕ: перед отправкой mint  проверить - достаточно ли апрувно соответствующих токенов
 	    const p_index = 0; //при индексе 1 требуется конвертация ценового диапазона
-	    let p_range = {p1: 0.2504, p2: 0.2855};
+	    let p_range = {p1: 0.2508, p2: 0.2855};
 	    if (p_index == 1)
 	    {
 		const p_range0 = w_liq.LiqWorker.invertPrices(p_range);

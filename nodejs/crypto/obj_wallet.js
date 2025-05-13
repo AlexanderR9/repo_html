@@ -375,7 +375,7 @@ class WalletObj
 	    log("try approve asset ......");
 	    if (!this.isSigner()) {log("WARNING: wallet object is not SIGNER!!!"); return -1;}
 	    if (!varNumber(sum))  {log("WARNING: approvig SUM is not number_value, sum: ", sum); return -2;}
-	    if (sum < 0.01 || sum > 1000)  {log("WARNING: approvig SUM is not correct, sum:", sum); return -3;}
+	    if (sum < 0.01 || sum > 10000)  {log("WARNING: approvig SUM is not correct, sum:", sum); return -3;}
 	    if (i >= this.assetsCount() || i < 0) {log("Invalid asset index ", i, ", assets count: ", this.assetsCount()); return -4;}
 	    
 	    log("ASSET:", this.assets[i].name, "/" ,this.assets[i].address);

@@ -14,7 +14,9 @@ const ERC20_ABI = require("./abi/erc20.abi.json");
 const READABLE_FORM_LEN = 12;
 const TICK_QUANTUM = 1.0001;	
 const SWAP_ROUTER_ADDRESS='0xE592427A0AEce92De3Edee1F18E0157C05861564';
+const SWAP_ROUTER_BNB_ADDRESS='0x1b81D678ffb9C0263b24A97847620C99d213eB14';
 const POS_MANAGER_ADDRESS='0xC36442b4a4522E871399CD717aBDD847Ab11FE88';
+const POS_MANAGER_BNB_ADDRESS='0x46A15B0b27311cedF172AB29E4f4766fbE7F4364';
 const QUOTER_CONTRACT_ADDRESS='0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6';
 
 
@@ -42,35 +44,6 @@ function RPC_URL()
     if (s == "bnb") return serv;
     return (serv + "/" + process.env.INFURA_KEY.toString()); 
 }
-
-/*
-function nativeToken() //for current chain
-{
-	let s = RPC_URL().toLowerCase();
-	if (s.includes("polygon")) return "POL";
-	if (s.includes("optimism")) return "OP";
-	if (s.includes("arbitrum")) return "ARB";
-	if (s.includes("base")) return "BASE";
-	return "ETH";	
-}
-function currentChain()
-{
-    let s = nativeToken();
-    if (s == "POL") return "polygon";
-    if (s == "ARB") return "arbitrum";
-    if (s == "OP") return "optimism";
-    if (s == "BASE") return "base";
-    return "etherium"
-}
-function feeTokenByChain(chain_name)
-{
-    const s = chain_name.toLowerCase().trim();
-    if (s == "polygon") return "POL";
-    if (s == "bnb") return "BNB";
-    if (s == "optimism" || s == "arbitrum") return "ETH";
-    return "none";
-}
-*/
 
 
 //standard funcs
@@ -100,18 +73,14 @@ function getQuoterContract(provider)
 }
 function getRouterContract(provider)
 {
-  return getContract(SWAP_ROUTER_ADDRESS, ROUTER_ABI, provider);			
+    const swr_addr = ((currentChain() == "bnb") ? SWAP_ROUTER_BNB_ADDRESS : SWAP_ROUTER_ADDRESS);
+    return getContract(swr_addr, ROUTER_ABI, provider);			
 }
 function getPosManagerContract(provider)
 {
-  return getContract(POS_MANAGER_ADDRESS, POS_MANAGER_ABI, provider);			
+    const pm_addr = ((currentChain() == "bnb") ? POS_MANAGER_BNB_ADDRESS : POS_MANAGER_ADDRESS);
+    return getContract(pm_addr, POS_MANAGER_ABI, provider);			
 }
-/*
-function getRouterObj(provider)
-{
-  return new AlphaRouter({chainId: m_const.CHAIN_ID, provider });			
-}
-*/
 
 //convert funcs
 function fromReadableAmount(amount, decimals = 18)
@@ -142,14 +111,12 @@ module.exports = {
 	getQuoterContract,
 	getRouterContract,
 	getPosManagerContract,
-//	getRouterObj,
 	fromReadableAmount,
 	toReadableAmount,
 	toGwei,
 	RPC_URL,
 	nativeToken,
 	currentChain,
-//	feeTokenByChain,
 	fromGwei,
 	toBig,
 	MAX_BIG128,

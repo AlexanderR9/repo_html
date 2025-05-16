@@ -45,11 +45,11 @@ if (!isJson(j_params)) {sendErrResult("can't readed JSON data"); return;}
 log("JSON parsed OK! \n\n DATA:", j_params);
 
 //check filelds kit
-if (!hasField(j_params, "address")) {sendErrResult("json-params has not field: [address]"); return;}
-if (!hasField(j_params, "fee")) {sendErrResult("json-params has not field: [fee]"); return;}
-if (!hasField(j_params, "tick_space")) {sendErrResult("json-params has not field: [tick_space]"); return;}
-if (!hasField(j_params, "token0")) {sendErrResult("json-params has not field: [token0]"); return;}
-if (!hasField(j_params, "token1")) {sendErrResult("json-params has not field: [token1]"); return;}
+if (!hasField(j_params, "address")) {sendErrResult("json-params has not field <address>"); return;}
+if (!hasField(j_params, "fee")) {sendErrResult("json-params has not field <fee>"); return;}
+if (!hasField(j_params, "tick_space")) {sendErrResult("json-params has not field <tick_space>"); return;}
+if (!hasField(j_params, "token0")) {sendErrResult("json-params has not field <token0>"); return;}
+if (!hasField(j_params, "token1")) {sendErrResult("json-params has not field <token1>"); return;}
 log("JSON fields kit OK! ");
 space();
 
@@ -115,7 +115,7 @@ try
 }
 catch(e) 
 {
-    const err = ("ERROR: " + e);
+    const err = ("ERROR - " + e);
     sendErrResult(err);
 }
 

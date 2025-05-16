@@ -52,11 +52,11 @@ if (!isJson(j_params)) {sendErrResult("can't readed JSON data"); return;}
 log("JSON parsed OK! \n\n DATA:", j_params);
 
 //check filelds kit
-if (!hasField(j_params, "pool_address")) {sendErrResult("json-params has not field: [pool_address]"); return;}
-if (!hasField(j_params, "input_token")) {sendErrResult("json-params has not field: [input_token]"); return;}
-if (!hasField(j_params, "dead_line")) {sendErrResult("json-params has not field: [dead_line]"); return;}
-if (!hasField(j_params, "size")) {sendErrResult("json-params has not field: [size]"); return;}
-if (!hasField(j_params, "simulate_mode")) {sendErrResult("json-params has not field: [simulate_mode]"); return;}
+if (!hasField(j_params, "pool_address")) {sendErrResult("json-params has not field <pool_address>"); return;}
+if (!hasField(j_params, "input_token")) {sendErrResult("json-params has not field <input_token>"); return;}
+if (!hasField(j_params, "dead_line")) {sendErrResult("json-params has not field <dead_line>"); return;}
+if (!hasField(j_params, "size")) {sendErrResult("json-params has not field <size>"); return;}
+if (!hasField(j_params, "simulate_mode")) {sendErrResult("json-params has not field <simulate_mode>"); return;}
 log("JSON fields kit OK! ");
 space();
 
@@ -101,7 +101,7 @@ if (IS_SUMULATE)
 	    sendResult();
 	});
     }
-    catch(e) {const err = ("ERROR: " + e); sendErrResult(err);}
+    catch(e) {const err = ("ERROR - " + e); sendErrResult(err);}
 }
 else
 {
@@ -119,6 +119,6 @@ else
     	    sendResult();
 	});
     }
-    catch(e) {const err = ("ERROR: " + e); sendErrResult(err);}
+    catch(e) {const err = ("ERROR - " + e); sendErrResult(err);}
 }
 

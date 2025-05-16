@@ -74,8 +74,8 @@ const MAX_FEE = 220;  //Gweis
 //let POOL_ADDR = "0x3d0acd52ee4a9271a0ffe75f9b91049152bac64b";  // USDC(PoS):LDO:0.3%
 //let POOL_ADDR = "0xd36ec33c8bed5a9f7b6630855f1533455b98a418"; // USDC(PoS):USDC:0.01% 
 //let POOL_ADDR = "0xd866fac7db79994d08c0ca2221fee08935595b4b"; // WPOL:LDO:0.3%
-//let POOL_ADDR = "0x4d05f2a005e6f36633778416764e82d1d12e7fbb"; // WPOL:CRV:0.3%
-let POOL_ADDR = "0x9b08288c3be4f62bbf8d1c20ac9c5e6f9467d8b7"; // WPOL:USDT:0.05%
+let POOL_ADDR = "0x4d05f2a005e6f36633778416764e82d1d12e7fbb"; // WPOL:CRV:0.3%
+//let POOL_ADDR = "0x9b08288c3be4f62bbf8d1c20ac9c5e6f9467d8b7"; // WPOL:USDT:0.05%
 
 
 
@@ -134,8 +134,8 @@ else
 	}
 	case 4: 
 	{
-	    log("----------- MODE: add liquidity to position --------------");
-	    const liq = {token0: 20, token1: -1};
+	    log("----------- MODE: increase liquidity to position --------------");
+	    const liq = {token0: -1, token1: 30};
 	    const tick_range = {tick1: pos.l_tick, tick2: pos.u_tick}; //position ticks range
 	    w_obj.setGas(2*GAS_LIMIT, 2*MAX_FEE);
 	    liq_worker.tryIncrease(POS_PID, tick_range, liq).then((data) => { log("adding liq_pos result: ", data); });

@@ -120,14 +120,29 @@ function mergeJson(a, b) //слияние двух json, все поля b пе�
     }
     return true;
 }
+
+/////////////string function////////////////////
 function charRepeat(c, n) //строка из n одинаковых символов
 {
     return c.repeat(n);
 }
+function strReplace(str, sub1, sub2) //заменяет в строке s все вхождения подстроки sub1 на sub2, вернет новую результирующую строку, старая не меняется
+{
+    let s_result = str;
+    while (2 > 0) 
+    {
+	let pos = s_result.indexOf(sub1);
+	if (pos < 0) break;
+	s_result = s_result.replace(sub1, sub2);
+    }
+    return s_result;
+}
+
+
 
 
 //export funcs
 module.exports = {log, curTime, delay, space, countDecimals, varNumber, decimalFactor, uLog, 
 	priceToStr, amountToStr, isInt, isJson, hasField, fileExist, jsonFromFile, jsonKeys, mergeJson,
-	charRepeat};
+	charRepeat, strReplace};
 

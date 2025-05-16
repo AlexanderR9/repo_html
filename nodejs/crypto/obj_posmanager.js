@@ -529,5 +529,5 @@ class PosManager
 
 };
 
-module.exports = {PosManager};
+module.exports = {PosManager, PID_FILE, POS_DATA_FILE};
 

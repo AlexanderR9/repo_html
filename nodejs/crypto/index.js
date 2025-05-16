@@ -17,6 +17,8 @@ const {PositionObj} = require("./obj_position.js");
 const {TxWorkerObj} = require("./obj_txworker.js");
 const {DateTimeObj} = require("./obj_dt.js");
 const {tokenData} = require("./asyncbase.js");
+const {StringListObj} = require("./obj_stringlist.js");
+const {FileObj} = require("./obj_file.js");
 
 
 
@@ -33,16 +35,46 @@ log("INFURA RPC_URL:", m_base.RPC_URL() );
 log("Current chain:", m_base.currentChain());
 log(`NATIVE_TOKEN (${m_base.nativeToken()})`);
 
+/*
 let dt = new DateTimeObj;
 dt.toDebug();
 space();
-
-
 let w_obj = new m_wallet.WalletObj(process.env.WA2);
 w_obj.out();
-
 tokenData(w_obj.assets[4].address, w_obj.pv).then((data) => log(data));
+*/
 
+let sl = new StringListObj();
+sl.append("str11");
+sl.append("str21");
+sl.append("str31");
+sl.append("str41");
+sl.append("str51");
+sl.toLog();
+
+log("first:", sl.first());
+log("last:", sl.last());
+
+sl.insert(10, "aaaaaaaaaaaaaa");
+
+sl.toLog();
+
+log("index of", sl.find("str2"));
+log("contains ", sl.contains("Str3"));
+
+let fname = "/home/roman/tmp"
+log("file exist", FileObj.dirExists(fname));
+space();
+space();
+
+fname = "aaa.txt";
+let fdata = "";
+let err = FileObj.readSL(fname, sl);
+if (err != "") log(err);
+else {
+    log("F_DATA:");
+    sl.toLog();
+}
 
 
 return 1;

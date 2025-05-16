@@ -505,6 +505,7 @@ class PosManager
 	//пересчитать значения диапазона pricesRange для указанной позы по номерам тиков
 	recalcPosRange(pos_obj)
 	{
+	    //цены считаются для token0
 	    let p1 = m_base.TICK_QUANTUM ** (pos_obj.l_tick);
 	    let p2 = m_base.TICK_QUANTUM ** (pos_obj.u_tick);
 	    const t0 = this.wallet.findAsset(pos_obj.token0);
@@ -513,9 +514,9 @@ class PosManager
 	    f_dec = 10 ** ((t0.decimal - t1.decimal));
 	    p1 *= f_dec; p2 *= f_dec;
 
-//	    pos_obj.pricesRange.p_cur = 
 
-	    if (t0.ticker.slice(0, 3) == "USD" && t0.ticker != "USDT")
+	    //если token0 стейбл то цены конвертируются для token1
+	    if (t0.ticker.slice(0, 3) == "USD" && t1.ticker != "USDT")
 	    {
 		pos_obj.pricesRange.p1 = 1/p2;
 		pos_obj.pricesRange.p2 = 1/p1;		
@@ -529,5 +530,5 @@ class PosManager
 
 };
 
-module.exports = {PosManager, PID_FILE, POS_DATA_FILE};
+module.exports = {PosManager, PID_FILE, POS_DATA_FILE, PosData};
 

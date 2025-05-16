@@ -134,8 +134,8 @@ class PositionObj
 	if (!this.ready()) {log("WARNING: invalid pool object, can't recalc prices"); return;}
 	this.rangePrices.l_p0 = this.pool.priceByTick(this.l_tick);
 	this.rangePrices.u_p0 = this.pool.priceByTick(this.u_tick);
-	if (this.rangePrices.l_p0 > 0) this.rangePrices.l_p1 = 1/this.rangePrices.l_p0;
-	if (this.rangePrices.u_p0 > 0) this.rangePrices.u_p1 = 1/this.rangePrices.u_p0;
+	if (this.rangePrices.l_p0 > 0) this.rangePrices.u_p1 = 1/this.rangePrices.l_p0;
+	if (this.rangePrices.u_p0 > 0) this.rangePrices.l_p1 = 1/this.rangePrices.u_p0;
     }
     //пересчитать вложенные объемы активов
     _calcDeposited()

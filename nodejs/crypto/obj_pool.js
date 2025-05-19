@@ -64,7 +64,7 @@ class PoolObj
 		this.T0 = new TokenObj("?"); //пустой объект
 		this.T1 = new TokenObj("?");
 		this.fee = 0;
-		this.tick_space = -1;
+		//this.tick_space = -1;
 		this.pv = m_base.getProvider();	
 		this.contract = m_base.getPoolContract(this.address, this.pv);
 		this.state = {liq: 0, sqrtPrice: 0, tick: 0};
@@ -110,6 +110,40 @@ class PoolObj
 	    fline += " / " + this.T0.address.toLowerCase() + " / " + this.T1.address.toLowerCase() + " / " + this.fee;
 	    fs.appendFileSync(POOL_FILE, (fline + '\n'));
 	    log("done!");
+	}
+	//функция пытается загрузить все неизменяемые данные о пуле из файла POOL_FILE,
+	// предполагается что на текущий момент установлено только поле this.address.
+	//в функцию необходимо передать заранее инициализированный объект кошелька для получения различных атрибутов токенов.
+	//в случае успеха функция вернет true, иначе false.
+	loadFromFile(w_obj)
+	{
+	    log("try load main pool attrs from file [pools.txt] ......");
+	    log("POOL_ADDRESS: ", this.address);
+	    const f_data = PoolObj.lookPoolsFile();
+	    if (f_data.length == 0) return false;
+            for (let i=0; i<f_data.length; i++)
+	    {
+		if (f_data[i].addr == this.address)
+		{
+//		    log("FOUND POOL IN FILE!!!!!!!!!!!!!!");
+		    //token0 info
+		    this.T0.address = f_data[i].t0_addr;
+		    const wt0 = w_obj.findAsset(this.T0.address);
+		    if (wt0.decimal <= 0) return false;
+		    this.T0.decimal = wt0.decimal;		   
+		    this.T0.ticker = wt0.ticker;		   
+		    //token1 info
+		    this.T1.address = f_data[i].t1_addr;
+		    const wt1 = w_obj.findAsset(this.T1.address);
+		    if (wt1.decimal <= 0) return false;
+		    this.T1.decimal = wt1.decimal;		   
+		    this.T1.ticker = wt1.ticker;		   
+
+		    this.fee = Number.parseInt(f_data[i].fee);
+		    return true;
+		}
+	    }	    
+	    return false;
 	}
 	//читает файл pools.txt и возвращает массив записей-объектов всех пулов
 	static lookPoolsFile() 
@@ -169,8 +203,9 @@ class PoolObj
 		this.T0.address = data.t0_addr;		
 		this.T1.address = data.t1_addr;		
 		this.fee = data.fee;
-		this.tick_space = data.tspace;
-		if (this.tick_space == 1) this.tick_space = 2;
+		log("CHAIN_POOL_DATA:", data);
+	//	this.tick_space = data.tspace;
+	//	if (this.tick_space == 1) this.tick_space = 2;
 		await Promise.all([this.T0.update(this.pv), this.T1.update(this.pv)]);
 		if (with_state) await this.updateState();
 		log("done!");
@@ -212,7 +247,7 @@ class PoolObj
 		log("token 1:");
 		this.T1.out();
 		log("fee: ", this.strFee());
-		log("tickSpacing: ", this.tick_space);
+		log("tickSpacing: ", m_base.tickSpacingByFee(this.fee));
 	}
 	outState()
 	{
@@ -323,13 +358,15 @@ class PoolObj
         result.tick2 = Math.floor(uLog(qp, p2));
 	//log("raw_result:", result);    	
 	
+	
+	const t_space = m_base.tickSpacingByFee(this.fee);
 	//find ticks nearest tickSpacing
-	let mod = result.tick1 % this.tick_space;
-	if (mod < 0) {mod += this.tick_space; result.tick1 -= mod;}
+	let mod = result.tick1 % t_space;
+	if (mod < 0) {mod += t_space; result.tick1 -= mod;}
 	else if (mod > 0) result.tick1 -= mod;
 
-	mod = result.tick2 % this.tick_space;
-	if (mod < 0) {mod += this.tick_space; result.tick2 -= mod;}
+	mod = result.tick2 % t_space;
+	if (mod < 0) {mod += t_space; result.tick2 -= mod;}
 	else if (mod > 0) result.tick2 -= mod;
 
         return result;

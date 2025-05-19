@@ -81,6 +81,19 @@ function getPosManagerContract(provider)
     const pm_addr = ((currentChain() == "bnb") ? POS_MANAGER_BNB_ADDRESS : POS_MANAGER_ADDRESS);
     return getContract(pm_addr, POS_MANAGER_ABI, provider);			
 }
+function tickSpacingByFee(fee)
+{
+    switch (fee)
+    {
+	case 100: return 1;
+	case 500: return 10;
+	case 3000: return 60;
+	case 10000: return 200;
+	default: break;
+    }
+//    log("tickSpacingByFee WARNING: invalid FEE_VALUE=", fee);
+    return -1;
+}
 
 //convert funcs
 function fromReadableAmount(amount, decimals = 18)
@@ -118,6 +131,7 @@ module.exports = {
 	nativeToken,
 	currentChain,
 	fromGwei,
+	tickSpacingByFee,
 	toBig,
 	MAX_BIG128,
 	SWAP_ROUTER_ADDRESS,

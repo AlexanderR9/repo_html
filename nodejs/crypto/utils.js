@@ -22,7 +22,7 @@ function countDecimals(x) //возвращает количество десят
   if (Math.floor(x) === x) return 0;
   return x.toString().split('.')[1].length || 0;
 }
-function varNumber(a) ///проверяет является ли параметр числом (float)
+function varNumber(a) ///проверяет является ли строковый параметр числом (float)
 {
     let res = Number.parseFloat(a);
     return Number.isFinite(res);
@@ -30,6 +30,11 @@ function varNumber(a) ///проверяет является ли парамет
 function isInt(a) ///проверяет является ли параметр числом (integer)
 {
     if (Number.isInteger(a)) return true;
+    return false;
+}
+function isFloat(a) ///проверяет является ли параметр числом (float)
+{
+    if (Number.isFinite(a)) return true;
     return false;
 }
 function isJson(a) ///проверяет является ли переменная объектом json
@@ -144,5 +149,5 @@ function strReplace(str, sub1, sub2) //заменяет в строке s все
 //export funcs
 module.exports = {log, curTime, delay, space, countDecimals, varNumber, decimalFactor, uLog, 
 	priceToStr, amountToStr, isInt, isJson, hasField, fileExist, jsonFromFile, jsonKeys, mergeJson,
-	charRepeat, strReplace};
+	charRepeat, strReplace, isFloat};
 

@@ -40,31 +40,38 @@ pm.getPosCount().then((n) => {
 
     var i = 0;
     let pid_arr = [];
-
-    if (n > 0)
+    const n_old = pm.posDataCount();
+    log("n_old = ", n_old);
+    if (n_old > 0)
     {
-	for (i=0; i<n; i++)
+	for (i=0; i<n_old; i++)
+	{
+	    log("i=",i, "  pid: ", pm.pos_list[i].pid);
 	    pid_arr.push(pm.pos_list[i].pid.toString());
+	}
     }
 
 
-    if (n == pm.posDataCount())
+    if (n == n_old)
     {
 	log("Have not new position.");
 	result.pids = pid_arr;
 	sendResult();	    
 	return;
     }
+    else log("new pos appeared");
 
 
-    const need_get = n - pm.posDataCount();
-    pm.getPidList(pm.posDataCount(), need_get).then((new_pids) => {
+    const need_get = n - n_old;
+    log("need get next pids ", need_get);
+
+    pm.getPidList(n_old, need_get).then((new_pids) => {
     log("new pids:", "number ", new_pids.length);
 
         for (i=0; i<new_pids.length; i++)
         {
     	    pid_arr.push(new_pids[i].toString());
-	    let fline = (i+pm.posDataCount()+1).toString()+"." + " / ";
+	    let fline = (i+n_old+1).toString()+"." + " / ";
             fline += new_pids[i].toString() + " / ";
             fline += "*" + pm.wallet.address.slice(-5) + " / ";
             fline += (m_base.currentChain() + '\n');        

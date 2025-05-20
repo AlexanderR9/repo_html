@@ -143,7 +143,7 @@ try
 	result.price_current = (price_state.p_current);
 	let p_loc = "in_range";
 	if (Number.parseFloat(price_state.p_current) < Number.parseFloat(price_state.p1)) p_loc = "out_left";
-	if (Number.parseFloat(price_state.p_current) > Number.parseFloat(price_state.p1)) p_loc = "out_right";
+	if (Number.parseFloat(price_state.p_current) > Number.parseFloat(price_state.p2)) p_loc = "out_right";
 	result.price_location = p_loc;
 	
 	//check to need modif PID_FILE

@@ -80,7 +80,7 @@ class LiqWorker
 	    if (!isInt(ticks.tick1) || !isInt(ticks.tick2)) {log("invalid_int"); return "invalid";}
 	    const d_tick = ticks.tick2 - ticks.tick1;
 	    if (d_tick <= 0) {log("invalid_dTick"); return "invalid";}
-	    if ((d_tick % this.pool.tick_space) != 0) {log("invalid_tickSpacing"); return "invalid";}
+	    if ((d_tick % m_base.tickSpacingByFee(this.pool.fee)) != 0) {log("invalid_tickSpacing"); return "invalid";}
 
 	    if (this.pool.state.tick < ticks.tick1) return "out_left";
 	    if (this.pool.state.tick >= ticks.tick2) return "out_right";
@@ -263,6 +263,53 @@ class LiqWorker
 	    const result = await this._sendTx(mint_params, "mint");
 	    return result;
 	}
+	//--------------------------------------------------------------------------------
+	//аналогична 1-й функции tryMintByTicks, но на вход подаются вместо ценового диапазона сразу готовый тиковый
+	//ticks - объект вида: {tick1 : v1, tick2 : v2}
+	async tryMintByTicks(ticks, liq_size)
+	{
+	    space();
+	    log("mint TX ............");
+	    log("TICK_RANGE:", ticks);
+	    log("LIQ:", liq_size);
+	    log("POOL_STATE:", this.pool.state);
+	    if (this._invalid()) return -1;
+	    const liq_err = this._checkLiqSizeObj(liq_size);
+	    if (liq_err != "") {log("WARNING: ", liq_err); return -2;}
+
+	    //chack ticks's range
+	    const r_loc = this._locationRange(ticks);
+	    log(`TICK_RANGE: [${ticks.tick1} : ${ticks.tick2}]`, "   current tick: ", this.pool.state.tick);
+	    const p1_tick = this.pool.priceByTick(ticks.tick1);
+	    const p2_tick = this.pool.priceByTick(ticks.tick2);
+	    log(`REAL_PRICE_RANGE: [${p1_tick.toFixed(4)} : ${p2_tick.toFixed(4)}]`,  `  current price ${this.pool.T0.ticker} : `, this.pool.T0.price.toFixed(4));
+	    log("PRICE_LOCATION: ", r_loc, '\n');
+	    if (r_loc == "invalid") {log("ERROR: invalid ticks range"); return -3;}
+
+	    // prepare mint params
+	    let mint_params = {token0: this.pool.T0.address, token1: this.pool.T1.address, fee: this.pool.fee};
+    	    mint_params.tickLower = ticks.tick1;
+	    mint_params.tickUpper = ticks.tick2;
+
+	    //calc token's sizes
+	    const p_arr = [this.pool.T0.price, p1_tick, p2_tick];
+            const amounts = this._calcMintAmounts(liq_size, r_loc, p_arr);
+	    if (amounts.t0_size < 0 || amounts.t1_size < 0) {log("ERROR: invalid calculation amounts token"); return -3;}
+	    mint_params.amount0Desired = amounts.t0_size.toString();
+	    mint_params.amount1Desired = amounts.t1_size.toString();
+	    mint_params.amount0Min = amounts.t0_min.toString();
+	    mint_params.amount1Min = amounts.t1_min.toString();
+	    mint_params.recipient = this.wallet.address;
+            mint_params.deadline = this._deadLine();
+	    log("MINT_PARAMS:", mint_params, '\n');
+	//    return "MINT READY FOR TX";
+
+	    /////////////////////SEND TX///////////////////////////////////
+	    const result = await this._sendTx(mint_params, "mint");
+	    return result;	    
+	}
+
+
 	//TX_2. добавление ликвидности в указанную позу(уже существующую). 
 	//в папаметрах нужно указать PID позы и размер добавляемой ликвидности.
 	//liq_size - добавляемая ликвидность, задается как объект с двумя полями {token0, token1}, один из которых должен быть -1, 
@@ -375,15 +422,6 @@ class LiqWorker
 
 		if (tx_res.status == 0) {log("STAGE_1: transaction was fail"); return -13;}
 		if (tx_res.status == 1) {log("STAGE_1: transaction SUCCESSED"); can_collect=true; break;}
-
-
-/*
-		if (isInt(tx_res))
-		{
-		    if (tx_res == 0) {log("STAGE_1: transaction was fail"); return -13;}
-		    if (tx_res == 1) {log("STAGE_1: transaction SUCCESSED"); can_collect=true; break;}
-		}
-*/
 	    }
 	    if (!can_collect) {log("STAGE_1: transaction over timeout"); return -14;}
 	    space();	

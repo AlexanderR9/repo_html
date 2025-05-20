@@ -194,10 +194,12 @@ w_obj.setGas(GAS_LIMIT, MAX_FEE);
 //init LIQ_WORKER
 let liq_worker = new LiqWorker(w_obj, POOL_ADDR);
 liq_worker.setSimulateMode(IS_SIMULATE); //TURN ON/OFF SIMULATE_MODE
+liq_worker.setDeadLine(DEAD_LINE);
 
 space();
 log("try mint new position ........");
-let p_obj = new m_pool.PoolObj(POOL_ADDR);
+//let p_obj = new m_pool.PoolObj(POOL_ADDR);
+let p_obj = liq_worker.pool;
 var ok = p_obj.loadFromFile(w_obj); //грузим базовые данные пула из файла
 if (!ok) {sendErrResult("can't load pool data from file (check pool_address)"); return;}
 log("WORKING_POOL_INFO: ", p_obj.baseInfo());
@@ -254,18 +256,46 @@ function calcRealPriceRange()
     result.real_price_range = ("(" + real_p1.toString() + "; " + real_p2.toString() + ")");
     log("done!");
 }
+//функция рассчитывает размер второго вносимого токена по текущей цене и реального диапазона.
+//если параметры заданы не верно, функция вернет false, иначе true.
+function calcAssetAmounts(p_cur)
+{
+    log("Calculation asset amounts .....");
+    var real_p1 = p_obj.priceByTick(result.tick_lower); 
+    var real_p2 = p_obj.priceByTick(result.tick_upper); 
+    if (tx_options.index == 1) p_cur = 1/p_cur;
+
+    let prices = {p1: real_p1, p2: real_p2, p_current: p_cur};
+    const am = ((tx_options.amount0 > 0) ? tx_options.amount0 : tx_options.amount1);
+    const am_i = ((tx_options.amount0 > 0) ? 0 : 1);
+    const am_other = p_obj.calcPosAssetAmount(prices, am, am_i);
+    if (am_other < 0) return false;
+    
+    if (am_i == 0)
+    {
+	result.token0_amount = am.toFixed(4);
+	result.token1_amount = am_other.toFixed(4);
+    }
+    else 
+    {
+	result.token1_amount = am.toFixed(4);
+	result.token0_amount = am_other.toFixed(4);
+    }
+    return true;
+}
 
 
+// MAIN CODE
 log("------------------CURRENT STATE--------------------------------");
 try 
 {
     // получаем текущее состояние пула
-    p_obj.updateState().then(() => { 
+    p_obj.updateState().then(() => {
+ 
 	//p_obj.out();
 	p_obj.showPrices();
 	log("current tick:", p_obj.state.tick);
-	result.current_p0 = p_obj.T0.strPrice();
-	result.current_p1 = p_obj.T1.strPrice();
+	result.current_price = ((tx_options.index == 1) ? p_obj.T1.strPrice() : p_obj.T0.strPrice());
 	result.current_tick = p_obj.state.tick;
 
 	const tr = findTicksRange();
@@ -273,9 +303,25 @@ try
 	result.tick_upper = tr.tick2;
 	
 	calcRealPriceRange(); 
+	if (!calcAssetAmounts(Number.parseFloat(result.current_price)))
+	{
+	    sendErrResult("can't calc amounts (check price range and input token_amount)"); 
+	    return;
+	}
+	if (IS_SIMULATE) {sendResult(); return;}
 
 
-	sendResult();    
+	/////////////////SEND REAL MINT_TX////////////////////
+	const liq_size = {token0: tx_options.amount0, token1: tx_options.amount1};
+	liq_worker.tryMintByTicks(tr, liq_size).then((tx_result) => {
+	    log("tx_result:", tx_result);
+	    if (!hasField(tx_result, "tx_hash")) {sendErrResult("wrong result of tx_mint"); return;}
+
+	    result.tx_hash = tx_result.tx_hash;
+	    result.tx_code = tx_result.code;
+	    sendResult();
+	});
+
     });
 }
 catch(e)

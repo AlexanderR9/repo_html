@@ -1,4 +1,4 @@
-const {space, log, curTime, varNumber, decimalFactor, uLog} = require("./utils.js");
+const {space, log, curTime, varNumber, decimalFactor, uLog, isFloat, isInt} = require("./utils.js");
 const m_base = require("./base.js");
 const {poolData, poolState, tokenData} = require("./asyncbase.js");
 
@@ -258,9 +258,9 @@ class PoolObj
 	showPrices()
 	{
 		log("////////// Current prices of pool //////////////")
-		let s = "Token_0:  1 " + this.T0.ticker + " = " + this.T0.strPrice() + " " + this.T1.ticker;
+		let s = "Token_0:  " + this.T0.ticker + " = " + this.T0.strPrice() + " " + this.T1.ticker;
 		log(s);
-		s = "Token_1:  1 " + this.T1.ticker + " = " + this.T1.strPrice() + " " + this.T0.ticker;
+		s = "Token_1:  " + this.T1.ticker + " = " + this.T1.strPrice() + " " + this.T0.ticker;
 		log(s);
 	}
 	showTVL()
@@ -404,6 +404,55 @@ class PoolObj
 	return 	real_price;
     }
     
+
+    //получить объем одного из токенов для внесения в позу при следующих условиях:
+    //prices - объект с тремя ценами {p1, p2, p_current}. ВНИМАНИЕ: цены должны быть указаны для TOKEN_0.
+    //t_amount - принудительный объем одного из токенов (любой).
+    //t_index - индекс (0/1) токена t_amount для которого мыуказываем принудительно.
+    //функция рассчитывает объем 2-го токена для внесения (вернет именно это значение, float).
+    //при некоректных данных вернет -1.
+    //все значения параметров и возвращаемое значение - это обычные пользовательныкие float
+    calcPosAssetAmount(prices, t_amount, t_index)
+    {
+	space();
+	//log("calcPosAssetAmount .......");
+	log("PRICES:", prices);
+	const p1 = prices.p1;
+	const p2 = prices.p2;
+	const p_cur = prices.p_current;
+	if (!isFloat(p1) || !isFloat(p2) || !isFloat(p_cur)) {log("ERROR: invalid prices values!"); return -1;}
+	if (!isFloat(t_amount) || t_amount < 0.001) {log("ERROR: invalid t_amount value!"); return -1;}
+	if (!isInt(t_index) || t_index < 0 || t_index > 1) {log("ERROR: invalid t_index value!"); return -1;}
+	if (p1<=0 || p2<=0 || p_cur<=0) {log("ERROR: prices must > 0"); return -1;}
+	if (p2 <= p1) {log("ERROR: p2 must > p1"); return -1;}
+	log(`INPUT_AMOUNT TOKEN ${t_amount}`, `  TOKEN INDEX ${t_index}`);
+	
+	//stage_1 (p_cur < p_low)
+	if (p_cur < p1) 
+	{
+	    if (t_index == 1) {log("ERROR: invalid t_index, (p_cur < p_low) all liq must in TOKEN_0!"); return -1;}
+	    return 0;
+	}
+	//stage_2 (p_cur > p_high)
+	if (p_cur > p2) 
+	{
+	    if (t_index == 0) {log("ERROR: invalid t_index, (p_cur > p_high) all liq must in TOKEN_1!"); return -1;}
+	    return 0;
+	}
+
+	//stage_3 (p_cur within range [p_low; p_high])
+	var qp1 = Math.sqrt(p1);
+	var qp2 = Math.sqrt(p2);
+	var qp_cur = Math.sqrt(p_cur);
+	//calc LIQ value
+	var L = t_amount/(qp_cur-qp1); // by t_index == 1
+	if (t_index == 0) L = (t_amount*qp_cur*qp2)/(qp2 - qp_cur); // by t_index == 0
+	log("Liquidity value: ", L.toFixed(4));
+
+	//calc other amount
+	if (t_index == 0) return L*(qp_cur-qp1); // calc amount for T1
+	return L*(qp2 - qp_cur)/(qp_cur*qp2); // calc amount for T0
+    }
 
 };
 

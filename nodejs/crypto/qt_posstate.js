@@ -100,7 +100,7 @@ function checkFdataPos(pm, pos)
     {
 	if (pos_pm.liq.toString() != pos.liq.toString())
 	{
-    	    pm.pos_list[next_i].liq = pos.liq;
+    	    pos_pm.liq = pos.liq;
     	    need_frw = true;	    
 	}
     }
@@ -141,7 +141,7 @@ try
 	const price_state = calcPricesState(pos.pool, pos.l_tick, pos.u_tick, pos.pool.state.tick);
 	result.price_range = ("(" + price_state.p1 + "; " + price_state.p2 + ")");
 	result.price_current = (price_state.p_current);
-	let p_loc = "in_range";
+	let p_loc = "active";
 	if (Number.parseFloat(price_state.p_current) < Number.parseFloat(price_state.p1)) p_loc = "out_left";
 	if (Number.parseFloat(price_state.p_current) > Number.parseFloat(price_state.p2)) p_loc = "out_right";
 	result.price_location = p_loc;

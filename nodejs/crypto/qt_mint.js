@@ -258,14 +258,14 @@ function calcRealPriceRange()
 }
 //функция рассчитывает размер второго вносимого токена по текущей цене и реального диапазона.
 //если параметры заданы не верно, функция вернет false, иначе true.
-function calcAssetAmounts(p_cur)
+function calcAssetAmounts()
 {
     log("Calculation asset amounts .....");
     var real_p1 = p_obj.priceByTick(result.tick_lower); 
     var real_p2 = p_obj.priceByTick(result.tick_upper); 
-    if (tx_options.index == 1) p_cur = 1/p_cur;
+    let prices = {p1: real_p1, p2: real_p2};
+    prices.p_current = ((tx_options.index == 1) ? p_obj.T1.price : p_obj.T0.price);
 
-    let prices = {p1: real_p1, p2: real_p2, p_current: p_cur};
     const am = ((tx_options.amount0 > 0) ? tx_options.amount0 : tx_options.amount1);
     const am_i = ((tx_options.amount0 > 0) ? 0 : 1);
     const am_other = p_obj.calcPosAssetAmount(prices, am, am_i);
@@ -303,7 +303,7 @@ try
 	result.tick_upper = tr.tick2;
 	
 	calcRealPriceRange(); 
-	if (!calcAssetAmounts(Number.parseFloat(result.current_price)))
+	if (!calcAssetAmounts())
 	{
 	    sendErrResult("can't calc amounts (check price range and input token_amount)"); 
 	    return;

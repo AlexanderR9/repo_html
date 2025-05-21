@@ -131,7 +131,7 @@ class LiqWorker
 		    degree *= 10;		    
 		}	
 		const f_int = Math.round(f_part*degree);
-		log("degree: ", degree, "  f_int: ", f_int);
+		//log("degree: ", degree, "  f_int: ", f_int);
 		let ja = JSBI.multiply(jsbi_a, JSBI.BigInt(f_int)); 
 		//log("ja after mul f_int: ", ja.toString());
 		ja = JSBI.divide(ja, JSBI.BigInt(degree)); 
@@ -183,7 +183,7 @@ class LiqWorker
                     const L = liq.token1/(Math.sqrt(p_arr[0]) - Math.sqrt(p_arr[1])); //p_arr[0] - current price
                     const size0 = L*(1/Math.sqrt(p_arr[0]) - 1/Math.sqrt(p_arr[2]));
                     result.t0_size = JSBI.BigInt(Math.round(size0 * this.pool.T0.decimalFactor()));
-                    log(` TOKENS_SIZE: ${size0.toFixed(1)} / ${liq.token1}`, `  L: ${L}`);
+                    log(` TOKENS_SIZE: ${size0.toFixed(4)} / ${liq.token1}`, `  L: ${L}`);
 		}
 		else
 		{
@@ -191,7 +191,7 @@ class LiqWorker
                     const L = liq.token0*Math.sqrt(p_arr[0]*p_arr[2])/(Math.sqrt(p_arr[2]) - Math.sqrt(p_arr[0])); //p_arr[0] - current price
                     const size1 = L*(Math.sqrt(p_arr[0]) - Math.sqrt(p_arr[1]));
                     result.t1_size = JSBI.BigInt(Math.round(size1 * this.pool.T1.decimalFactor()));
-                    log(` TOKENS_SIZE: ${liq.token0} / ${size1.toFixed(1)}`, `  L: ${L}`);
+                    log(` TOKENS_SIZE: ${liq.token0} / ${size1.toFixed(4)}`, `  L: ${L}`);
 		}
 	    }
             
@@ -209,6 +209,25 @@ class LiqWorker
 	    }
             return result;
 	}
+	//расчет минимальных объемов активов при опрерациях mint и increase.
+	//выполняется после выполнения функции _calcMintAmounts. на вход подается объект - результат выполнения функции _calcMintAmounts.
+	_calcMinDesiredAmounts(jsbi_amounts)
+	{
+	    const f_mul = 0.996;
+	    let min0 = JSBI_ZERO;
+	    let min1 = JSBI_ZERO;
+	    if (jsbi_amounts.t0_size != JSBI_ZERO)
+	    {
+		min0 = LiqWorker.jsbiMulFloat(jsbi_amounts.t0_size, f_mul)
+	    }
+	    if (jsbi_amounts.t1_size != JSBI_ZERO)
+	    {
+		min1 = LiqWorker.jsbiMulFloat(jsbi_amounts.t1_size, f_mul)
+	    }
+	    jsbi_amounts.t0_min = min0;
+	    jsbi_amounts.t1_min = min1;
+	}
+	
 
 
 	/////////////////////////transaction funcs /////////////////////////////
@@ -292,9 +311,13 @@ class LiqWorker
 	    mint_params.tickUpper = ticks.tick2;
 
 	    //calc token's sizes
-	    const p_arr = [this.pool.T0.price, p1_tick, p2_tick];
-            const amounts = this._calcMintAmounts(liq_size, r_loc, p_arr);
+    	    const p_arr = [this.pool.T0.price, p1_tick, p2_tick];
+	    log("p_arr:", p_arr);
+
+            let amounts = this._calcMintAmounts(liq_size, r_loc, p_arr);
 	    if (amounts.t0_size < 0 || amounts.t1_size < 0) {log("ERROR: invalid calculation amounts token"); return -3;}
+	    this._calcMinDesiredAmounts(amounts);
+
 	    mint_params.amount0Desired = amounts.t0_size.toString();
 	    mint_params.amount1Desired = amounts.t1_size.toString();
 	    mint_params.amount0Min = amounts.t0_min.toString();
@@ -314,7 +337,7 @@ class LiqWorker
 	//в папаметрах нужно указать PID позы и размер добавляемой ликвидности.
 	//liq_size - добавляемая ликвидность, задается как объект с двумя полями {token0, token1}, один из которых должен быть -1, 
 	//перед добавлением ликвидности функция сначала обновит данные и состояние пула для точного определения 2-го размера токена.
-	async tryIncrease(pid, ticks, liq_size)
+	async tryIncrease(pid, ticks, liq_size, need_pool_update = true)
 	{
 	    log("try increase liquidity to pos", pid, " ............");
 	    if (this._invalid()) return -1;
@@ -323,8 +346,11 @@ class LiqWorker
 	    if (liq_err != "") {log("WARNING: ", liq_err); return -2;}
 
 	    log("adding liquidity size: ", liq_size);
-	    try {await this.pool.updateData();}  //get current pool state params
-	    catch(e) {log("ERROR:", e); return -2;}
+	    if (need_pool_update)
+	    {
+		try {await this.pool.updateData();}  //get current pool state params
+		catch(e) {log("ERROR:", e); return -2;}
+	    }
 
 	    //определения нахождения текущей цены относительно диапазона существующей позы
 	    const r_loc = this._locationRange(ticks);
@@ -337,8 +363,9 @@ class LiqWorker
 
 	    //calc token's sizes
 	    const p_arr = [this.pool.T0.price, p1_tick, p2_tick];
-            const amounts = this._calcMintAmounts(liq_size, r_loc, p_arr);
+            let amounts = this._calcMintAmounts(liq_size, r_loc, p_arr);
 	    if (amounts.t0_size < 0 || amounts.t1_size < 0) {log("ERROR: invalid calculation amounts token"); return -3;}
+	    this._calcMinDesiredAmounts(amounts);
 
 	    //prepare params		    
     	    let add_params = {tokenId: pid};
@@ -371,7 +398,7 @@ class LiqWorker
 	    remove_params.liquidity = m_base.toBig(liq_size);
 	    remove_params.amount0Min = 0;
 	    remove_params.amount1Min = 0;
-            remove_params.deadline = this._deadLine();;
+            remove_params.deadline = this._deadLine();
 	    log("REMOVE_PARAMS:", remove_params);
 	    space();
 

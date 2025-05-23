@@ -35,7 +35,7 @@ pm.loadPidListFromFile();
 pm.getPosCount().then((n) => {
 
     log("POS_COUNT:", n)
-    if (n < 0) {sendErrResult("can't get pos_count"); return;}
+    if (n < 0) {sendErrResult("can not get pos_count"); return;}
     result.pos_count = n;
 
     var i = 0;

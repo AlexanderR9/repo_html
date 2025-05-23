@@ -48,6 +48,12 @@ class PositionObj
 	this.fee = -1;
 	this.token0 = this.token1 = "";
     }
+    _reset_v2() 
+    {
+	this.liq = this.l_tick = this.u_tick = 0;
+	this.fee = -1;
+	this.token0 = this.token1 = "";
+    }
 
     //признак того что поза находится в диапазоне, перед вызовов необходимо выполнить updateData()
     isInRange() 
@@ -74,6 +80,25 @@ class PositionObj
 
         this._findPool();
 	const result = this._updatePoolData();
+	return result;
+    }	
+    async updateData_v2() //объект пула уже инициализирован (данная функция нужна для уменьшения времени этого запроса)
+    {
+	this._reset_v2();	
+	log("get pos data, PID [", this.pid,"]  ....");
+	if (this.pid < 0) {log("WARNING: invalid PID value."); return false;}
+
+	try
+	{
+	    const data = await this.pm_contract.positions(this.pid);	    
+	    space();
+	    log("position data:", data);
+	    this._setData(data);
+	    log("done!");	    
+	}
+	catch(err) {log("CATCH_ERR:"); log(err); return false;}    
+
+	const result = this._updatePoolState();
 	return result;
     }	
     //пересчитать невостребованные комиссии
@@ -112,6 +137,16 @@ class PositionObj
     {
 	if (!this.ready()) {log("WARNING: invalid pool object"); return false;}
 	try {await this.pool.updateData();}
+	catch(err) {log("CATCH_POOL_ERR:"); log(err); return false;}    
+
+	this._recalcRangePrices();
+	this._recalcAssets();
+	return true;
+    }
+    async _updatePoolState() //protected metod
+    {
+	if (!this.ready()) {log("WARNING: invalid pool object"); return false;}
+	try {await this.pool.updateState();}
 	catch(err) {log("CATCH_POOL_ERR:"); log(err); return false;}    
 
 	this._recalcRangePrices();

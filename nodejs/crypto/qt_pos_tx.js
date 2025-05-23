@@ -117,7 +117,7 @@ if (a_parser.count() != 1) {sendErrResult("invalid args (parameters != 1)"); ret
 const F_JSON = a_parser.first();
 log("JSON-file: ", F_JSON);
 const j_params  = jsonFromFile(F_JSON);
-if (!isJson(j_params)) {sendErrResult("can't readed JSON data"); return;}
+if (!isJson(j_params)) {sendErrResult("can not readed JSON data"); return;}
 log("JSON parsed OK! \n\n DATA:", j_params);
 
 //check filelds kit
@@ -182,9 +182,10 @@ space();
 log("tx_options:", tx_options);
 
 
-result.tx_kind = TX_KIND;
+//result.tx_kind = TX_KIND;
+result.type = TX_KIND;
 result.pid = PID;
-result.is_simulate = IS_SIMULATE;
+result.is_simulate = IS_SIMULATE.toString();
 ///////////////////////everything is ready to perform the operation/////////////////////////////////////
 // init WalletObj
 const w_obj = new m_wallet.WalletObj(process.env.WA2, process.env.WKEY);
@@ -270,7 +271,7 @@ else if (TX_KIND == "increase")
 {
     let p_obj = liq_worker.pool;
     var ok = p_obj.loadFromFile(w_obj); //грузим базовые данные пула из файла
-    if (!ok) {sendErrResult("can't load pool data from file (check pool_address)"); return;}
+    if (!ok) {sendErrResult("can not load pool data from file (check pool_address)"); return;}
     log("WORKING_POOL_INFO: ", p_obj.baseInfo());
     space();
 
@@ -289,7 +290,7 @@ else if (TX_KIND == "increase")
 
     	    if (!calcAssetAmounts(p_obj))
     	    {
-        	sendErrResult("can't calc amounts (check price range and input token_amount)");
+        	sendErrResult("can not calc amounts (check price range and input token_amount)");
         	return;
     	    }
 	    if (IS_SIMULATE) {sendResult(); return;}

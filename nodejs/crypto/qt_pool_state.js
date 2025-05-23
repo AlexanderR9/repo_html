@@ -41,7 +41,7 @@ if (a_parser.count() != 1) {sendErrResult("invalid args (parameters != 1)"); ret
 const F_JSON = a_parser.first();
 log("JSON-file: ", F_JSON);
 const j_params  = jsonFromFile(F_JSON);
-if (!isJson(j_params)) {sendErrResult("can't readed JSON data"); return;}
+if (!isJson(j_params)) {sendErrResult("can not readed JSON data"); return;}
 log("JSON parsed OK! \n\n DATA:", j_params);
 
 //check filelds kit

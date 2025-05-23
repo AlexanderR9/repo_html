@@ -59,7 +59,7 @@ class TxGas
     {
 	this.gas_limit = 185000; //максимально единиц газа за транзакцию
 	this.max_fee = 130; //максимальная цена за единицу газа, gwei
-	this.priority = 42; //пожертвование за приоритет, gwei	
+	this.priority = 35; //пожертвование за приоритет, gwei	
     }
     update(g, m, p = -1)
     {

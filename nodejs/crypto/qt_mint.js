@@ -121,7 +121,7 @@ if (a_parser.count() != 1) {sendErrResult("invalid args (parameters != 1)"); ret
 const F_JSON = a_parser.first();
 log("JSON-file: ", F_JSON);
 const j_params  = jsonFromFile(F_JSON);
-if (!isJson(j_params)) {sendErrResult("can't readed JSON data"); return;}
+if (!isJson(j_params)) {sendErrResult("can not readed JSON data"); return;}
 log("JSON parsed OK! \n\n DATA:", j_params);
 
 //check filelds kit
@@ -184,7 +184,7 @@ log("DEAD_LINE:", DEAD_LINE);
 space();
 log("tx_options:", tx_options);
 
-result.is_simulate = IS_SIMULATE;
+result.is_simulate = IS_SIMULATE.toString();
 ///////////////////////everything is ready to perform the operation/////////////////////////////////////
 
 // init WalletObj
@@ -201,7 +201,7 @@ log("try mint new position ........");
 //let p_obj = new m_pool.PoolObj(POOL_ADDR);
 let p_obj = liq_worker.pool;
 var ok = p_obj.loadFromFile(w_obj); //грузим базовые данные пула из файла
-if (!ok) {sendErrResult("can't load pool data from file (check pool_address)"); return;}
+if (!ok) {sendErrResult("can not load pool data from file (check pool_address)"); return;}
 log("WORKING_POOL_INFO: ", p_obj.baseInfo());
 space();
 
@@ -264,7 +264,8 @@ function calcAssetAmounts()
     var real_p1 = p_obj.priceByTick(result.tick_lower); 
     var real_p2 = p_obj.priceByTick(result.tick_upper); 
     let prices = {p1: real_p1, p2: real_p2};
-    prices.p_current = ((tx_options.index == 1) ? p_obj.T1.price : p_obj.T0.price);
+//    prices.p_current = ((tx_options.index == 1) ? p_obj.T1.price : p_obj.T0.price);
+    prices.p_current = p_obj.T0.price;
 
     const am = ((tx_options.amount0 > 0) ? tx_options.amount0 : tx_options.amount1);
     const am_i = ((tx_options.amount0 > 0) ? 0 : 1);
@@ -305,7 +306,7 @@ try
 	calcRealPriceRange(); 
 	if (!calcAssetAmounts())
 	{
-	    sendErrResult("can't calc amounts (check price range and input token_amount)"); 
+	    sendErrResult("can not calc amounts (check price range and input token_amount)"); 
 	    return;
 	}
 	if (IS_SIMULATE) {sendResult(); return;}

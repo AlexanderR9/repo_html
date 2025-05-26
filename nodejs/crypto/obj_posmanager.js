@@ -74,6 +74,7 @@ class PosData
 	s += (this.strPricesRange() + "  ");	
 	s += (this.strTickRange() + "  ");	
 	s += ("liq_size=" + this.liq + "  ");	
+	s += ("fee=" + this.fee + "  ");	
 	return s;
     }
     out()

@@ -13,7 +13,16 @@ const {feeGas} = require("./asyncbase.js");
 const pv = m_base.getProvider();
 
 //get wallet object
-const wallet = m_base.getWallet(process.env.WKEY, pv);
+//const wallet = m_base.getWallet(process.env.WKEY, pv);
 log("get gas price ...");
-feeGas(pv).then((data) => log(`Gas price: `, data));
+//feeGas(pv).then((data) => log(`Gas price: `, data));
+pv.getGasPrice().then((gp) => {
+
+    log(`Gas price: `, gp.toString(), "wei")
+    const gpf = Number.parseInt(gp.toString());
+    log(`Gas price: `, m_base.fromGwei(gpf).toFixed(3), "gwei")
+    
+
+
+});
 

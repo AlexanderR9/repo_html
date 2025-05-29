@@ -1,4 +1,4 @@
-const {space, log, curTime, varNumber, charRepeat} = require("./utils.js");
+const {space, log, curTime, varNumber, charRepeat, amountToStr} = require("./utils.js");
 const m_base = require("./base.js");
 const {poolData, poolState, tokenData, balanceAt} = require("./asyncbase.js");
 const m_wallet = require("./obj_wallet.js");
@@ -114,7 +114,7 @@ class SwapperObj
 	log(s);
 	space();
 
-	p_obj.tokenSizeBySwapping(sum_in, input_t, false);
+	const sum_out = await p_obj.tokenSizeBySwapping(sum_in, input_t, false);
 	log(charRepeat("-", 50));
 	space();
 
@@ -145,7 +145,14 @@ class SwapperObj
         }
 
         /////////////////////SEND TX///////////////////////////////////
-        const result = await this.tx_worker.sendTx(swap_params);
+//	let result = {code: true}; //simulate
+	let result = {};
+        result = await this.tx_worker.sendTx(swap_params);
+	
+	result.input_token = input_t;
+	result.price_token = ((input_t == 0) ? p_obj.T0.price : p_obj.T1.price);
+	result.pool_tick = p_obj.state.tick;
+	result.sum_out = amountToStr(sum_out);
         return result;
     }
         

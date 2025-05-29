@@ -33,7 +33,7 @@ const PRIOR_FEE = -1;  //Gweis
 
 
 // user vars
-let result = {type: "swap"};
+let result = {type: "tx_swap"};
 const sendResult = () => log("JSON_RESULT_START", result, "JSON_RESULT_END");
 function sendErrResult(err) {result.error = err; sendResult();}    
 
@@ -113,6 +113,9 @@ else
     	    {
         	result.result_code = "OK";
         	result.tx_hash = data.tx_hash;
+    		result.price_token = data.price_token.toFixed(6).toString();
+    		result.pool_tick = data.pool_tick.toString();
+		result.output_size = data.sum_out.toString();
     	    }
     	    else result.result_code = "FAULT";
     	    space();

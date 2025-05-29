@@ -108,7 +108,7 @@ function checkTokenAmounts(v1, v2)
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-let result = {type: "mint_tx"};
+let result = {type: "tx_mint"};
 const sendResult = () => {space(); log("JSON_RESULT_START", result, "JSON_RESULT_END");}
 function sendErrResult(err) {result.error = err; sendResult();}
 
@@ -185,6 +185,7 @@ space();
 log("tx_options:", tx_options);
 
 result.is_simulate = IS_SIMULATE.toString();
+result.pool_address = POOL_ADDR;
 ///////////////////////everything is ready to perform the operation/////////////////////////////////////
 
 // init WalletObj

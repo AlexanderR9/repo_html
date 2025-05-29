@@ -72,6 +72,10 @@ log("transfering token index: ", i_asset);
 
 
 // try send tx    
+result.token = TOKEN_ADDR;
+result.to_wallet = TO_WALLET;
+result.size = AMOUNT.toString();
+
 w_obj.trySend(i_asset, TO_WALLET, AMOUNT).then((data) => {
 
     log("result: ", data);

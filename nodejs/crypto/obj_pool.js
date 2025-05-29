@@ -235,7 +235,25 @@ class PoolObj
 	    if (this.T0.price > 0) this.T1.price = 1/this.T0.price;
 	}
 
+	//вернет цену одного из токенов пула(более привычную для пользователя), какую - зависит от типов токенов.
+	//если один из токен стайбл, то вернет цену НЕ стейбла.
+	//если пул состоит из обоих стейблов и при этом один из них USDT, то вернет цену другого токена.
+	//в остальных случаях всегда возвращает цену первого токена из пары.
+	userPrice()
+	{
+	    if (this.invalidPoolData()) return -1;
 
+	    if (!this.T0.isStable() && this.T1.isStable()) return this.T0.price;		
+	    if (this.T0.isStable() && !this.T1.isStable()) return this.T1.price;		
+	    if (this.isStable())
+	    {
+		if (this.T0.ticker == "USDT") return this.T1.price;
+		if (this.T1.ticker == "USDT") return this.T0.price;
+	    }
+	    return this.T0.price;
+	}
+
+	
 	floatFee() {return (this.fee/10000);}
 	strFee() {return (this.floatFee().toString()+"%");} 
 	out()
@@ -334,7 +352,9 @@ class PoolObj
 	s += "  QUOTE = " + ((t_in == 0) ? this.T1.strPrice() : this.T0.strPrice());
 	log("Waiting result: ", s);
 	
-	const result = sum_in/price;
+	const p_factor = (100-this.floatFee())/100;
+	log("Percent factor:", p_factor);
+	const result = (sum_in*p_factor)/price;
 	log("Result: ", result.toFixed(4));
 	return result;
     }

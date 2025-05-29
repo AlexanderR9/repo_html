@@ -186,6 +186,7 @@ log("tx_options:", tx_options);
 result.type = TX_KIND;
 result.pid = PID;
 result.is_simulate = IS_SIMULATE.toString();
+result.pool_address = POOL_ADDR;
 ///////////////////////everything is ready to perform the operation/////////////////////////////////////
 // init WalletObj
 const w_obj = new m_wallet.WalletObj(process.env.WA2, process.env.WKEY);
@@ -197,10 +198,9 @@ liq_worker.setSimulateMode(IS_SIMULATE); //TURN ON/OFF SIMULATE_MODE
 liq_worker.setDeadLine(DEAD_LINE);
 //------------------------------------------------------------------
 
-
+//функция используется только для режима 'increase'.
 //функция рассчитывает размер второго вносимого токена для этой позиции, с учетом тикового диапазона и текущей цены токена_0 в пуле.
 //если параметры заданы не верно, функция вернет false, иначе true.
-//функция используется только для режима 'increase'.
 function calcAssetAmounts(pool_obj)
 {
     log("Calculation asset amounts .....");
@@ -229,7 +229,134 @@ function calcAssetAmounts(pool_obj)
 
 
 // MAIN CODE
-log("TX_ACTION: ", `[${TX_KIND}]`);
+async function makeDecrease() //return err_string or ""
+{
+    let err = "";
+    log("remove liquidity: SIZE =", tx_options.liq_size);
+    result.liq_size = tx_options.liq_size;
+    try 
+    {
+	const tx_result = await liq_worker.tryDecrease(PID, tx_options.liq_size); 
+        log("tx_result:", tx_result);
+	if (!IS_SIMULATE) 
+	{
+    	    if (hasField(tx_result, "tx_hash")) 
+	    {
+        	result.tx_hash = tx_result.tx_hash;
+        	result.tx_code = tx_result.code;		
+	    }
+	    else err = "wrong result of tx_decrease";
+	}
+    }
+    catch(e) {err = ("ERROR - " + e);}
+    return err;
+}
+async function makeCollect() //return err_string or ""
+{
+    let err = "";
+    log("collect assets from position...");
+    try 
+    {
+	const tx_result = await liq_worker.tryCollect(PID);
+        log("tx_result:", tx_result);
+	if (!IS_SIMULATE) 
+	{
+    	    if (hasField(tx_result, "tx_hash")) 
+	    {
+        	result.tx_hash = tx_result.tx_hash;
+        	result.tx_code = tx_result.code;		
+	    }
+	    else err = "wrong result of tx_collect";
+	}
+    }
+    catch(e) {err = ("ERROR - " + e);}
+    return err;
+}
+async function makeIncrease(pool_obj) //return err_string or ""
+{
+    let err = "";
+    log("increase liquidity to position...");
+    result.tick_lower = tx_options.tick1;
+    result.tick_upper = tx_options.tick2;
+    try 
+    {
+        if (!calcAssetAmounts(pool_obj)) {err = "can not calc amounts (check price range and input token_amount)"; return err;}
+	
+	if (!IS_SIMULATE)
+	{
+    	    const liq_size = {token0: tx_options.amount0, token1: tx_options.amount1};
+	    const tx_result = await liq_worker.tryIncrease(PID, tx_options, liq_size, false);
+    	    log("tx_result:", tx_result);
+    	    if (hasField(tx_result, "tx_hash")) 
+	    {
+        	result.tx_hash = tx_result.tx_hash;
+        	result.tx_code = tx_result.code;		
+	    }
+	    else err = "wrong result of tx_increase";
+	}
+    }
+    catch(e) {err = ("ERROR - " + e);}
+    return err;
+}
+async function main(pool_obj)
+{
+    log("START_MAIN_FUNCTION.......");
+    log("TX_ACTION: ", `[${TX_KIND}]`);
+    result.pool_tick = pool_obj.state.tick;
+    result.current_price = pool_obj.userPrice().toFixed(6).toString();
+
+    let err = "";
+    if (TX_KIND == "decrease")
+    {
+	err = await makeDecrease();	
+    }
+    else if (TX_KIND == "collect")
+    {
+	err = await makeCollect();	
+    }
+    else if (TX_KIND == "increase")
+    {
+        w_obj.setGas(2*GAS_LIMIT, 2*MAX_FEE);
+	err = await makeIncrease(pool_obj);	
+    }
+
+
+    if (err == "") sendResult();
+    else sendErrResult(err);
+}
+
+///////////////////////////////////BODY////////////////////////////////////////////////
+
+
+//firstly get current state of pool
+let p_obj = liq_worker.pool;
+var ok = p_obj.loadFromFile(w_obj); //грузим базовые данные пула из файла
+if (!ok) {sendErrResult("can not load pool data from file (check pool_address)"); return;}
+log(" ------------------------- WORKING_POOL_INFO: ", p_obj.baseInfo(), "------------------------------");
+space();
+
+
+//try make TX
+// получаем текущее состояние пула
+try 
+{
+    p_obj.updateState().then(() => {
+	p_obj.showPrices();
+	space();
+	p_obj.out();	
+	log("current tick:", p_obj.state.tick);
+	main(p_obj); //send TX to chain
+    });
+}
+catch(e)
+{
+    const err = ("ERROR - " + e);
+    sendErrResult(err);
+}
+
+
+
+/* OLD CODE
 if (TX_KIND == "decrease")
 {
     log("remove liquidity: SIZE =", tx_options.liq_size);
@@ -269,11 +396,13 @@ else if (TX_KIND == "collect")
 }
 else if (TX_KIND == "increase")
 {
+
     let p_obj = liq_worker.pool;
     var ok = p_obj.loadFromFile(w_obj); //грузим базовые данные пула из файла
     if (!ok) {sendErrResult("can not load pool data from file (check pool_address)"); return;}
     log("WORKING_POOL_INFO: ", p_obj.baseInfo());
     space();
+
 
     log("increase liquidity to position...");
     result.tick_lower = tx_options.tick1;
@@ -312,5 +441,5 @@ else if (TX_KIND == "increase")
     }
     catch(e) {const err = ("ERROR - " + e);  sendErrResult(err);}
 }
-
+*/
 

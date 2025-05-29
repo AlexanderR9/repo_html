@@ -44,8 +44,9 @@ TOKEN_ADDR = a_parser.first();
 if (a_parser.count() > 1)
 {
     if (a_parser.count() != 3) {sendErrResult("invalid args (count)"); return;}
-    if (a_parser.at(1) == "swap_router") WHOM_APPROVE = m_base.SWAP_ROUTER_ADDRESS;
-    else if (a_parser.at(1) == "pos_manager") WHOM_APPROVE = m_base.POS_MANAGER_ADDRESS;
+
+    if (a_parser.at(1) == "swap_router") {WHOM_APPROVE = m_base.SWAP_ROUTER_ADDRESS; result.whom = "swap_router";}
+    else if (a_parser.at(1) == "pos_manager") {WHOM_APPROVE = m_base.POS_MANAGER_ADDRESS; result.whom = "pos_manager";}
     else {sendErrResult("invalid arg_2 ("+a_parser.at(1)+")"); return;}
 
     APPROVE_SUM = a_parser.at(2);
@@ -88,6 +89,7 @@ if (LOOK_MODE)
 else
 {
     result.type = "tx_approve";
+    result.size = APPROVE_SUM.toString();
     w_obj.tryApprove(i_asset, WHOM_APPROVE, APPROVE_SUM).then((data) => {
 	log("result: ", data)
 

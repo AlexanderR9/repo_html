@@ -70,6 +70,9 @@ function checkResultTx(data)
 }
 
 // try send tx    
+result.token = TOKEN_NAME;
+result.size = AMOUNT.toString();
+
 let w_obj = new m_wallet.WalletObj(process.env.WA2, process.env.WKEY);
 if (COMMAND == "wrap")
 {

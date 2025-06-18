@@ -240,6 +240,22 @@ function findTicksRange()
     log("ticks got!");
     return t_range;
 }
+//функция определяет tx_options.index принудительно если (tx_options.mode == "price")
+function determineTokenIndex()
+{
+    log("--------determineTokenIndex()----------");
+    if (tx_options.index == 1) return;
+    log("1");
+    if (tx_options.mode == "price") return;
+    log("2");
+    if (p_obj.T1.ticker == "USDT") return;
+    log("3");
+
+    if (p_obj.T0.ticker.slice(0, 3) == "USD") tx_options.index = 1;
+    else if (p_obj.T1.ticker == "WETH" || p_obj.T1.ticker == "ETH") tx_options.index = 1;
+    log("tx_options.index=", tx_options.index);
+}
+
 //функция находит реальный ценовой диапазон, т.е. который точно соответствует нормализованным тикам, рассчитанным ранее.
 //диапазон запишется в поле result.real_price_range выходного результата.
 //ценовые значения будут указаны для того же актива, который указан во входном JSON в поле token_index.
@@ -304,6 +320,7 @@ try
 	result.tick_lower = tr.tick1;
 	result.tick_upper = tr.tick2;
 	
+	determineTokenIndex();
 	calcRealPriceRange(); 
 	if (!calcAssetAmounts())
 	{

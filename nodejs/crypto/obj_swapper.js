@@ -43,7 +43,7 @@ class SwapperObj
 	log("Try calc out token by swap ...");
 	if (this.pool_addr.length < 10) {log("WARNING: invalid pool_address:", this.pool_addr); return -1;}
         if (!varNumber(sum_in))  {log("WARNING: input SUM is not number_value, sum: ", sum_in); return -1;}
-        if (sum_in < 0.01 || sum_in > 100000)  {log("WARNING: input SUM is not correct, sum:", sum_in); return -1;}
+        if (sum_in < 0.01 || sum_in > 10000)  {log("WARNING: input SUM is not correct, sum:", sum_in); return -1;}
 
 	log(curTime(), "try get pool data", ".....");
 	log("POOL ADDRESS:", this.pool_addr);
@@ -88,7 +88,7 @@ class SwapperObj
 	if (this.pool_addr.length < 10) {log("WARNING: invalid pool_address:", this.pool_addr); return -1;}
         if (!this.wallet.isSigner()) {log("WARNING: wallet object is not SIGNER!!!"); return -1;}
         if (!varNumber(sum_in))  {log("WARNING: swapping SUM is not number_value, sum: ", sum_in); return -2;}
-        if (sum_in < 0.01 || sum_in > 100000)  {log("WARNING: input SUM is not correct, sum:", sum_in); return -1;}
+        if (sum_in < 0.01 || sum_in > 10000)  {log("WARNING: input SUM is not correct, sum:", sum_in); return -1;}
 
 	//get pool data
 	log(curTime(), "try get pool data", ".....");

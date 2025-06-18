@@ -309,8 +309,8 @@ class WalletObj
 	{
 	    log("try unwrap native asset ......");
 	    if (!this.isSigner()) {log("WARNING: wallet object is not SIGNER!!!"); return -1;}
-	    if (!varNumber(sum))  {log("WARNING: approvig SUM is not number_value, sum: ", sum); return -2;}
-	    if (sum < 0.01 || sum > 1000)  {log("WARNING: approvig SUM is not correct, sum:", sum); return -2;}
+	    if (!varNumber(sum))  {log("WARNING: unwraping SUM is not number_value, sum: ", sum); return -2;}
+	    if (sum < 0.01 || sum > 10000)  {log("WARNING: unwraping SUM is not correct, sum:", sum); return -2;}
 	    if (this.assetsCount() < 2) {log("Invalid asset count: ", this.assetsCount()); return -2;}
 	    
 	    const nt = this.assets[0].name;
@@ -342,8 +342,8 @@ class WalletObj
 	{
 	    log("try wrap native asset ......");
 	    if (!this.isSigner()) {log("WARNING: wallet object is not SIGNER!!!"); return -1;}
-	    if (!varNumber(sum))  {log("WARNING: approvig SUM is not number_value, sum: ", sum); return -2;}
-	    if (sum < 0.01 || sum > 1000)  {log("WARNING: approvig SUM is not correct, sum:", sum); return -2;}
+	    if (!varNumber(sum))  {log("WARNING: wraping SUM is not number_value, sum: ", sum); return -2;}
+	    if (sum < 0.01 || sum > 10000)  {log("WARNING: wraping SUM is not correct, sum:", sum); return -2;}
 	    if (this.assetsCount() < 2) {log("Invalid asset count: ", this.assetsCount()); return -2;}
 	    
 	    const nt = this.assets[0].name;
@@ -402,7 +402,7 @@ class WalletObj
 	    log("try transfer asset ......");
 	    if (!this.isSigner()) {log("WARNING: wallet object is not SIGNER!!!"); return -1;}
 	    if (!varNumber(sum))  {log("WARNING: transfer SUM is not number_value, sum: ", sum); return -2;}
-	    if (sum < 0.0001 || sum > 1000)  {log("WARNING: transfer SUM limit is not correct, sum:", sum); return -3;}
+	    if (sum < 0.0001 || sum > 10000)  {log("WARNING: transfer SUM limit is not correct, sum:", sum); return -3;}
 	    if (i >= this.assetsCount() || i < 0) {log("Invalid asset index ", i, ", assets count: ", this.assetsCount()); return -4;}
 
 	    log("SENDING ASSET:", this.assets[i].name, "/" ,this.assets[i].address);

@@ -426,6 +426,25 @@ class LiqWorker
 	    const result = await this._sendTx(collect_params, "collect");
 	    return result;
 	}
+	//TX_5. сжигание позы, освобождение слота NFT в кошелеке.
+	async tryBurn(pid)
+	{
+	    log("try burn NFT position", pid, " to own wallet ............");
+	    if (this._invalid(false)) return -1;
+    	    if (!varNumber(pid) || pid <= 0)  {log("WARNING: position PID is not correct, PID: ", pid); return -2;}
+
+	    //collect params		    
+    	    let burn_params = {tokenId: pid};
+	    burn_params.recipient = this.wallet.address;
+            burn_params.deadline = this._deadLine();
+	    log("BURN_PARAMS:", burn_params);
+	    space();
+
+	    /////////////////////SEND TX///////////////////////////////////
+	    const result = await this._sendTx(burn_params, "burn");
+	    return result;
+	}
+
 	//данная функция просто сочетает в себе 2 фунции tryDecrease и tryCollect (что бы не делать 2 вызова скрипта по очереди).
 	//функция выполняет последовательно tryDecrease и tryCollect, в случае ошибки 1-й итерации прерывается.
 	async takeFull(pid, liq_size)

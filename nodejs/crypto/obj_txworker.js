@@ -97,6 +97,7 @@ class TxRecord
 //7. decrease (перевод части/всей ликвидности указанной позы в раздел невостребованные комиссии этой позы)
 //8. collect (вывод токенов-комиссий у заданной позы на кошелек)
 //9. swap (обмен токенов один на другой в кошельке используя конкретный пул)
+//10. burn (Сжигает позицию. Ликвидность токена должна быть нулевой, и все токены должны быть собраны)
 class TxWorkerObj
 {
     //в конструкторе необходимо передать объект wallet_obj
@@ -172,23 +173,6 @@ class TxWorkerObj
 	    return;	
 	}
 
-/*
-	    rec.fromFileLine(f_line);
-	    if (rec.invalid())
-	    {
-		log("TxWorkerObj: WARNING invalid parsing TX file line: ", f_line);
-		rec = null;
-	    }
-	    else this.tx_list.push(rec);
-*/
-
-/*
-        const dt = new Date(Date.now()); 	
-//	log(dt.toISOString().replace('T', ' ').split('.')[0]);
-	fline = dt.toISOString().replace('T', ' ').split('.')[0] + " / ";
-	fline += tx_reply.hash + " / " + tx_kind;
-*/
-
 	fline = rec.toFileLine() + '\n'
         fs.appendFileSync(F_LOG, fline);
 	rec = null;
@@ -248,6 +232,7 @@ class TxWorkerObj
 	if (tx_kind == "increase") return true;
 	if (tx_kind == "decrease") return true;
 	if (tx_kind == "collect") return true;
+	if (tx_kind == "burn") return true;
 	return false;
     }
     
@@ -378,6 +363,11 @@ class TxWorkerObj
         {
             try { tx_reply = await pm_conn.collect(params, fee_params); }
             catch(e) {log("ERROR:", e); return -118;}         
+        }
+        else if (operation_name == "burn")
+        {
+            try { tx_reply = await pm_conn.burn(params.tokenId, fee_params); }
+            catch(e) {log("ERROR:", e); return -119;}         
         }
         else {log("ERROR: invalid operation_name ", operation_name); return -99;}
 

@@ -269,6 +269,7 @@ function calcRealPriceRange()
         const real_prange = LiqWorker.invertPrices({"p1" : real_p1.toFixed(8), "p2" : real_p2.toFixed(8)});
 	real_p1 = real_prange.p1.toFixed(6);
 	real_p2 = real_prange.p2.toFixed(6);
+	result.average_price = ((real_prange.p1+real_prange.p2)/2).toFixed(4);
     }
     result.real_price_range = ("(" + real_p1.toString() + "; " + real_p2.toString() + ")");
     log("done!");

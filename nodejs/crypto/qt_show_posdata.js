@@ -102,7 +102,8 @@ for (var i=0; i<n_data; i++)
     const key = p.pid.toString();
     let value = p.pool.address + " / " + p.pool.info;
     value = strReplace(value, ':', ';');
-    value = value + " / " + "price_range(" + p.pricesRange.p1.toFixed(4).toString() + "; " + p.pricesRange.p2.toFixed(4).toString() + ")";
+    const prec = ( p.pricesRange.p1 > 50 ) ? 2 : 4; 
+    value = value + " / " + "price_range(" + p.pricesRange.p1.toFixed(prec).toString() + "; " + p.pricesRange.p2.toFixed(prec).toString() + ")";
     value = value + " / " + "tick_range(" + p.l_tick + "; " + p.u_tick + ")";
     value = value + " / " + p.liq.toString();
 

@@ -527,6 +527,15 @@ class PosManager
 		pos_obj.pricesRange.p1 = p1;
 		pos_obj.pricesRange.p2 = p2;
 	    }
+
+	    if (pos_obj.pricesRange.p1 < 0.01 && pos_obj.pricesRange.p2 < 0.01)
+	    {
+		p1 = pos_obj.pricesRange.p1;
+		p2 = pos_obj.pricesRange.p2;
+		pos_obj.pricesRange.p1 = 1/p2;
+		pos_obj.pricesRange.p2 = 1/p1;		
+	    }
+
 	}	
 
 };

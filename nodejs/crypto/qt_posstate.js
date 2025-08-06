@@ -152,6 +152,7 @@ try
 	const price_state = calcPricesState(pos.pool, pos.l_tick, pos.u_tick, pos.pool.state.tick);
 	result.price_range = ("(" + price_state.p1 + "; " + price_state.p2 + ")");
 	result.price_current = (price_state.p_current);
+	if (result.price_current < 0.01) result.price_current = (1/result.price_current).toFixed(2);
 	let p_loc = "active";
 	if (Number.parseFloat(price_state.p_current) < Number.parseFloat(price_state.p1)) p_loc = "out_left";
 	if (Number.parseFloat(price_state.p_current) > Number.parseFloat(price_state.p2)) p_loc = "out_right";

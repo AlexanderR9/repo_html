@@ -20,9 +20,13 @@ const m_wallet = require("./obj_wallet.js");
 const {ArgsParser} = require("./obj_argsparser.js");
 
 //константы для определения размера газа перед совершением транзакции
-const GAS_LIMIT = 260000; //единиц газа за транзакцию
+//	for POLYGON chain
+var GAS_LIMIT = 260000; //единиц газа за транзакцию
 const MAX_FEE = 220;  //Gweis
 const PRIOR_FEE = -1;  //Gweis
+//	for BNB chain
+//const GAS_PRICE = 0.15;  //Gweis
+if (m_base.isBnbChain()) GAS_LIMIT = 80000;
 
 
 // user vars
@@ -45,8 +49,8 @@ if (a_parser.count() > 1)
 {
     if (a_parser.count() != 3) {sendErrResult("invalid args (count)"); return;}
 
-    if (a_parser.at(1) == "swap_router") {WHOM_APPROVE = m_base.SWAP_ROUTER_ADDRESS; result.whom = "swap_router";}
-    else if (a_parser.at(1) == "pos_manager") {WHOM_APPROVE = m_base.POS_MANAGER_ADDRESS; result.whom = "pos_manager";}
+    if (a_parser.at(1) == "swap_router") {WHOM_APPROVE = m_base.swapRouterContractAddr(); result.whom = "swap_router";}
+    else if (a_parser.at(1) == "pos_manager") {WHOM_APPROVE = m_base.posManagerContractAddr(); result.whom = "pos_manager";}
     else {sendErrResult("invalid arg_2 ("+a_parser.at(1)+")"); return;}
 
     APPROVE_SUM = a_parser.at(2);
@@ -55,12 +59,17 @@ if (a_parser.count() > 1)
 }
 
 result.token = TOKEN_ADDR;
+log("CHAIN:", m_base.currentChain());
 log("TOKEN_ADDRESS: ", TOKEN_ADDR, "  APPROVE_SUM: ", APPROVE_SUM);
 log("  WHOM_APPROVE: ", WHOM_APPROVE, "   LOOK_MODE=", LOOK_MODE);
+log("TX_GAS: GAS_LIMIT =", GAS_LIMIT);
+
+//return 1;
 
 //WALLET DATA
 let w_obj = new m_wallet.WalletObj(process.env.WA2, process.env.WKEY);
-w_obj.setGas(GAS_LIMIT, MAX_FEE, PRIOR_FEE);
+//w_obj.setGas(GAS_LIMIT, MAX_FEE, PRIOR_FEE, GAS_PRICE);
+w_obj.setGas(GAS_LIMIT, MAX_FEE);
 const i_asset = w_obj.assetIndexOf(TOKEN_ADDR);
 if (i_asset < 0) {sendErrResult("invalid token address (not found in wallet)"); return;}    
 log("token index: ", i_asset);
@@ -68,13 +77,13 @@ log("token index: ", i_asset);
 if (LOOK_MODE) 
 {
     result.type = "update";
-    w_obj.checkApproved(i_asset, m_base.SWAP_ROUTER_ADDRESS).then((res_func) => {
+    w_obj.checkApproved(i_asset, m_base.swapRouterContractAddr()).then((res_func) => {
 	if (res_func < 0) {sendErrResult("can not get supplied value for SWAP_ROUTER"); return;}    
 	const s_swap = 	res_func;
 	log("supplied for SWR: ", s_swap);
 	
 	//check POS_MANAGER
-	w_obj.checkApproved(i_asset, m_base.POS_MANAGER_ADDRESS).then((res_func) => {
+	w_obj.checkApproved(i_asset, m_base.posManagerContractAddr()).then((res_func) => {
 	    if (res_func < 0) {sendErrResult("can not get supplied value for POS_MANAGER"); return;}    
 	    const s_pm = res_func;
 	    log("supplied for PM: ", s_pm);

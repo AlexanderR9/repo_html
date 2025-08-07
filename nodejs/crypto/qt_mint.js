@@ -52,8 +52,11 @@ const m_base = require("./base.js");
 
 
 //константы для определения размера газа перед совершением транзакции
-const GAS_LIMIT = 2*360000; //единиц газа за транзакцию
+//      for POLYGON chain
+var GAS_LIMIT = 2*360000; //единиц газа за транзакцию
 const MAX_FEE = 2*220;  //Gweis
+//      for BNB chain
+if (m_base.isBnbChain()) GAS_LIMIT = 1280000;
 
 
 //user vars

@@ -27,9 +27,14 @@ const m_pool = require("./obj_pool.js");
 const m_swapper = require("./obj_swapper.js");
 
 //константы для определения размера газа перед совершением транзакции
-const GAS_LIMIT = 490000; //единиц газа за транзакцию
+//      for POLYGON chain
+var GAS_LIMIT = 490000; //единиц газа за транзакцию
 const MAX_FEE = 340;  //Gweis
 const PRIOR_FEE = -1;  //Gweis
+//      for BNB chain
+//const GAS_PRICE = 0.15;  //Gweis
+if (m_base.isBnbChain()) GAS_LIMIT = 180000;
+
 
 
 // user vars
@@ -81,7 +86,8 @@ log("INPUT_SUM:", INPUT_SUM);
 //body
 log("//////////////////WITH SWAPPER_OBJ/////////////////////////");
 let w_obj = new m_wallet.WalletObj(process.env.WA2, process.env.WKEY);
-w_obj.setGas(GAS_LIMIT, MAX_FEE, PRIOR_FEE);
+//w_obj.setGas(GAS_LIMIT, MAX_FEE, PRIOR_FEE, GAS_PRICE);
+w_obj.setGas(GAS_LIMIT, MAX_FEE);
 
 let s_obj = new m_swapper.SwapperObj(w_obj, POOL_ADDR);
 s_obj.setSimulateMode(IS_SUMULATE); //TURN ON/OFF SIMULATE_MODE

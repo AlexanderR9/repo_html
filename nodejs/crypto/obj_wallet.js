@@ -60,19 +60,31 @@ class TxGas
 	this.gas_limit = 185000; //максимально единиц газа за транзакцию
 	this.max_fee = 130; //максимальная цена за единицу газа, gwei
 	this.priority = 35; //пожертвование за приоритет, gwei	
+
+	//дополнительное поле, используется при сети BNB в паре с gas_limit
+	this.gas_price = 0.12;
     }
-    update(g, m, p = -1)
+    update(g, m, p = -1, gp = -1)
     {
 	this.gas_limit = g;
 	this.max_fee = m;
 	if (p > 0) this.priority = p;
+	if (gp > 0) this.gas_price = gp;
     }
     //установить в объект транзакции текщие значения комиссий
     setFeeParams(txp) 
     {
         txp.gasLimit = this.gas_limit;
-        txp.maxFeePerGas = m_base.toGwei(this.max_fee);
-        txp.maxPriorityFeePerGas = m_base.toGwei(this.priority);
+
+	if (m_base.isPolygonChain())
+	{
+    	    txp.maxFeePerGas = m_base.toGwei(this.max_fee);
+    	    txp.maxPriorityFeePerGas = m_base.toGwei(this.priority);
+	}
+	else if (m_base.isBnbChain())
+	{
+	    txp.gasPrice = m_base.toGwei(this.gas_price);
+	}		
     }
 }
 
@@ -106,7 +118,7 @@ class WalletObj
   	}
 	//установка параметров трат коммисии на газ за предстоящую транзакцию.
 	//функция выполнится только если кошелек находится в режиме SIGNER.	
-	setGas(g, m, p = -1) {if (this.gas) this.gas.update(g,m,p);}
+	setGas(g, m, p = -1, gp = -1) {if (this.gas) this.gas.update(g,m,p,gp);}
 	initNativeToken()
 	{
 		let asset = new WalletAsset(1);

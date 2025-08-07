@@ -19,10 +19,15 @@ const m_wallet = require("./obj_wallet.js");
 const {ArgsParser} = require("./obj_argsparser.js");
 
 //константы для определения размера газа перед совершением транзакции
-//  for POLYGON
-const GAS_LIMIT = 265000; //единиц газа за транзакцию
+//      for POLYGON chain
+var GAS_LIMIT = 265000; //единиц газа за транзакцию
 const MAX_FEE = 220;  //Gweis
 const PRIOR_FEE = -1;  //Gweis
+//      for BNB chain
+//const GAS_PRICE = 0.12;  //Gweis
+if (m_base.isBnbChain()) GAS_LIMIT = 80000;
+
+
 
 //  for ARBITRUM
 /*
@@ -62,7 +67,8 @@ result.type = "tx_transfer";
 
 //WALLET DATA
 let w_obj = new m_wallet.WalletObj(process.env.WA2, process.env.WKEY);
-w_obj.setGas(GAS_LIMIT, MAX_FEE, PRIOR_FEE);
+//w_obj.setGas(GAS_LIMIT, MAX_FEE, PRIOR_FEE, GAS_PRICE);
+w_obj.setGas(GAS_LIMIT, MAX_FEE);
 
 var i_asset = -1;
 if (TOKEN_ADDR == m_base.nativeToken()) i_asset = 0;

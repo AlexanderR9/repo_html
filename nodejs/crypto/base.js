@@ -20,6 +20,7 @@ const POS_MANAGER_BNB_ADDRESS='0x46A15B0b27311cedF172AB29E4f4766fbE7F4364';
 const QUOTER_CONTRACT_ADDRESS='0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6';
 
 
+/////////// CHAIN_NAME funcs/////////////////////////
 function currentChain()
 {
     let s = process.env.INFURA_URL.toString().toLowerCase();
@@ -27,23 +28,47 @@ function currentChain()
     if (s.includes("optimism")) return "optimism";
     if (s.includes("arbitrum")) return "arbitrum";
     if (s.includes("base")) return "base";
-    if (s.includes("binance")) return "bnb";
+    if (s.includes("bsc")) return "bnb";
     return "etherium"
 }
+const isPolygonChain = () => {return (currentChain() == "polygon");}
+const isBnbChain = () => {return (currentChain() == "bnb");}
+const isOptimismChain = () => {return (currentChain() == "optimism");}
+const isArbitrumChain = () => {return (currentChain() == "arbitrum");}
 function nativeToken() //for current chain, fee pay token
 {
-	let s = currentChain();
-	if (s == "polygon") return "POL";
-	if (s == "bnb") return "BNB";
-	return "ETH";	
+    if (isPolygonChain()) return "POL";	
+    if (isBnbChain()) return "BNB";	
+    return "ETH";	
 }
 function RPC_URL()
 {
     const serv = process.env.INFURA_URL.toString();
+    if (!serv.includes("infura.io")) return serv;
+    return (serv + "/" + process.env.INFURA_KEY.toString()); 
+
+
+/*		old code
+    const serv = process.env.INFURA_URL.toString();
     let s = currentChain();
     if (s == "bnb") return serv;
     return (serv + "/" + process.env.INFURA_KEY.toString()); 
+*/
 }
+
+
+// contract addresses funcs
+function swapRouterContractAddr()
+{
+    if (isBnbChain()) return SWAP_ROUTER_BNB_ADDRESS;
+    return SWAP_ROUTER_ADDRESS;
+}
+function posManagerContractAddr()
+{
+    if (isBnbChain()) return POS_MANAGER_BNB_ADDRESS;
+    return POS_MANAGER_ADDRESS;
+}
+
 
 
 //standard funcs
@@ -73,14 +98,14 @@ function getQuoterContract(provider)
 }
 function getRouterContract(provider)
 {
-    const swr_addr = ((currentChain() == "bnb") ? SWAP_ROUTER_BNB_ADDRESS : SWAP_ROUTER_ADDRESS);
-    return getContract(swr_addr, ROUTER_ABI, provider);			
+    return getContract(swapRouterContractAddr(), ROUTER_ABI, provider);			
 }
 function getPosManagerContract(provider)
 {
-    const pm_addr = ((currentChain() == "bnb") ? POS_MANAGER_BNB_ADDRESS : POS_MANAGER_ADDRESS);
-    return getContract(pm_addr, POS_MANAGER_ABI, provider);			
+    return getContract(posManagerContractAddr(), POS_MANAGER_ABI, provider);			
 }
+
+
 function tickSpacingByFee(fee)
 {
     switch (fee)
@@ -122,20 +147,24 @@ module.exports = {
 	getPoolContract,
 	getTokenContract,
 	getQuoterContract,
-	getRouterContract,
-	getPosManagerContract,
 	fromReadableAmount,
 	toReadableAmount,
 	toGwei,
 	RPC_URL,
 	nativeToken,
 	currentChain,
+	isPolygonChain,
+	isBnbChain,
+	isOptimismChain,
+	isArbitrumChain,
+	swapRouterContractAddr,
+	posManagerContractAddr,
 	fromGwei,
 	tickSpacingByFee,
 	toBig,
+	getRouterContract,
+	getPosManagerContract,
 	MAX_BIG128,
-	SWAP_ROUTER_ADDRESS,
-	POS_MANAGER_ADDRESS,
 	TICK_QUANTUM
 	
 };

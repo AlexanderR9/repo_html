@@ -82,6 +82,7 @@ function amountToStr(p) //приводит вещественное значен
     if (p < 0) return p.toString();
     if (p == 0) return p.toFixed(1);
     if (p < 0.1) return p.toFixed(5);
+    if (p < 1) return p.toFixed(4);
     if (p < 100) return p.toFixed(2);
     return p.toFixed(1);
 }

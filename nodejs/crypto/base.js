@@ -14,10 +14,13 @@ const ERC20_ABI = require("./abi/erc20.abi.json");
 const READABLE_FORM_LEN = 12;
 const TICK_QUANTUM = 1.0001;	
 const SWAP_ROUTER_ADDRESS='0xE592427A0AEce92De3Edee1F18E0157C05861564';
-const SWAP_ROUTER_BNB_ADDRESS='0x1b81D678ffb9C0263b24A97847620C99d213eB14';
+//const SWAP_ROUTER_BNB_ADDRESS='0x1b81D678ffb9C0263b24A97847620C99d213eB14';
+const SWAP_ROUTER_BNB_ADDRESS='0xB971eF87ede563556b2ED4b1C0b0019111Dd85d2';
+
 const POS_MANAGER_ADDRESS='0xC36442b4a4522E871399CD717aBDD847Ab11FE88';
 const POS_MANAGER_BNB_ADDRESS='0x46A15B0b27311cedF172AB29E4f4766fbE7F4364';
 const QUOTER_CONTRACT_ADDRESS='0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6';
+const QUOTER_CONTRACT_BNB_ADDRESS='0x78D78E420Da98ad378D7799bE8f4AF69033EB077';
 
 
 /////////// CHAIN_NAME funcs/////////////////////////
@@ -68,6 +71,11 @@ function posManagerContractAddr()
     if (isBnbChain()) return POS_MANAGER_BNB_ADDRESS;
     return POS_MANAGER_ADDRESS;
 }
+function quoterContractAddr()
+{
+    if (isBnbChain()) return QUOTER_CONTRACT_BNB_ADDRESS;
+    return QUOTER_CONTRACT_ADDRESS;
+}
 
 
 
@@ -94,7 +102,7 @@ function getTokenContract(t_addr, provider)
 }
 function getQuoterContract(provider)
 {
-  return getContract(QUOTER_CONTRACT_ADDRESS, QUOTER_ABI, provider);			
+  return getContract(quoterContractAddr(), QUOTER_ABI, provider);			
 }
 function getRouterContract(provider)
 {

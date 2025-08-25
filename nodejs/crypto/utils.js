@@ -32,6 +32,11 @@ function isInt(a) ///проверяет является ли параметр �
     if (Number.isInteger(a)) return true;
     return false;
 }
+function isStr(a) ///проверяет является ли параметр строкой (string)
+{
+    if (typeof(a) === "string") return true;
+    return false;
+}
 function isFloat(a) ///проверяет является ли параметр числом (float)
 {
     if (Number.isFinite(a)) return true;
@@ -151,5 +156,5 @@ function strReplace(str, sub1, sub2) //заменяет в строке s все
 //export funcs
 module.exports = {log, curTime, delay, space, countDecimals, varNumber, decimalFactor, uLog, 
 	priceToStr, amountToStr, isInt, isJson, hasField, fileExist, jsonFromFile, jsonKeys, mergeJson,
-	charRepeat, strReplace, isFloat};
+	charRepeat, strReplace, isFloat, isStr};
 

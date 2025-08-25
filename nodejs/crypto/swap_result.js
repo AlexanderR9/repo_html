@@ -39,7 +39,10 @@ const POOL_ADDR = "0x6fe9e9de56356f7edbfcbb29fab7cd69471a4869" // USDT:WBNB:0.05
 log("//////////////////WITH SWAPPER_OJ/////////////////////////");
 let w_obj = new m_wallet.WalletObj(process.env.WA2);
 let s_obj = new m_swapper.SwapperObj(w_obj, POOL_ADDR);
-s_obj.tokenSizeBySwapping(INPUT_SUM, INPUT_T).then((out_sum) => log("calc finished!"));
+s_obj.tokenSizeBySwapping(INPUT_SUM, INPUT_T).then((out_sum) => {
+    log("out_sum =", out_sum);
+    log("calc finished!")
+});
 
 
 //by PoolObj

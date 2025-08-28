@@ -130,6 +130,15 @@ class WalletObj
 	    }
 	    return result;
 	}
+	//возвращает адрес обернутого нативного токена в текущей сети, если в кошельке такой присутствует среди активов или "err"
+	wrapedNativeAddr()
+	{
+	    if (this.invalid()) return "err";
+	    let w_name = ("W"+this.assets[0].name);
+	    for (let i=0; i<this.assets.length; i++)
+		if (this.assets[i].name == w_name) return this.assets[i].address;
+	    return "err";	    
+	}
 
 
 	//diag debug
@@ -247,136 +256,6 @@ class WalletObj
 	}
 
 
-
-	/////////////////////////////TRANSACTIONS FUNCS//////////////////////////////////////////
-
-
-/*
-
-	//TX_1. функция конвертирует завернутый нативный токен в нативную монету(внутри кошелька).
-	//для этого в списке токенов кошелька должен присутствовать токен вида  W<NATIVE_TICKER> (example: WPOL)
-	//если такого токена нет, то функция ничего не выполнит. Для такой операции approve не нужно делать предварительно.
-	async unwrapNative(sum)
-	{
-	    log("try unwrap native asset ......");
-	    if (!this.isSigner()) {log("WARNING: wallet object is not SIGNER!!!"); return -1;}
-	    if (!varNumber(sum))  {log("WARNING: unwraping SUM is not number_value, sum: ", sum); return -2;}
-	    if (sum < 0.01 || sum > 10000)  {log("WARNING: unwraping SUM is not correct, sum:", sum); return -2;}
-	    if (this.assetsCount() < 2) {log("Invalid asset count: ", this.assetsCount()); return -2;}
-	    
-	    const nt = this.assets[0].name;
-	    const wnt = ("W" + nt);
-	    log("Native coin: ", nt, ",   wraped token: ", wnt);
-	    //find wraped native token
-	    let i_wraped = -1;
-    	    for (let i=1; i<this.assets.length; i++)
-		if (this.assets[i].name == wnt) {i_wraped = i; break;}
-	    if (i_wraped < 0) {log("WARNING: wraped native token not found among wallet assets"); return -3;}
-
-    	    //prepare BinNumber sum
-    	    const bi_sum = m_base.fromReadableAmount(sum, this.nativeDecimal());
-    	    log("BI sum format: ", bi_sum, " / ", bi_sum.toString());
-	    log("index of wraped token: ", i_wraped);	    	    
-    	    space();
-
-	    //prepare tx params
-            let tx_params = {tx_kind: "unwrap", value: bi_sum.toString()};
-	    tx_params.token_address = this.assets[i_wraped].address;        
-            /////////////////////SEND TX///////////////////////////////////
-            const result = await this.tx_worker.sendTx(tx_params);
-            return result;
-	}
-	//TX_2. функция конвертирует нативный токен в завернутый тот же токен(внутри кошелька).
-	//для этого в списке токенов кошелька должен присутствовать токен вида  W<NATIVE_TICKER> (example: WPOL)
-	//если такого токена нет, то функция ничего не выполнит. Для такой операции approve не нужно делать предварительно.
-	async wrapNative(sum)
-	{
-	    log("try wrap native asset ......");
-	    if (!this.isSigner()) {log("WARNING: wallet object is not SIGNER!!!"); return -1;}
-	    if (!varNumber(sum))  {log("WARNING: wraping SUM is not number_value, sum: ", sum); return -2;}
-	    if (sum < 0.01 || sum > 10000)  {log("WARNING: wraping SUM is not correct, sum:", sum); return -2;}
-	    if (this.assetsCount() < 2) {log("Invalid asset count: ", this.assetsCount()); return -2;}
-	    
-	    const nt = this.assets[0].name;
-	    const wnt = ("W" + nt);
-	    log("Native coin: ", nt, ",   wraped token: ", wnt);
-	    //find wraped native token
-	    let i_wraped = -1;
-    	    for (let i=1; i<this.assets.length; i++)
-		if (this.assets[i].name == wnt) {i_wraped = i; break;}
-	    if (i_wraped < 0) {log("WARNING: wraped native token not found among wallet assets"); return -3;}
-
-    	    //prepare BinNumber sum
-    	    const bi_sum = m_base.fromReadableAmount(sum, this.nativeDecimal());
-    	    log("BI sum format: ", bi_sum, " / ", bi_sum.toString());
-	    log("index of wraped token: ", i_wraped);	    	    
-    	    space();
-
-	    //prepare tx params
-            let wrap_params = {tx_kind: "wrap", value: bi_sum};
-	    wrap_params.token_address = this.assets[i_wraped].address;        
-            /////////////////////SEND TX///////////////////////////////////
-            const result = await this.tx_worker.sendTx(wrap_params);
-            return result;
-	}
-	//TX_3. функция предоставляет актив с указанным индексом контракту to_addr. sum - количество предоставляемого токена.
-	//кошелек должен находится в режиме SIGNER.	
-	async tryApprove(i, to_addr, sum)
-	{
-	    log("try approve asset ......");
-	    if (!this.isSigner()) {log("WARNING: wallet object is not SIGNER!!!"); return -1;}
-	    if (!varNumber(sum))  {log("WARNING: approvig SUM is not number_value, sum: ", sum); return -2;}
-	    if (sum < 0.01 || sum > 10000)  {log("WARNING: approvig SUM is not correct, sum:", sum); return -3;}
-	    if (i >= this.assetsCount() || i < 0) {log("Invalid asset index ", i, ", assets count: ", this.assetsCount()); return -4;}
-	    
-	    log("ASSET:", this.assets[i].name, "/" ,this.assets[i].address);
-	    log("TO_CONTRACT:", to_addr);
-	    log("APPROVING_AMOUNT:", sum, '\n');
-
-    	    //prepare sum
-    	    const bi_sum = m_base.fromReadableAmount(sum, this.assets[i].decimal);
-    	    log("BI sum format: ", bi_sum, " / ", bi_sum.toString());
-    	    space();
-
-	    //prepare tx_params
-            let tx_params = {tx_kind: "approve", value: bi_sum.toString()};
-	    tx_params.token_address = this.assets[i].address;        
-	    tx_params.target_address = to_addr;        
-            /////////////////////SEND TX///////////////////////////////////
-            const result = await this.tx_worker.sendTx(tx_params);
-            return result;
-	}
-	//TX_4. функция отправляет актив с указанным индексом на другой кошелек to_addr. sum - количество переводимого токена.
-	//кошелек должен находится в режиме SIGNER.	
-	async trySend(i, to_addr, sum)
-	{
-	    log("try transfer asset ......");
-	    if (!this.isSigner()) {log("WARNING: wallet object is not SIGNER!!!"); return -1;}
-	    if (!varNumber(sum))  {log("WARNING: transfer SUM is not number_value, sum: ", sum); return -2;}
-	    if (sum < 0.0001 || sum > 10000)  {log("WARNING: transfer SUM limit is not correct, sum:", sum); return -3;}
-	    if (i >= this.assetsCount() || i < 0) {log("Invalid asset index ", i, ", assets count: ", this.assetsCount()); return -4;}
-
-	    log("SENDING ASSET:", this.assets[i].name, "/" ,this.assets[i].address);
-	    if (i==0) log("IS A NATIVE TOKEN");
-	    log("TO_WALLET:", to_addr);
-	    log("ASSET_AMOUNT:", sum, '\n');
-
-    	    //prepare sum
-    	    const bi_sum = m_base.fromReadableAmount(sum, this.assets[i].decimal);
-    	    log("BI sum format: ", bi_sum, " / ", bi_sum.toString());
-    	    space();
-
-	    //prepare tx_params
-            let tx_params = {tx_kind: "transfer", value: bi_sum.toString()};
-	    tx_params.token_address = ""; //native coin
-	    if (i>0) tx_params.token_address = this.assets[i].address;  // any token       
-	    tx_params.target_address = to_addr;        
-            /////////////////////SEND TX///////////////////////////////////
-            const result = await this.tx_worker.sendTx(tx_params);
-            return result;
-	}
-
-*/
 
 };
 

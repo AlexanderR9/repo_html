@@ -1,7 +1,10 @@
 const {space, log, curTime, hasField, jsonFromFile, jsonKeys, fileExist, isJson} = require("./../utils.js");
 
-// список валидных значений команд  (порядок элементов важен)
-const REQ_NAME_VALID_LIST = ["balance", "tx_count", "approved", "gas_price", "chain_id", "tx_status"];
+// список валидных значений команд на чтение  (порядок элементов важен)
+const REQ_NAME_LIST = ["balance", "tx_count", "approved", "gas_price", "chain_id", "tx_status"];
+
+// список валидных значений команд на запись  (порядок элементов важен)
+const TX_REQ_NAME_LIST = ["wrap", "unwrap", "transfer", "approve"];
 
 //класс для чтения и обработки входного json-файла параметров для скрипта
 class ParamParser 
@@ -12,8 +15,8 @@ class ParamParser
 	    this.params = {}; //полный считанный объект из файла параметров
 	    this.param_file = fname;
 	    this.err = ""; //значение ошибки при чтении файла параметров, пустая строка означает OK
-	    this._initParams();
-	    this._checkReqNameValue()
+	    this._initParams(); // в том числе, проверка наличия основного поля 'req_name'
+	    this._checkReqNameValue(); //проверка значения основного поля 'req_name'
 	    
 	    if (!this.invalid()) log("loaded OK!  ");
 	}
@@ -37,66 +40,81 @@ class ParamParser
 	_checkReqNameValue()
 	{
 	    if (this.invalid()) return;
-	    if (!REQ_NAME_VALID_LIST.includes(this.reqName()))
+	    if (!REQ_NAME_LIST.includes(this.reqName()) && !TX_REQ_NAME_LIST.includes(this.reqName()))
 	    {
 		this.err = ("invalid cmd value: "+this.reqName());
-		log("Correct commands: \n ", REQ_NAME_VALID_LIST);
+		log("Correct commands: \n ", REQ_NAME_LIST);
 	    }
 	}
 
 
 
-	//inline funcs
+	//help funcs
 	paramCount() {return this.keys.length;}
 	isEmpty() {return (this.keys.length == 0);}
 	invalid() {return (this.err != "");}
-	reqName()
+	isReadingReq()  // признак того что текущий запрос на чтение
+	{
+	    if (this.invalid()) return false;
+	    return REQ_NAME_LIST.includes(this.reqName());
+	}
+	isWritingReq() // признак того что текущий запрос на запись (транзакция)
+	{
+	    if (this.invalid()) return false;
+	    return TX_REQ_NAME_LIST.includes(this.reqName());
+	}
+	reqName() // значение самой команды запроса, т.е. поля 'req_name'
 	{
 	    if (this.isEmpty()) return "none";
 	    if (!hasField(this.params, "req_name")) return "none";	 
 	    return this.params.req_name;
 	}
-
-	//функциий возвращающие признак того, что пришел запрос типа  REQ_NAME_VALID_LIST[i]
-	isBalanceReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_VALID_LIST[0]));}
-	isTxCountReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_VALID_LIST[1]));}
-	isApprovedReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_VALID_LIST[2]));}
-	isGasPriceReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_VALID_LIST[3]));}
-	isChainIdReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_VALID_LIST[4]));}
-	isTxStatusReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_VALID_LIST[5]));}
-
-
-/*
-	first() {return (this.isEmpty() ? "" : this.at(0));}
-	last() {return (this.isEmpty() ? "" : this.at(this.count()-1));}
-
-  	out() //to debug (diag func)
+	simulateMode() //признак того что текущий запрос на запись и при этом установлен режим симуляции
 	{
-		if (this.invalid) {log("invalid!!!"); return;}	
-
-		log("/////// SCRIPT ARGUMENTS ///////////")
-		log("SCRIPT: ", this.script_name);
-		if (this.isEmpty()) {log("ARGS_EMPTY"); return;}	
-
-		const n = this.count();
-		log("ARGS_COUNT: ", n);
-		let i = 0;
-		for (i=0; i<n; i++) 
-			log(i+1, ".  [", this.at(i), "]");
-  	}
-	at(i)
-	{
-        	if (i>=this.count() || i<0) return "???";
-        	return this.list[i];
+	    if (!this.isWritingReq()) return false;
+	    if (!this.keys.includes("simulate_mode")) return true;
+	    return (this.params.simulate_mode == "yes");
 	}
-	isNumber(i) ///является ли аргумент числом (float или int)
-	{
-		let a = Number.parseFloat(this.at(i));
-		return Number.isFinite(a);
-	}
-*/
+
+	//функциий возвращающие признак того, что пришел запрос типа  REQ_NAME_LIST[i] (read cmd)
+	isBalanceReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_LIST[0]));}
+	isTxCountReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_LIST[1]));}
+	isApprovedReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_LIST[2]));}
+	isGasPriceReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_LIST[3]));}
+	isChainIdReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_LIST[4]));}
+	isTxStatusReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_LIST[5]));}
+
+	//функциий возвращающие признак того, что пришел запрос типа  TX_REQ_NAME_LIST[i] (tx cmd)
+	isWrapTxReq() {return (!this.invalid() && (this.reqName() == TX_REQ_NAME_LIST[0]));}
+	isUnwrapTxReq() {return (!this.invalid() && (this.reqName() == TX_REQ_NAME_LIST[1]));}
+
+	
+	//проверка набора полей(НЕ ЗНАЧЕНИЙ) на соответствие типу запроса
+	readFieldsKidOk() //for reading req
+	{	    
+	    if (this.invalid()) return false;
+	    if (this.isBalanceReq() || this.isTxCountReq() || this.isGasPriceReq() || this.isChainIdReq()) return true;
+	    if (this.isApprovedReq()) 
+	    {
+		return (this.keys.includes("token_address"))
+	    }
+	    if (this.isTxStatusReq()) 
+	    {
+		return (this.keys.includes("tx_hash"))
+	    }
+	    return false;
+	}    
+	writeFieldsKidOk() //for TX req
+	{	    
+	    if (this.invalid()) return false;
+	    if (this.isWrapTxReq() || this.isUnwrapTxReq()) 
+	    {
+		return (this.keys.includes("amount"))
+	    }
+	    return false;
+	}    
 
 }
 
-module.exports = {ParamParser, REQ_NAME_VALID_LIST};
+module.exports = {ParamParser, REQ_NAME_LIST};
 

@@ -132,6 +132,12 @@ function mergeJson(a, b) //слияние двух json, все поля b пе�
     }
     return true;
 }
+function removeField(a, field_name)
+{
+    if (!isJson(a)) return;
+    if (!hasField(a, field_name)) return;
+    delete a[field_name];
+}
 
 /////////////string function////////////////////
 function charRepeat(c, n) //строка из n одинаковых символов
@@ -155,6 +161,6 @@ function strReplace(str, sub1, sub2) //заменяет в строке s все
 
 //export funcs
 module.exports = {log, curTime, delay, space, countDecimals, varNumber, decimalFactor, uLog, 
-	priceToStr, amountToStr, isInt, isJson, hasField, fileExist, jsonFromFile, jsonKeys, mergeJson,
+	priceToStr, amountToStr, isInt, isJson, hasField, fileExist, jsonFromFile, jsonKeys, mergeJson, removeField,
 	charRepeat, strReplace, isFloat, isStr};
 

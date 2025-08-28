@@ -73,13 +73,11 @@ class ContractObj
     static getQuoterContract(provider)
     {
 	const q_abi = (ChainObj.isBnbChain() ? QUOTER_V2_ABI : QUOTER_ABI);
-	//if (ChainObj.isBnbChain()) return ContractObj.getContract(quoterAddress(), QUOTER_V2_ABI, provider);
 	return ContractObj.getContract(ContractObj.quoterAddress(), q_abi, provider);			
     }
     static getRouterContract(provider)
     {
 	const r_abi = (ChainObj.isBnbChain() ? ROUTER_V2_ABI : ROUTER_ABI);
-//	if (ChainObj.isBnbChain()) getContract(swapRouterAddress(), ROUTER_V2_ABI, provider);			
 	return ChainObj.getContract(ChainObj.swapRouterAddress(), r_abi, provider);			
     }
     static getPosManagerContract(provider)

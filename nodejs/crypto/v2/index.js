@@ -5,7 +5,7 @@
 
 //including
 //const m_chain = require("./chain.js");
-const { space, log } = require("./../utils.js");
+const { space, log, hasField, removeField } = require("./../utils.js");
 const { ChainObj } = require("./chain_class.js");
 const { WalletObj } = require("./wallet_class.js");
 const { JSBIWorker } = require("./calc_class.js");
@@ -47,17 +47,11 @@ const MAX_FEE = 220;  //Gweis
 //log("Current chain:", m_chain.currentChain());
 //log(`NATIVE_TOKEN (${m_chain.nativeToken()})`);
 
-/*
-let dt = new DateTimeObj;
-dt.toDebug();
-space();
-let w_obj = new m_wallet.WalletObj(process.env.WA2);
-w_obj.out();
-tokenData(w_obj.assets[4].address, w_obj.pv).then((data) => log(data));
-*/
 
 space();
 let w_obj = new WalletObj(process.env.WA2, process.env.WKEY);
+
+
 
 
 //return 1;
@@ -70,22 +64,14 @@ let bi2 = JSBIWorker.toBI(s);
 //let f = JSBIWorker.fromWeiToFloat(s);
 //log("fromWeiToFloat: ", f, " / ", f.toString());
 
+let json = {name: "sdfs", age: 17, tall: 170};
+log(json);
+removeField(json, "age");
+log("after remove:", json);
 
 
 //log(JSBIWorker.isBI(a), "  / ", JSBIWorker.isBI(bi));
 //log("types a/bi : ", JSBIWorker.isBI(a), " / ", JSBIWorker.isBI(bi))
-/*
-let sum = JSBIWorker.biSum(bi, bi2);
-log("sum=", sum)
-let d = JSBIWorker.biDiff(bi, bi2);
-log("diff=", d)
-let mul = JSBIWorker.biMul(bi, bi2);
-log("mul=", mul)
-let div = JSBIWorker.biDiv(bi, bi2);
-log("div=", div)
-let rem = JSBIWorker.biDivRemainder(bi, bi2);
-log("div rem=", rem)
-*/
 
 /*
 let k = 1.5;
@@ -97,7 +83,7 @@ log("mul_float ", bi4)
 
 //log("bi: ", bi, "   bi2:", bi2);
 
-//return 1;
+return 1;
 async function main()
 {
     space();
@@ -109,8 +95,8 @@ async function main()
 //    const v = await w_obj.balance(3);
 //    log("balance: ", v, " / ", v.toString());
     space();
-    await w_obj.updateBalances();
-    w_obj.showBalances();
+//    await w_obj.updateBalances();
+//    w_obj.showBalances();
 
 //    const ntx = await w_obj.txCount();
 //    log("tx count: ", ntx);
@@ -118,8 +104,8 @@ async function main()
 //    const apr = await w_obj.checkApproved(1, '0xE592427A0AEce92De3Edee1F18E0157C05861564');
 //    log("approved: ", apr);
 
-//    const gp = await w_obj.currentGasPrice();
-//    log("Gas: ", gp);
+    const gp = await w_obj.currentGasPrice();
+    log("Gas: ", gp);
     const cid = await w_obj.chainId();
     log("Chain ID: ", cid);
 

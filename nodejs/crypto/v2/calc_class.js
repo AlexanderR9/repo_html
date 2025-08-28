@@ -124,6 +124,15 @@ class JSBIWorker
     }
 
     // ------------ практические функции -----------------------
+    //преобразование нормального пользовательского значения float (например сумма 12.6) в JSBI число с поправкой на decimal
+    static floatToWeis(f_value, decimal = 18)
+    {
+	if (decimal < 3 || decimal > 18) {log("floatToWeis: err 1"); return JSBI_ERR.toString();}
+	const jsbi_factor = JSBI.BigInt(10**decimal);
+	return JSBIWorker.biMulFloat(jsbi_factor, f_value);
+    }
+
+
 
     // конвертация значения полученного из сети в нормальное пользовательское значение
     // bi - должен быть типа JSBI/ether.BigInt/bi_string, decimal - должен быть типа int

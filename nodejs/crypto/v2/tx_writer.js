@@ -36,7 +36,7 @@ let tx_params = {};
 
 
 
-
+// проверка валидности вещественного значения (количества актива)
 function validFloatSum(field_name)
 {
     if (!hasField(p_parser.params, field_name)) return false;
@@ -59,6 +59,8 @@ function makeTxWrapParams()
     log("Amount param OK:", amount);
     tx_params.tx_kind = p_parser.reqName();
     tx_params.value = bi_amount.toString();
+    req_result.amount = p_parser.params["amount"];
+    req_result.token_address = w_obj.assets[0].address;
 }
 function makeTxUnwrapParams()
 {
@@ -71,6 +73,8 @@ function makeTxUnwrapParams()
     log("Amount param OK:", amount);
     tx_params.tx_kind = p_parser.reqName();
     tx_params.value = bi_amount.toString();
+    req_result.amount = p_parser.params["amount"];
+    req_result.token_address = w_obj.wrapedNativeAddr();
 }
 async function tryWriteTx() // проверить параметры и отправить транзакцию в сеть
 {
@@ -95,14 +99,8 @@ async function tryWriteTx() // проверить параметры и отпр
 
     /// finished OK
     req_result.code = 0; 
-    if (tx_worker.isSimulate)
-    {
-	req_result.estimated_gas = tx_result.estimated_gas;
-    }
-    else
-    {
-        req_result.tx_hash = tx_result.tx_hash;    
-    }	
+    if (tx_worker.isSimulate) req_result.estimated_gas = tx_result.estimated_gas;
+    else req_result.tx_hash = tx_result.tx_hash;    
 }
 
 
@@ -115,9 +113,6 @@ async function main()
 
     if (p_parser.isWrapTxReq()) makeTxWrapParams();
     else if (p_parser.isUnwrapTxReq()) makeTxUnwrapParams();
-//    else if (p_parser.isGasPriceReq()) await getChainGasPrice();
-//    else if (p_parser.isChainIdReq()) await getChainID();
-
 
     await tryWriteTx();
 };

@@ -4,7 +4,7 @@ const {space, log, curTime, hasField, jsonFromFile, jsonKeys, fileExist, isJson}
 const REQ_NAME_LIST = ["balance", "tx_count", "approved", "gas_price", "chain_id", "tx_status"];
 
 // список валидных значений команд на запись  (порядок элементов важен)
-const TX_REQ_NAME_LIST = ["wrap", "unwrap", "transfer", "approve"];
+const TX_REQ_NAME_LIST = ["wrap", "unwrap", "transfer", "approve", "swap"];
 
 //класс для чтения и обработки входного json-файла параметров для скрипта
 class ParamParser 

@@ -73,8 +73,9 @@ async function checkTxState()
     if (req_result.finished)
     {
         req_result.status = ((tx_status.status == 1) ? "OK" : "FAULT");
-        req_result.fee = tx_status.fee;
-	req_result.gas_used = tx_status.gas_used;
+        req_result.fee = tx_status.fee; // native coin size
+	req_result.gas_used = tx_status.gas_used;  // real gaslimit burned
+	req_result.tx_hash = p_parser.params.tx_hash;
     }
     else log("tx executing else"); //tx executing else
 }

@@ -42,6 +42,7 @@ class TxWorkerObj
 	this.tx_debug = true; //выводить полученный ответ из сети после отправки транзакции в debug
 	this.fee_gas = new TxGasObj(); // объект который отвечает за параметры газа для текущей сети и его размера.
 	this.isSimulate = true; //признак режима симуляции
+	this.deadline = 60; // seconds left
     }
 
     // признак успешности инициализации объекта
@@ -102,6 +103,16 @@ class TxWorkerObj
         checked_res.tx_hash = tx_result.hash;
 	return checked_res;
     }
+    // добавить в структуру параметров транзакции поле deadline.
+    // данное поле записывается только для некоторых типов транзакций.
+    _addDeadlineField(params)
+    {
+	removeField(params, "deadline");
+	const txk = params.tx_kind;
+	if (txk === "swap")
+	    params.deadline = Math.floor(Date.now()/1000) + this.deadline;
+    }
+    
 
     //функция проверяет результат выполнения транзакции по ее хеш-значению, 
     //возвращает код текущего состояния транзакции (-1 еще выполняется, 1 выполнена успешно, 0 транзакция завершилась но результат отрицательный)
@@ -142,6 +153,9 @@ class TxWorkerObj
 	if (this._invalid()) {log("TxWorkerObj WARNING: invalid state of object."); return -101;}
 	if (!isJson(params)) {log("TxWorkerObj WARNING: invalid paramers, is not JSON."); return -102;}
 	if (!hasField(params, "tx_kind")) {log("TxWorkerObj WARNING: params has not JSON field [tx_kind]."); return -103;}
+
+	//check tx kind abd add  DeadlineField if need
+	this._addDeadlineField(params);
 	log("TX params: ", params, '\n');
 	log("Simulate mode: ", this.isSimulate);
 	const tx_kind = params.tx_kind;

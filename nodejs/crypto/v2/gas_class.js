@@ -15,7 +15,7 @@ class TxGasObj
         this.priority = 35; //пожертвование за приоритет, gwei  
         
         //дополнительное поле, используется при сети BNB в паре с gas_limit
-        this.gas_price = 0.12;
+        this.gas_price = 0.12; // цена единицы газа, gweis
     }
     update(g, m, p = -1, gp = -1)
     {

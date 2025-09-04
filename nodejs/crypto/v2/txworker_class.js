@@ -9,6 +9,9 @@ const { WalletObj } = require("./wallet_class.js");
 const { ContractObj } = require("./contract_class.js");
 const { JSBIWorker } = require("./calc_class.js");
 
+//including
+//const ethers = require("ethers");
+
 
 const fs = require("fs");
 const F_LOG = "tx.log";
@@ -80,6 +83,9 @@ class TxWorkerObj
     // если результат простое ценлое отрицательное число то - неудача.
     _checkTxReply(tx_result, tx_kind)
     {
+	space();    
+	log("_checkTxReply ....................");
+	//log("tx_result:", tx_result);
 	const checked_res = {code: 0};
 	if (isInt(tx_result) && tx_result < 0) // произошла ошибка при выполнении
 	{
@@ -210,6 +216,39 @@ class TxWorkerObj
         catch(e) {log("ERROR:", e); }
 	return -112;
     }
+    async _transfer(params, fee_params) //need params: value, token_address, target_address
+    {
+	if (params.token_address == "") //native token
+	{
+	    log("sending native token ................");
+	    fee_params.to = params.to_wallet;
+	    fee_params.value = params.value;
+	    try
+	    {
+		let tx_reply = null;
+		if (this.isSimulate) {log("unknown node"); return -299;  /*tx_reply = await this.wallet.signer.estimateGas.sendTransaction(fee_params);*/}
+		else tx_reply = await this.wallet.signer.sendTransaction(fee_params);
+		return tx_reply;
+	    }
+    	    catch(e) {log("ERROR:", e); }
+	}
+	else // any token
+	{
+	    log("sending some token ................");
+	    const t_contract = ContractObj.getTokenContract(params.token_address, this.wallet.signer);
+	    try
+	    {
+		let tx_reply = null;
+		if (this.isSimulate) tx_reply = await t_contract.estimateGas.transfer(params.to_wallet, params.value);
+		else tx_reply = await t_contract.transfer(params.to_wallet, params.value, fee_params);
+		return tx_reply;
+	    }
+    	    catch(e) {log("ERROR:", e); }
+	}
+	return -114;
+    }
+
+
 /*
     async _approve(params, fee_params) //need params: value, token_address, target_address
     {
@@ -221,32 +260,6 @@ class TxWorkerObj
         }
         catch(e) {log("ERROR:", e); }
 	return -113;
-    }
-    async _transfer(params, fee_params) //need params: value, token_address, target_address
-    {
-	const bi_sum = m_base.toBig(params.value);
-	if (params.token_address == "") //native token
-	{
-	    fee_params.to = params.target_address;
-	    fee_params.value = bi_sum;
-    	    try
-    	    {
-        	const tx_reply = await this.wallet.signer.sendTransaction(fee_params);
-		return tx_reply;
-    	    }
-    	    catch(e) {log("ERROR:", e); }
-	}
-	else // any token
-	{
-    	    const t_obj = m_base.getTokenContract(params.token_address, this.wallet.signer);
-    	    try
-    	    {
-        	const tx_reply = await t_obj.transfer(params.target_address, bi_sum, fee_params);
-		return tx_reply;
-    	    }
-    	    catch(e) {log("ERROR:", e); }	    
-	}
-	return -114;
     }
     async _pmTx(params, fee_params)
     {

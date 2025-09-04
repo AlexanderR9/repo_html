@@ -10,6 +10,8 @@ const { ParamParser } = require("./paramparser_class.js");
 const { WalletObj } = require("./wallet_class.js");
 const { TxWorkerObj } = require("./txworker_class.js");
 const { JSBIWorker } = require("./calc_class.js");
+const { ChainObj } = require("./chain_class.js");
+
 
 // init script result var
 let req_result = {req_name: "none"};
@@ -23,6 +25,7 @@ const p_parser = new ParamParser(process.argv[2]);
 if (p_parser.invalid()) {sendErrResult(p_parser.err); return -2;} // поле req_name либо отсутствует либо у него некорректное значение
 if (!p_parser.isWritingReq()) {sendErrResult("req is not TX"); return -3;} // поле req_name не является для записи транзакции
 if (!p_parser.writeFieldsKidOk()) {sendErrResult("invalid req fields kid"); log("JSON_FIELDS:", p_parser.keys); return -4;} // набор полей для текущего запроса некорректен
+else {space(); log("Fields kid ok!  "); space();}
 
 //init wallet obj
 req_result.req_name = p_parser.reqName();
@@ -76,13 +79,35 @@ function makeTxUnwrapParams()
     req_result.amount = p_parser.params["amount"];
     req_result.token_address = w_obj.wrapedNativeAddr();
 }
+function makeTxTransferParams()
+{
+    log("[TX_CMD/TRANSFER]");
+    if (!validFloatSum("amount")) return;
+    const amount = Number.parseFloat(p_parser.params["amount"]);        
+    const w_asset = w_obj.findAsset(p_parser.params["token_address"]);
+    if (!hasField(w_asset, "decimal") || w_asset.decimal <= 0) {log(`WARNING: decimal invalid of asset (${w_asset})`, "  addr=", p_parser.params["token_address"]); return;}    
+    const bi_amount = JSBIWorker.floatToWeis(amount, w_asset.decimal);
+    
+    //params OK
+    log("Amount param OK:", amount);
+    log("Target wallet:", p_parser.params["to_wallet"]);
+    log("Token:", w_asset);
+    tx_params.tx_kind = p_parser.reqName();
+    tx_params.value = bi_amount.toString();
+    tx_params.token_address = p_parser.params["token_address"];
+    if (ChainObj.nativeToken() == w_asset.ticker) tx_params.token_address = "";
+    tx_params.to_wallet = p_parser.params["to_wallet"];
+        
+    req_result.amount = p_parser.params["amount"];
+    req_result.token_address = p_parser.params["token_address"];
+    req_result.to_wallet = p_parser.params["to_wallet"];
+}
 async function tryWriteTx() // проверить параметры и отправить транзакцию в сеть
 {
     if (!hasField(tx_params, "tx_kind")) {req_result.error = "invalid tx_params"; return;}   
 
     tx_worker.isSimulate = p_parser.simulateMode();
     const tx_result = await tx_worker.sendTx(tx_params);
-
     //check result
     if (!hasField(tx_result, "result")) 
     {
@@ -113,7 +138,10 @@ async function main()
 
     if (p_parser.isWrapTxReq()) makeTxWrapParams();
     else if (p_parser.isUnwrapTxReq()) makeTxUnwrapParams();
+    else if (p_parser.isTransferTxReq()) makeTxTransferParams();
 
+//    log("TX_PARAMS:", tx_params);
+    space();
     await tryWriteTx();
 };
 

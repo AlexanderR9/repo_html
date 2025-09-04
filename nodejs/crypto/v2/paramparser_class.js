@@ -87,6 +87,9 @@ class ParamParser
 	//функциий возвращающие признак того, что пришел запрос типа  TX_REQ_NAME_LIST[i] (tx cmd)
 	isWrapTxReq() {return (!this.invalid() && (this.reqName() == TX_REQ_NAME_LIST[0]));}
 	isUnwrapTxReq() {return (!this.invalid() && (this.reqName() == TX_REQ_NAME_LIST[1]));}
+	isTransferTxReq() {return (!this.invalid() && (this.reqName() == TX_REQ_NAME_LIST[2]));}
+	isApproveTxReq() {return (!this.invalid() && (this.reqName() == TX_REQ_NAME_LIST[3]));}
+	isSwapTxReq() {return (!this.invalid() && (this.reqName() == TX_REQ_NAME_LIST[4]));}
 
 	
 	//проверка набора полей(НЕ ЗНАЧЕНИЙ) на соответствие типу запроса
@@ -110,6 +113,13 @@ class ParamParser
 	    if (this.isWrapTxReq() || this.isUnwrapTxReq()) 
 	    {
 		return (this.keys.includes("amount"))
+	    }
+	    if (this.isTransferTxReq()) 
+	    {
+		if (!this.keys.includes("amount")) return false;
+		if (!this.keys.includes("token_address")) return false;
+		if (!this.keys.includes("to_wallet")) return false;
+		return true;
 	    }
 	    return false;
 	}    

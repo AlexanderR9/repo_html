@@ -5,14 +5,19 @@ const { JSBIWorker } = require("./calc_class.js");
 
 
 // класс для утановки параметров газа при совершении любой транзакции.
+// параметры газа принимают разную комбинацию полей взависимости от сети.
 class TxGasObj
 {
     //настройки по умолчанию: установлены  минимальные значения, но этого хватает чтобы например сделать approve or wrap/unwrap
     constructor()
     {	
-        this.gas_limit = 155000; //максимально количество единиц газа за транзакцию, которое мы готовы потратить
-        this.max_fee = 95; //максимальная цена за единицу газа, в gweis
-        this.priority = 35; //пожертвование за приоритет, gwei  
+	//максимально количество единиц газа за транзакцию, которое мы готовы потратить.
+	//это поле присутствует для всех сетей в параметрах газа.
+        this.gas_limit = 95000; 
+
+	// эти поля участвуют при сети polygon
+        this.max_fee = -1; //максимальная цена за единицу газа, в gweis
+        this.priority = 45; //пожертвование за приоритет, gwei  
         
         //дополнительное поле, используется при сети BNB в паре с gas_limit
         this.gas_price = 0.12; // цена единицы газа, gweis
@@ -30,7 +35,8 @@ class TxGasObj
         txp.gasLimit = this.gas_limit;                
         if (ChainObj.isPolygonChain())
         {
-            txp.maxFeePerGas = JSBIWorker.floatToWeis(this.max_fee, 9).toString();
+	    const maxf = ((this.max_fee > 0) ? this.max_fee : this.priority*2);
+            txp.maxFeePerGas = JSBIWorker.floatToWeis(maxf, 9).toString();
             txp.maxPriorityFeePerGas = JSBIWorker.floatToWeis(this.priority, 9).toString();
         }
         else if (ChainObj.isBnbChain())

@@ -104,6 +104,14 @@ class WalletObj
 		else log("WARNING: invalid asset: ", jres[v]);
 	    });
 	}
+	_indexOf(t_addr) // поиск индекса актива в контейнере this.assets по адресу
+	{
+	    log("try get asset index by address:", t_addr, "  ..........");
+	    if (this.assetsCount() <= 0) {log("WARINING: assets container is empty"); return -1;}
+	    for (var i=0; i<this.assets.length; i++)
+		if (this.assets[i].address.toLowerCase() == t_addr.toLowerCase()) return i;
+	    return -1;	    
+	}
 
 
 	assetsCount() {return this.assets.length;} //количетсво активов в кошельке
@@ -254,8 +262,31 @@ class WalletObj
             catch(e) {log("ERROR:", e); return -1;}
 	    return JSBIWorker.weisToFloat(result.toString(), this.assets[i].decimal, 2);	    
 	}
+	//функция определяет сколько единиц актива с указанным адресом одобрено для 2-х основных контрактов текущей сети:
+	// - pos_manager
+	// - swap_router
+	//функция возвращает объект с 3-мя полями {token_address, pos_manager, swap_router}.
+	//где token_address копируется из входного параметра, остальные запрашиваются из сети, в случае ошибки значения будут -1.
+	//результат возвращается в нормализованных единицах.
+	async getMainApprovedAmounts(t_addr)
+	{	    
+	    log("getMainApprovedAmounts ......");
+	    let result = {token_address: t_addr, pos_manager: -1, swap_router: -1};	
+	    const pos = this._indexOf(t_addr);
+	    if (pos > 0) 
+	    {
+		log("ASSET_INDEX:", pos);
+		log("Swap router contract:", ContractObj.swapRouterAddress());
+		log("Position manager contract:", ContractObj.posManagerAddress());
+		space();
 
-
+		const data = await Promise.all([ this.checkApproved(pos, ContractObj.posManagerAddress()), this.checkApproved(pos, ContractObj.swapRouterAddress()) ]);
+		if (!Array.isArray(data)) log("WARNING: invalid result, data is not array"); 
+		else {result.pos_manager = data[0]; result.swap_router = data[1];}
+	    }
+	    else log("WARNING: asset not found in wallet!");	    	    
+	    return result;
+	}
 
 };
 

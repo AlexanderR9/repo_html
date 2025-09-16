@@ -5,14 +5,14 @@
 
 
 //include
-const {space, log, curTime, delay, hasField} = require("./../utils.js");
+const {space, log, curTime, delay, hasField, mergeJson} = require("./../utils.js");
 const { ParamParser } = require("./paramparser_class.js");
 const { WalletObj } = require("./wallet_class.js");
 const { TxWorkerObj } = require("./txworker_class.js");
 
 // init script result var
 let req_result = {req_name: "none"};
-const sendResult = () => {space(); log("JSON_RESULT_START", req_result, "JSON_RESULT_END");}
+const sendResult = () => {space(); log("----- script result -----"); log("JSON_RESULT_START", req_result, "JSON_RESULT_END");}
 const sendErrResult = (err) =>  {log("WARNING: script breaked!!!"); req_result.error = err; sendResult();}
 
 //read input args
@@ -79,6 +79,16 @@ async function checkTxState()
     }
     else log("tx executing else"); //tx executing else
 }
+async function getApprovedTokenAmounts()
+{
+    log("[CMD/APPROVED]");
+    const data = await w_obj.getMainApprovedAmounts(p_parser.params.token_address);
+    log("data:", data);
+
+    if (!hasField(data, "pos_manager") || !hasField(data, "swap_router")) {req_result.error="invalid result_approved object"; return;}
+    if (data.pos_manager<0 || data.swap_router<0) {req_result.error="invalid asset address"; return;}
+    mergeJson(req_result, data);        
+}
 
 
 // --------- try request for getting chain data ------------------
@@ -91,7 +101,7 @@ async function main()
     else if (p_parser.isGasPriceReq()) await getChainGasPrice();
     else if (p_parser.isChainIdReq()) await getChainID();
     else if (p_parser.isTxStatusReq()) await checkTxState();
-
+    else if (p_parser.isApprovedReq()) await getApprovedTokenAmounts();
 
 };
 // run main func

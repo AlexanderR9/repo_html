@@ -11,6 +11,7 @@ const { WalletObj } = require("./wallet_class.js");
 const { TxWorkerObj } = require("./txworker_class.js");
 const { JSBIWorker } = require("./calc_class.js");
 const { ChainObj } = require("./chain_class.js");
+const { ContractObj } = require("./contract_class.js");
 
 
 // init script result var
@@ -102,6 +103,35 @@ function makeTxTransferParams()
     req_result.token_address = p_parser.params["token_address"];
     req_result.to_wallet = p_parser.params["to_wallet"];
 }
+function makeTxApproveParams()
+{
+    log("[TX_CMD/APPROVE]");
+    if (!validFloatSum("amount")) return;
+    const amount = Number.parseFloat(p_parser.params["amount"]);        
+    const w_asset = w_obj.findAsset(p_parser.params["token_address"]);
+    if (!hasField(w_asset, "decimal") || w_asset.decimal <= 0) {log(`WARNING: decimal invalid of asset (${w_asset})`, "  addr=", p_parser.params["token_address"]); return;}    
+    const bi_amount = JSBIWorker.floatToWeis(amount, w_asset.decimal);
+
+    //check to_contract field
+    const contr = p_parser.params["to_contract"];
+    if (contr=="pos_manager") tx_params.to_contract = ContractObj.posManagerAddress();
+    else if (contr=="swap_router") tx_params.to_contract = ContractObj.swapRouterAddress();
+    else {log(`WARNING: invalid to_contract field (${contr})`); return;}    
+
+    
+    //params OK
+    log("Amount param OK:", amount);
+    log("TO contract:", p_parser.params["to_contract"]);
+    log("Token:", w_asset);
+    tx_params.tx_kind = p_parser.reqName();
+    tx_params.value = bi_amount.toString();
+    tx_params.token_address = p_parser.params["token_address"];
+//    tx_params.to_contract = p_parser.params["to_contract"];
+        
+    req_result.amount = p_parser.params["amount"];
+    req_result.token_address = p_parser.params["token_address"];
+    req_result.to_contract = p_parser.params["to_contract"];
+}
 async function tryWriteTx() // проверить параметры и отправить транзакцию в сеть
 {
     if (!hasField(tx_params, "tx_kind")) {req_result.error = "invalid tx_params"; return;}   
@@ -139,6 +169,7 @@ async function main()
     if (p_parser.isWrapTxReq()) makeTxWrapParams();
     else if (p_parser.isUnwrapTxReq()) makeTxUnwrapParams();
     else if (p_parser.isTransferTxReq()) makeTxTransferParams();
+    else if (p_parser.isApproveTxReq()) makeTxApproveParams();
 
 //    log("TX_PARAMS:", tx_params);
     space();

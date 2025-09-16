@@ -121,6 +121,13 @@ class ParamParser
 		if (!this.keys.includes("to_wallet")) return false;
 		return true;
 	    }
+	    if (this.isApproveTxReq()) 
+	    {
+		if (!this.keys.includes("amount")) return false;
+		if (!this.keys.includes("token_address")) return false;
+		if (!this.keys.includes("to_contract")) return false;
+		return true;
+	    }
 	    return false;
 	}    
 

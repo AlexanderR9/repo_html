@@ -171,6 +171,7 @@ class TxWorkerObj
         let fee_params = {};
         this.fee_gas.setFeeParams(fee_params);	
         log("fee_params:", fee_params, '\n');
+	space();space();space();
 
         log("try send transaction .................................................");
 	let tx_result = null;
@@ -247,20 +248,25 @@ class TxWorkerObj
 	}
 	return -114;
     }
-
-
-/*
-    async _approve(params, fee_params) //need params: value, token_address, target_address
+    async _approve(params, fee_params) //need params: value, token_address, to_contract
     {
-        const t_obj = m_base.getTokenContract(params.token_address, this.wallet.signer);
+	const t_contract = ContractObj.getTokenContract(params.token_address, this.wallet.signer);
         try
         {
-            const tx_reply = await t_obj.approve(params.target_address, params.value, fee_params);
+	    let tx_reply = null;
+	    if (this.isSimulate) tx_reply = await t_contract.estimateGas.approve(params.to_contract, params.value);
+	    else tx_reply = await t_contract.approve(params.to_contract, params.value, fee_params);
 	    return tx_reply;
+
+//            const tx_reply = await t_obj.approve(params.target_address, params.value, fee_params);
+//	    return tx_reply;
         }
         catch(e) {log("ERROR:", e); }
 	return -113;
     }
+
+
+/*
     async _pmTx(params, fee_params)
     {
 	const operation_name = params.tx_kind;

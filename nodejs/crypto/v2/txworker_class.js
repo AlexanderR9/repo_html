@@ -168,6 +168,8 @@ class TxWorkerObj
 	removeField(params, "tx_kind");	
 
         //prepare fee params
+	this.fee_gas.reset();
+
         let fee_params = {};
         this.fee_gas.setFeeParams(fee_params);	
         log("fee_params:", fee_params, '\n');
@@ -227,7 +229,7 @@ class TxWorkerObj
 	    try
 	    {
 		let tx_reply = null;
-		if (this.isSimulate) {log("unknown node"); return -299;  /*tx_reply = await this.wallet.signer.estimateGas.sendTransaction(fee_params);*/}
+		if (this.isSimulate) tx_reply = await this.wallet.signer.estimateGas(fee_params);
 		else tx_reply = await this.wallet.signer.sendTransaction(fee_params);
 		return tx_reply;
 	    }
@@ -257,9 +259,6 @@ class TxWorkerObj
 	    if (this.isSimulate) tx_reply = await t_contract.estimateGas.approve(params.to_contract, params.value);
 	    else tx_reply = await t_contract.approve(params.to_contract, params.value, fee_params);
 	    return tx_reply;
-
-//            const tx_reply = await t_obj.approve(params.target_address, params.value, fee_params);
-//	    return tx_reply;
         }
         catch(e) {log("ERROR:", e); }
 	return -113;

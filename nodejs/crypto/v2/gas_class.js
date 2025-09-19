@@ -4,6 +4,12 @@ const { ChainObj } = require("./chain_class.js");
 const { JSBIWorker } = require("./calc_class.js");
 
 
+const MIN_GAS_LIMIT = 85000; // единиц газа за транзакцию
+const MIN_FEE_PRIORITY = 45; // пожертвование за приоритет, gwei   
+const MIN_GAS_PRICE = 0.12; // цена одной единицы газа, gweis
+
+
+
 // класс для утановки параметров газа при совершении любой транзакции.
 // параметры газа принимают разную комбинацию полей взависимости от сети.
 class TxGasObj
@@ -13,15 +19,16 @@ class TxGasObj
     {	
 	//максимально количество единиц газа за транзакцию, которое мы готовы потратить.
 	//это поле присутствует для всех сетей в параметрах газа.
-        this.gas_limit = 95000; 
+        this.gas_limit = MIN_GAS_LIMIT; 
 
 	// эти поля участвуют при сети polygon
         this.max_fee = -1; //максимальная цена за единицу газа, в gweis
-        this.priority = 45; //пожертвование за приоритет, gwei  
+        this.priority = MIN_FEE_PRIORITY; //пожертвование за приоритет, gwei  
         
         //дополнительное поле, используется при сети BNB в паре с gas_limit
-        this.gas_price = 0.12; // цена единицы газа, gweis
+        this.gas_price = MIN_GAS_PRICE; // цена единицы газа, gweis
     }
+    // чтобы задать принудительные значения каждого из полей
     update(g, m, p = -1, gp = -1)
     {
         this.gas_limit = g;
@@ -44,7 +51,14 @@ class TxGasObj
             txp.gasPrice = JSBIWorker.floatToWeis(this.gas_price, 9).toString();
         }
     }
-
+    // сброс всех полей в дефолтное состояние
+    reset()
+    {
+        this.gas_limit = MIN_GAS_LIMIT; 
+        this.max_fee = -1;
+        this.priority = MIN_FEE_PRIORITY;
+        this.gas_price = MIN_GAS_PRICE;
+    }
 
 }
 

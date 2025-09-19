@@ -1,7 +1,7 @@
 const {space, log, curTime, hasField, jsonFromFile, jsonKeys, fileExist, isJson} = require("./../utils.js");
 
 // список валидных значений команд на чтение  (порядок элементов важен)
-const REQ_NAME_LIST = ["balance", "tx_count", "approved", "gas_price", "chain_id", "tx_status"];
+const REQ_NAME_LIST = ["balance", "tx_count", "approved", "gas_price", "chain_id", "tx_status", "pool_state"];
 
 // список валидных значений команд на запись  (порядок элементов важен)
 const TX_REQ_NAME_LIST = ["wrap", "unwrap", "transfer", "approve", "swap"];
@@ -83,6 +83,7 @@ class ParamParser
 	isGasPriceReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_LIST[3]));}
 	isChainIdReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_LIST[4]));}
 	isTxStatusReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_LIST[5]));}
+	isPoolStateReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_LIST[6]));}
 
 	//функциий возвращающие признак того, что пришел запрос типа  TX_REQ_NAME_LIST[i] (tx cmd)
 	isWrapTxReq() {return (!this.invalid() && (this.reqName() == TX_REQ_NAME_LIST[0]));}
@@ -99,11 +100,19 @@ class ParamParser
 	    if (this.isBalanceReq() || this.isTxCountReq() || this.isGasPriceReq() || this.isChainIdReq()) return true;
 	    if (this.isApprovedReq()) 
 	    {
-		return (this.keys.includes("token_address"))
+		return (this.keys.includes("token_address"));
 	    }
 	    if (this.isTxStatusReq()) 
 	    {
-		return (this.keys.includes("tx_hash"))
+		return (this.keys.includes("tx_hash"));
+	    }
+	    if (this.isPoolStateReq()) 
+	    {
+		if (!this.keys.includes("pool_address")) return false;
+		if (!this.keys.includes("token0_address")) return false;
+		if (!this.keys.includes("token1_address")) return false;
+		if (!this.keys.includes("fee")) return false;
+		return true;
 	    }
 	    return false;
 	}    

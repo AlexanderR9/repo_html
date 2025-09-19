@@ -49,6 +49,7 @@ class WalletAsset
 	    }	    
 //	    log(`this.address(${this.address})  this.decimal = ${this.decimal}`);
 	}
+	decimalFactor() {return (10 ** this.decimal);}
 }
 
 
@@ -119,17 +120,17 @@ class WalletObj
 	invalid() {return (this.assetsCount() == 0);} // состояние объекта
 
 	//функция ищет по адресу контракта актив кошелька из контейнера this.assets.
-	//возвращает объект с полями ticker, decimal, addr.
+	//возвращает объект с полями ticker, decimal, address.
 	//если актив не будет найден то, поле decimal=-1, ticker=""
 	findAsset(t_addr)
 	{
-	    let result = {addr: t_addr.trim().toLowerCase(), ticker: "", decimal: -1};
-	    if (result.addr.length < 10) {log("Invalid input address"); return result;}
+	    let result = {address: t_addr.trim().toLowerCase(), ticker: "", decimal: -1};
+	    if (result.address.length < 10) {log("Invalid input address"); return result;}
 	    if (this.assetsCount() <= 0) {log("Invalid assets container"); return result;}
     	    
 	    for (let i=0; i<this.assets.length; i++)
 	    {
-		if (this.assets[i].address.toLowerCase() == result.addr)
+		if (this.assets[i].address.toLowerCase() == result.address)
 		{
 		    result.ticker = this.assets[i].name;
 		    result.decimal = this.assets[i].decimal;
@@ -290,5 +291,5 @@ class WalletObj
 
 };
 
-module.exports = {WalletObj};
+module.exports = {WalletObj, WalletAsset};
 

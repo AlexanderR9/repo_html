@@ -9,6 +9,7 @@ const {space, log, curTime, delay, hasField, mergeJson} = require("./../utils.js
 const { ParamParser } = require("./paramparser_class.js");
 const { WalletObj } = require("./wallet_class.js");
 const { TxWorkerObj } = require("./txworker_class.js");
+const { PoolObj } = require("./pool_class.js");
 
 // init script result var
 let req_result = {req_name: "none"};
@@ -89,6 +90,49 @@ async function getApprovedTokenAmounts()
     if (data.pos_manager<0 || data.swap_router<0) {req_result.error="invalid asset address"; return;}
     mergeJson(req_result, data);        
 }
+async function getPoolState()
+{
+    log("[CMD/POOL_STATE]");
+    let pool_obj = new PoolObj(p_parser.params.pool_address);
+    pool_obj.fee = p_parser.params.fee;
+    pool_obj.updateToken0(w_obj.findAsset(p_parser.params.token0_address));
+    pool_obj.updateToken1(w_obj.findAsset(p_parser.params.token1_address));
+    pool_obj.out();
+
+    if (pool_obj.invalid()) {req_result.error="invalid pool object"; return;}
+    space();
+
+    await pool_obj.updateState();
+    pool_obj.outState();
+    if (pool_obj.invalidState()) {req_result.error="invalid state pool object"; return;}
+    space();
+    
+    await pool_obj.updateTVL();
+    space();
+    pool_obj.token0.out();
+    pool_obj.token1.out();
+
+    //prepare finaly script result
+    req_result.pool_address = p_parser.params.pool_address;
+    req_result.tick = pool_obj.state.tick.toString();
+    req_result.tvl0 = pool_obj.token0.balance.toString();
+    req_result.tvl1 = pool_obj.token1.balance.toString();
+    req_result.price0 = pool_obj.state.price0.toString();
+    req_result.price1 = ((1/pool_obj.state.price0).toFixed(8)).toString();
+
+    
+    
+
+
+/*
+    const data = await w_obj.getMainApprovedAmounts(p_parser.params.token_address);
+    log("data:", data);
+
+    if (!hasField(data, "pos_manager") || !hasField(data, "swap_router")) {req_result.error="invalid result_approved object"; return;}
+    if (data.pos_manager<0 || data.swap_router<0) {req_result.error="invalid asset address"; return;}
+    mergeJson(req_result, data);        
+*/
+}
 
 
 // --------- try request for getting chain data ------------------
@@ -102,7 +146,8 @@ async function main()
     else if (p_parser.isChainIdReq()) await getChainID();
     else if (p_parser.isTxStatusReq()) await checkTxState();
     else if (p_parser.isApprovedReq()) await getApprovedTokenAmounts();
-
+    else if (p_parser.isPoolStateReq()) await getPoolState();
+    else log("unlnown req_name");
 };
 // run main func
 const start_req = async () => {

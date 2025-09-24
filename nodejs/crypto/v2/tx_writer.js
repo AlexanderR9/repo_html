@@ -126,12 +126,53 @@ function makeTxApproveParams()
     tx_params.tx_kind = p_parser.reqName();
     tx_params.value = bi_amount.toString();
     tx_params.token_address = p_parser.params["token_address"];
-//    tx_params.to_contract = p_parser.params["to_contract"];
         
     req_result.amount = p_parser.params["amount"];
     req_result.token_address = p_parser.params["token_address"];
     req_result.to_contract = p_parser.params["to_contract"];
 }
+function makeTxSwapParams()
+{
+    log("[TX_CMD/SWAP]");
+    if (!validFloatSum("input_amount")) return;
+    const amount = Number.parseFloat(p_parser.params["input_amount"]);        
+    const t_index = Number.parseInt(p_parser.params["input_index"]);        
+    const t_addr = ((t_index == 0) ? p_parser.params["token0_address"] : p_parser.params["token1_address"]);
+    const w_asset = w_obj.findAsset(t_addr);
+    if (!hasField(w_asset, "decimal") || w_asset.decimal <= 0) {log(`WARNING: decimal invalid of asset (${w_asset})`, "  addr=", p_parser.params["token_address"]); return;}    
+    const bi_amount = JSBIWorker.floatToWeis(amount, w_asset.decimal);
+
+    //params OK
+    log("Amount param OK:", amount);
+    log("Input index:", t_index);
+    log("Token:", w_asset);
+
+    tx_params.tx_kind = p_parser.reqName();
+    tx_params.amountIn = bi_amount.toString();
+    tx_params.tokenIn = ((t_index == 0) ? p_parser.params["token0_address"] : p_parser.params["token1_address"]);
+    tx_params.tokenOut = ((t_index == 0) ? p_parser.params["token1_address"] : p_parser.params["token0_address"]);
+    tx_params.fee = p_parser.params["fee"];
+    tx_params.recipient = w_obj.address;
+    tx_params.amountOutMinimum = 0;
+    tx_params.sqrtPriceLimitX96 = 0;
+
+    req_result.input_amount = p_parser.params["input_amount"];
+    req_result.input_index = p_parser.params["input_index"];
+    req_result.tokenIn = tx_params.tokenIn;
+    req_result.tokenOut = tx_params.tokenOut;
+    req_result.pool_address = p_parser.params["pool_address"];
+
+}
+
+
+
+
+
+
+
+
+
+// SEND TX FUNCTION
 async function tryWriteTx() // проверить параметры и отправить транзакцию в сеть
 {
     if (!hasField(tx_params, "tx_kind")) {req_result.error = "invalid tx_params"; return;}   
@@ -154,7 +195,11 @@ async function tryWriteTx() // проверить параметры и отпр
 
     /// finished OK
     req_result.code = 0; 
-    if (tx_worker.isSimulate) req_result.estimated_gas = tx_result.estimated_gas;
+    if (tx_worker.isSimulate) 
+    {
+	req_result.estimated_gas = tx_result.estimated_gas;
+	if (p_parser.isSwapTxReq()) req_result.out_amount= tx_result.amount_out;
+    }
     else req_result.tx_hash = tx_result.tx_hash;    
 }
 
@@ -170,6 +215,7 @@ async function main()
     else if (p_parser.isUnwrapTxReq()) makeTxUnwrapParams();
     else if (p_parser.isTransferTxReq()) makeTxTransferParams();
     else if (p_parser.isApproveTxReq()) makeTxApproveParams();
+    else if (p_parser.isSwapTxReq()) makeTxSwapParams();
 
 //    log("TX_PARAMS:", tx_params);
     space();

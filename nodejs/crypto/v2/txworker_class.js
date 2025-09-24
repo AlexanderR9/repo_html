@@ -98,7 +98,8 @@ class TxWorkerObj
 	{
 	    log("TXWorker: Simulate mode was ativated!!!");
 	    checked_res.result = "SIMULATE";
-	    checked_res.estimated_gas = tx_result.toString();	
+	    if (tx_kind == "swap") mergeJson(checked_res, tx_result);
+	    else checked_res.estimated_gas = tx_result.toString();	
 	    return checked_res;	    
 	}
 	    
@@ -168,7 +169,7 @@ class TxWorkerObj
 	removeField(params, "tx_kind");	
 
         //prepare fee params
-	this.fee_gas.reset();
+	this.fee_gas.setKindFactor(tx_kind);
 
         let fee_params = {};
         this.fee_gas.setFeeParams(fee_params);	
@@ -262,6 +263,32 @@ class TxWorkerObj
         }
         catch(e) {log("ERROR:", e); }
 	return -113;
+    }
+    async _swap(params, fee_params)
+    {
+        const router_contract = ContractObj.getRouterContract(this.wallet.signer);
+        try
+        {
+	    log("try run _swap()");
+	    let tx_reply = null;
+	    if (this.isSimulate) 
+	    {
+		const amountOut_bi = await router_contract.callStatic.exactInputSingle(params);		
+		const amountOut = JSBIWorker.weisToFloat(amountOut_bi, this.wallet.findAsset(params.tokenOut).decimal);
+		const gas = await router_contract.estimateGas.exactInputSingle(params);
+		log("result of simulate SWAP:");
+		log("amountOut:", amountOut.toString());
+		log("gas cost:", gas.toString());
+
+		tx_reply = {};
+		tx_reply.amount_out = amountOut.toString();
+		tx_reply.estimated_gas = gas.toString();
+	    }
+	    else tx_reply = await router_contract.exactInputSingle(params, fee_params);
+	    return tx_reply;
+        }
+        catch(e) {log("ERROR:", e); }
+	return -119;
     }
 
 

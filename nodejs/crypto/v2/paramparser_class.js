@@ -137,6 +137,16 @@ class ParamParser
 		if (!this.keys.includes("to_contract")) return false;
 		return true;
 	    }
+	    if (this.isSwapTxReq()) 
+	    {
+		if (!this.keys.includes("input_amount")) return false;
+		if (!this.keys.includes("input_index")) return false;
+		if (!this.keys.includes("pool_address")) return false;
+		if (!this.keys.includes("token0_address")) return false;
+		if (!this.keys.includes("token1_address")) return false;
+		if (!this.keys.includes("fee")) return false;
+		return true;
+	    }
 	    return false;
 	}    
 

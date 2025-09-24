@@ -59,6 +59,16 @@ class TxGasObj
         this.priority = MIN_FEE_PRIORITY;
         this.gas_price = MIN_GAS_PRICE;
     }
+    //установить параметры газа взависимости от типа транзакции
+    setKindFactor(tx_kind)
+    {
+	this.reset();
+	if (tx_kind == "swap")
+	{
+	    this.gas_limit *= 2;
+	}
+
+    }
 
 }
 

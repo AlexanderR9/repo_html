@@ -78,11 +78,11 @@ class ContractObj
     static getRouterContract(provider)
     {
 	const r_abi = (ChainObj.isBnbChain() ? ROUTER_V2_ABI : ROUTER_ABI);
-	return ChainObj.getContract(ChainObj.swapRouterAddress(), r_abi, provider);			
+	return ContractObj.getContract(ContractObj.swapRouterAddress(), r_abi, provider);			
     }
     static getPosManagerContract(provider)
     {
-	return ChainObj.getContract(ChainObj.posManagerAddress(), POS_MANAGER_ABI, provider);			
+	return ContractObj.getContract(ContractObj.posManagerAddress(), POS_MANAGER_ABI, provider);			
     }
 
 }

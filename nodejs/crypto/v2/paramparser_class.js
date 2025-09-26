@@ -1,7 +1,7 @@
 const {space, log, curTime, hasField, jsonFromFile, jsonKeys, fileExist, isJson} = require("./../utils.js");
 
 // список валидных значений команд на чтение  (порядок элементов важен)
-const REQ_NAME_LIST = ["balance", "tx_count", "approved", "gas_price", "chain_id", "tx_status", "pool_state"];
+const REQ_NAME_LIST = ["balance", "tx_count", "approved", "gas_price", "chain_id", "tx_status", "pool_state", "positions"];
 
 // список валидных значений команд на запись  (порядок элементов важен)
 const TX_REQ_NAME_LIST = ["wrap", "unwrap", "transfer", "approve", "swap"];
@@ -84,6 +84,7 @@ class ParamParser
 	isChainIdReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_LIST[4]));}
 	isTxStatusReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_LIST[5]));}
 	isPoolStateReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_LIST[6]));}
+	isPositionsReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_LIST[7]));}
 
 	//функциий возвращающие признак того, что пришел запрос типа  TX_REQ_NAME_LIST[i] (tx cmd)
 	isWrapTxReq() {return (!this.invalid() && (this.reqName() == TX_REQ_NAME_LIST[0]));}
@@ -97,7 +98,7 @@ class ParamParser
 	readFieldsKidOk() //for reading req
 	{	    
 	    if (this.invalid()) return false;
-	    if (this.isBalanceReq() || this.isTxCountReq() || this.isGasPriceReq() || this.isChainIdReq()) return true;
+	    if (this.isBalanceReq() || this.isTxCountReq() || this.isGasPriceReq() || this.isChainIdReq() || this.isPositionsReq()) return true;
 	    if (this.isApprovedReq()) 
 	    {
 		return (this.keys.includes("token_address"));

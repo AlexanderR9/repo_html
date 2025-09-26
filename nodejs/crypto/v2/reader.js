@@ -8,6 +8,7 @@
 const {space, log, curTime, delay, hasField, mergeJson} = require("./../utils.js");
 const { ParamParser } = require("./paramparser_class.js");
 const { WalletObj } = require("./wallet_class.js");
+const { PosManagerObj } = require("./posmanager_class.js");
 const { TxWorkerObj } = require("./txworker_class.js");
 const { PoolObj } = require("./pool_class.js");
 
@@ -120,18 +121,17 @@ async function getPoolState()
     req_result.price0 = pool_obj.state.price0.toString();
     req_result.price1 = ((1/pool_obj.state.price0).toFixed(8)).toString();
 
+}
+async function getWalletPositions()
+{
+    log("[CMD/WALLET_POSITIONS]");
+    let pm_obj = new PosManagerObj(w_obj);
+    const res = await pm_obj.updatePosData();		
+    log("pos data result: ", res);
     
-    
-
-
-/*
-    const data = await w_obj.getMainApprovedAmounts(p_parser.params.token_address);
-    log("data:", data);
-
-    if (!hasField(data, "pos_manager") || !hasField(data, "swap_router")) {req_result.error="invalid result_approved object"; return;}
-    if (data.pos_manager<0 || data.swap_router<0) {req_result.error="invalid asset address"; return;}
-    mergeJson(req_result, data);        
-*/
+    req_result.result = res;
+    if (res) req_result.pos_count = pm_obj.pid_list.length;
+    else req_result.pos_count = "-1";
 }
 
 
@@ -147,7 +147,11 @@ async function main()
     else if (p_parser.isTxStatusReq()) await checkTxState();
     else if (p_parser.isApprovedReq()) await getApprovedTokenAmounts();
     else if (p_parser.isPoolStateReq()) await getPoolState();
-    else log("unlnown req_name");
+    else if (p_parser.isPositionsReq()) await getWalletPositions();
+    else 
+    {
+	req_result.error = "unknown req_name";	
+    }
 };
 // run main func
 const start_req = async () => {

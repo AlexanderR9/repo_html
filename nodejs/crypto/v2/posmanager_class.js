@@ -6,11 +6,11 @@ const { space, log, jsonFromFile, hasField, jsonKeys, isInt } = require("./../ut
 const { ChainObj } = require("./chain_class.js");
 const { ContractObj } = require("./contract_class.js");
 const { WalletObj } = require("./wallet_class.js");
+const { PositionObj } = require("./position_class.js");
 
 const fs = require("fs");
 const POS_LIST_FILE="positions.txt";
 const SEPARATE_PART_DEFAULT = 8; // коэффициент прореживания запросов
-
 
 
 //класс для работы с позициями пулов для текущей цепи и указанного кошелька.
@@ -25,6 +25,76 @@ class PosManagerObj
             log("Created PosManager for wallet: ", this.wallet.address);
         }
 
+
+	//загрузить данные позиций в промежуточный контейнер pos_arr из файла  POS_DATA_FILE.
+	//будут загружен только те записи, PID которых просутствует в this.pid_list
+	_loadPosDataFromFile(pos_arr, pool_addrs)
+	{
+	    log("read POS_DATA file ....");
+	    log("file:", POS_LIST_FILE);	    
+            const data = fs.readFileSync(POS_LIST_FILE);
+            let list = data.toString().split("\n");
+            for (let i=0; i<list.length; i++)
+            {
+                let fline = list[i].trim();
+                if (fline == "") continue;		
+		let pos_obj = new PositionObj(-1);
+		pos_obj.fromFileLine(fline);
+
+		// check readed pos
+		const i_pid = this.pid_list.indexOf(pos_obj.pid.toString());
+		if (i_pid >= 0)
+		{
+		    space();
+		    pos_obj.pool_addr = pool_addrs[i_pid];
+		    if (!pos_obj.invalid()) {pos_arr.push(pos_obj); pos_obj.out();}
+		    else pos_obj = null;
+		}
+		else pos_obj = null;
+	    }	
+	}
+	//получить текущее состояние для выборочного набора позиций,
+	//функция возвращает json в который вложены  json-состояние с ключем pid по каждой позе
+	async getPosState(pool_addrs)
+	{
+	    let result = {code: 0};
+	    let pos_arr = [];
+	    this._loadPosDataFromFile(pos_arr, pool_addrs);
+	    log("loaded success pos: ", pos_arr.length);
+	    if (pos_arr.length <= 0) {log("WARNING: pos_arr is empty"); result.code = -1; return result;}	    
+
+	    // подготавливаем множественный запрос
+	    let req_arr = [];
+            const n = pos_arr.length;
+            for (let i=0; i<n; i++) 
+		req_arr[i] = pos_arr[i].updateState(this);
+
+	    // отправляем множественный запрос
+            const data = await Promise.all(req_arr);
+            if (!Array.isArray(data)) {log("WARNING: invalid result, data is not array"); result.code = -2; return result;}
+            if (n != data.length) {log("WARNING: invalid result, data.length != n_assets"); result.code = -3; return result;}
+
+	    // запрос успешно выполнился, формируем итоговый результат json
+    	    result.code = 0; // OK
+            for (let i=0; i<n; i++) 
+	    {
+		let pos_result = {};
+		pos_result.price0 = pos_arr[i].state.current_price.toString();
+		pos_result.tick = pos_arr[i].state.pool_tick.toString();
+		pos_result.range_p1 = pos_arr[i].state.price_range.p1.toString();
+		pos_result.range_p2 = pos_arr[i].state.price_range.p2.toString();
+		pos_result.asset0 = pos_arr[i].state.assets.amount0.toString();
+		pos_result.asset1 = pos_arr[i].state.assets.amount1.toString();
+		pos_result.reward0 = pos_arr[i].state.rewards.amount0.toString();
+		pos_result.reward1 = pos_arr[i].state.rewards.amount1.toString();
+		
+		const s_pid = pos_arr[i].pid.toString();
+		result[s_pid] = pos_result;
+	    }	    
+	    //log("GETIING POS STATES FINISHED!!!");
+	    space();
+	    return result;
+	}
 
 	/////////////////////////////////PROTECTED//////////////////////////////////////////////////////
 
@@ -173,10 +243,6 @@ class PosManagerObj
 	    log("//////////FINISHED ALL!/////////////////");	
 	    const fres = await this._rewritePosDataFile(pdata);
 	    return res;	
-
-//	    space();
-//	    log(pdata);
-//	    return true;
 	}
 
 /*
@@ -223,37 +289,9 @@ class PosManagerObj
 		log("pos_list size: ",  this.posDataCount());
                 log("done! \n");	    
 	}
-	//загрузить данные позиций в контейнер this.pos_list из файла  POS_DATA_FILE.
-	// контейнер this.pos_list полностью перезаписывается.
-	//перед выполнением этой функции желательно один раз выполнить  updateArrPosData.
-	loadPosDataFromFile()
-	{
-	    log("read POS_DATA file ....");
-	    log("file:", POS_DATA_FILE);
-	    
-	    this.pos_list = [];
-            const data = fs.readFileSync(POS_DATA_FILE);
-            let list = data.toString().split("\n");
+*/
 
-            for (let i=0; i<list.length; i++)
-            {
-                let fline = list[i].trim();
-                if (fline == "") continue;
-		
-		let pos_obj = new PosData(-1);
-		pos_obj.fromFileLine(fline);
-		if (!pos_obj.invalid())
-	    	{
-		    this.recalcPosRange(pos_obj);
-		    this.pos_list.push(pos_obj);
-		}
-	    }	
-	    const np = this.posDataCount();
-//	    log("posDataCount: ", np, ", active: ", this.activeCount());
-//	    this.outActive();
-//	    this.syncByPoolsFile();
-	    return np;	    
-	}
+/*
 	//загрузить файл pools.txt и синхронизировать данные поз с данными пулов, т.е. найти для каждой позы свой пул
 	syncByPoolsFile()
 	{

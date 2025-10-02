@@ -1,4 +1,4 @@
-const { space, log, jsonFromFile, hasField, jsonKeys, isInt } = require("./../utils.js");
+const { space, log, jsonFromFile, hasField, jsonKeys, isInt, decimalFactor } = require("./../utils.js");
 
 // my class objects
 const { ChainObj } = require("./chain_class.js");
@@ -6,7 +6,10 @@ const { ContractObj } = require("./contract_class.js");
 const { JSBIWorker } = require("./calc_class.js");
 const { WalletAsset } = require("./wallet_class.js");
 
+//const JSBI= require("jsbi");
 
+
+const PRICE0_PRECISION = 10;
 
 
 //класс для работы с выборочным пулом.
@@ -28,9 +31,33 @@ class PoolObj
 		this.contract = ContractObj.getPoolContract(this.address, this.pv);
 
 		// объект для хранения текущего состояния пула.
-		// price0 это цена токена0 в нормальных пользовательских единицах
+		// price0 это цена токена0 в нормальных пользовательских единицах, пересчитывается при обновлении состояния => func updateState() 
 		this.state = {liq: 0, sqrtPrice: 0, tick: 0, price0: -1}; 
   	}
+	_resetState()
+	{
+	    this.state.liq = 0;
+	    this.state.sqrtPrice = 0;
+	    this.state.tick = 0;
+	}
+	// поправочный кеф между decimals
+	_decimalScaleFactor() 
+	{
+	    return decimalFactor(this.token0.decimal, this.token1.decimal);
+	} 
+	// посчитать реальную текущую цену (token0) для текущего тика пула (предварительно нужно выполнить updateState() )
+	_recalcPrice0()
+	{
+	    const p_user = JSBIWorker.priceBySqrtPriceQ96(this.state.sqrtPrice, this.token0.decimal, this.token1.decimal);
+	    this.state.price0 = p_user.toFixed(PRICE0_PRECISION);
+	    //const p96 = Number(this.state.sqrtPrice);
+	    //if (p96 == 0) return;
+	    //let p = ((p96 / (2 ** 96)) ** 2);		
+	    //p /= this._decimalScaleFactor();
+	    //this.state.price0 = p.toFixed(PRICE0_PRECISION);
+	}
+
+
 	// признак того что параметры пула заданы некорректно
 	invalid() 
 	{
@@ -47,11 +74,19 @@ class PoolObj
 	    if (this.state.price0 <= 0) return true;
 	    return false;
 	}
-	_resetState()
+	// процент комиссии пула в вещественном виде
+    	floatFee() {return (this.fee/10000);}
+	//получить реальную цену(token0) по указанному тику
+	priceByTick(tick) 
 	{
-	    this.state.liq = 0;
-	    this.state.sqrtPrice = 0;
-	    this.state.tick = 0;
+	    const sqrtPriceQ96 = JSBIWorker.sqrtPriceQ96ByTick(tick);
+	    const p_user = JSBIWorker.priceBySqrtPriceQ96(sqrtPriceQ96, this.token0.decimal, this.token1.decimal);
+    	    return p_user.toFixed(PRICE0_PRECISION);
+
+
+    	    //const a = ContractObj.tickQuantum() ** tick;
+    	    //const real_price = a/this._decimalScaleFactor();
+    	    //return  real_price.toFixed(PRICE0_PRECISION);
 	}
 	//обновить поля token0
 	updateToken0(data)
@@ -76,7 +111,11 @@ class PoolObj
 	    log("Token 1:");
 	    this.token1.out();
 	}
-	// diag debug
+	outShort()
+	{
+    	    log("Pool info: ", this.address);
+	    log(`TOKEN_PAIR: ${this.token0.name}/${this.token1.name},  FEE = ${this.floatFee()}%`);
+	}
 	outState()
 	{
 	    space();
@@ -85,7 +124,14 @@ class PoolObj
 	    log("sqrt_price: ", this.state.sqrtPrice.toString());
 	    log("liquidity: ", this.state.liq.toString());
 	    log("price0: ", this.state.price0);
-	    log("price1: ", (1/this.state.price0).toFixed(8));
+	    log("price1: ", (1/this.state.price0).toFixed(PRICE0_PRECISION));
+/*
+	    log("///////////////JSBI////////////////")
+	    const sqrtPriceQ96 = JSBIWorker.sqrtPriceQ96ByTick(this.state.tick);
+	    log("sqrt_price", sqrtPriceQ96.toString());
+	    const p_user = JSBIWorker.priceBySqrtPriceQ96(sqrtPriceQ96, this.token0.decimal, this.token1.decimal);
+	    log("p_user: ", p_user);
+*/
 	}
 	//  запросить в сети текущее состояние пула, обновить объект this.state
 	async updateState()
@@ -105,14 +151,6 @@ class PoolObj
 	    catch(e) {log("ERR: ", e); this._resetState();} 
 	    log("state updated!");
 	}	
-	_recalcPrice0()
-	{
-	    const p96 = Number(this.state.sqrtPrice);
-	    if (p96 == 0) return;
-	    let p = ((p96 / (2 ** 96)) ** 2);		
-	    this.state.price0 = p*this.token0.decimalFactor()/this.token1.decimalFactor();
-	    this.state.price0 = this.state.price0.toFixed(8);
-	}
 	//функция извлекает текущий TVL каждого из пары токенов в пуле.
 	async updateTVL()
 	{
@@ -127,6 +165,7 @@ class PoolObj
 	    log("T1.tvl=", tvl1, this.token1.ticker);
 	    log("done!");
 	}
+
 /*
 	//вернет цену одного из токенов пула(более привычную для пользователя), какую - зависит от типов токенов.
 	//если один из токен стайбл, то вернет цену НЕ стейбла.
@@ -147,73 +186,6 @@ class PoolObj
 	}
 
 	
-	floatFee() {return (this.fee/10000);}
-	strFee() {return (this.floatFee().toString()+"%");} 
-	out()
-	{
-		log("PoolObj: ", this.address);
-		if (this.isStable()) log("IS_STABELS_POOL");
-		log("token 0:");
-		this.T0.out();
-		log("token 1:");
-		this.T1.out();
-		log("fee: ", this.strFee());
-		log("tickSpacing: ", m_base.tickSpacingByFee(this.fee));
-	}
-	outState()
-	{
-		space();
-		log("CURRENT_STATE:");
-		log(this.state);
-	}
-	showPrices()
-	{
-		log("////////// Current prices of pool //////////////")
-		let s = "Token_0:  " + this.T0.ticker + " = " + this.T0.strPrice() + " " + this.T1.ticker;
-		log(s);
-		s = "Token_1:  " + this.T1.ticker + " = " + this.T1.strPrice() + " " + this.T0.ticker;
-		log(s);
-	}
-	showTVL()
-	{
-		var sum_tvl_st = Number.parseFloat(-1);
-		log("////////// Current TVL sizes of pool //////////////")
-		let s = "T0.tvl=" + this.T0.tvl.toString() + " " +  this.T0.ticker;
-
-//		log("sum_tvl_st1 = ", sum_tvl_st);
-
-		if (!this.T0.isStable() && this.T1.isStable())		
-		{
-		    const tvl0_st = this.T0.tvl*this.T0.price;
-		    s += (" (" + tvl0_st.toFixed(1).toString() + " " +  this.T1.ticker + ")");
-		    sum_tvl_st = Number.parseFloat(tvl0_st);
-//		log("sum_tvl_st2 = ", sum_tvl_st);
-
-		}
-		else if (this.T0.isStable()) sum_tvl_st = this.T0.tvl;		
-		log(s);
-
-    
-//		log("sum_tvl_st3 = ", sum_tvl_st);
-
-		s = "T1.tvl=" + this.T1.tvl.toString() + " " + this.T1.ticker;
-		if (!this.T1.isStable() && this.T0.isStable())		
-		{
-		    const tvl1_st = this.T1.tvl*this.T1.price;
-		    s += (" (" + tvl1_st.toFixed(1).toString() + " " +  this.T0.ticker + ")");
-		    sum_tvl_st = Number.parseFloat(sum_tvl_st) + Number.parseFloat(tvl1_st);
-
-//		log("sum_tvl_st4 = ", sum_tvl_st);
-
-		}
-		else if (this.T1.isStable()) sum_tvl_st = Number.parseFloat(sum_tvl_st) + Number.parseFloat(this.T1.tvl);		
-		log(s);
-
-		sum_tvl_st/=1000;
-		//log("sum_tvl_st = ", sum_tvl_st);
-		if (sum_tvl_st > 1) log("TOTAL_TVL: ", sum_tvl_st.toFixed(1), "k_USD")
-	}
-
 
 
     //возвращает предполагаемую сумму обмена выходного токена при заданных входных параметрах.

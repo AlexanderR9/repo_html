@@ -1,8 +1,8 @@
 const {space, log, curTime, hasField, jsonFromFile, jsonKeys, fileExist, isJson} = require("./../utils.js");
 
+// ВНИМАНИЕ: порядок элементов REQ_NAME_LIST и TX_REQ_NAME_LIST менять нельзя, можно только добавлять новые в конец.
 // список валидных значений команд на чтение  (порядок элементов важен)
-const REQ_NAME_LIST = ["balance", "tx_count", "approved", "gas_price", "chain_id", "tx_status", "pool_state", "positions"];
-
+const REQ_NAME_LIST = ["balance", "tx_count", "approved", "gas_price", "chain_id", "tx_status", "pool_state", "positions", "pos_state"];
 // список валидных значений команд на запись  (порядок элементов важен)
 const TX_REQ_NAME_LIST = ["wrap", "unwrap", "transfer", "approve", "swap"];
 
@@ -85,6 +85,7 @@ class ParamParser
 	isTxStatusReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_LIST[5]));}
 	isPoolStateReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_LIST[6]));}
 	isPositionsReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_LIST[7]));}
+	isPosStateReq() {return (!this.invalid() && (this.reqName() == REQ_NAME_LIST[8]));}
 
 	//функциий возвращающие признак того, что пришел запрос типа  TX_REQ_NAME_LIST[i] (tx cmd)
 	isWrapTxReq() {return (!this.invalid() && (this.reqName() == TX_REQ_NAME_LIST[0]));}
@@ -113,6 +114,12 @@ class ParamParser
 		if (!this.keys.includes("token0_address")) return false;
 		if (!this.keys.includes("token1_address")) return false;
 		if (!this.keys.includes("fee")) return false;
+		return true;
+	    }
+	    if (this.isPosStateReq()) 
+	    {
+		if (!this.keys.includes("pid_arr")) return false;
+		if (!this.keys.includes("pool_addresses")) return false;
 		return true;
 	    }
 	    return false;

@@ -14,7 +14,7 @@ const { PoolObj } = require("./pool_class.js");
 
 // init script result var
 let req_result = {req_name: "none"};
-const sendResult = () => {space(); log("----- script result -----"); log("JSON_RESULT_START", req_result, "JSON_RESULT_END");}
+const sendResult = () => {space(); log("----- Finaly script result -----"); log("JSON_RESULT_START", req_result, "JSON_RESULT_END");}
 const sendErrResult = (err) =>  {log("WARNING: script breaked!!!"); req_result.error = err; sendResult();}
 
 //read input args
@@ -133,7 +133,27 @@ async function getWalletPositions()
     if (res) req_result.pos_count = pm_obj.pid_list.length;
     else req_result.pos_count = "-1";
 }
+async function getPosState()
+{
+    log("[CMD/POS_STATE]");
+//    const pids = p_parser.params.pid_arr;
+//    log("pid arr size: ", pids.length);
+    let pm_obj = new PosManagerObj(w_obj);
+    pm_obj.pid_list = p_parser.params.pid_arr;
+    let data = await pm_obj.getPosState(p_parser.params.pool_addresses);
+//    log("result:", data);
 
+    if (data.code == 0)
+    {
+	log("Request finished OK!");
+	mergeJson(req_result, data);        	
+    }
+    else	
+    {
+	req_result.error = "can't executing request: "+req_result.req_name;	
+	log("Request FAULT!");	
+    }
+}
 
 // --------- try request for getting chain data ------------------
 async function main()
@@ -147,6 +167,7 @@ async function main()
     else if (p_parser.isTxStatusReq()) await checkTxState();
     else if (p_parser.isApprovedReq()) await getApprovedTokenAmounts();
     else if (p_parser.isPoolStateReq()) await getPoolState();
+    else if (p_parser.isPosStateReq()) await getPosState();
     else if (p_parser.isPositionsReq()) await getWalletPositions();
     else 
     {

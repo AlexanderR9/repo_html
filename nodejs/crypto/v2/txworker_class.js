@@ -4,6 +4,7 @@ const {space, log, isInt, mergeJson, isJson, hasField, fileExist, charRepeat, re
 
 const { DateTimeObj } = require("./../obj_dt.js");
 const { TxGasObj } = require("./gas_class.js");
+const { PmTxObj } = require("./pmtxobj_class.js");
 const { ChainObj } = require("./chain_class.js");
 const { WalletObj } = require("./wallet_class.js");
 const { ContractObj } = require("./contract_class.js");
@@ -116,7 +117,7 @@ class TxWorkerObj
     {
 	removeField(params, "deadline");
 	const txk = params.tx_kind;
-	if (txk === "swap")
+	if (txk === "swap" || txk === "burn")
 	    params.deadline = Math.floor(Date.now()/1000) + this.deadline;
     }
     
@@ -182,7 +183,7 @@ class TxWorkerObj
 	else if (tx_kind == "unwrap") { tx_result = await this._unwrap(params, fee_params);}
 	else if (tx_kind == "approve") { tx_result = await this._approve(params, fee_params);}
 	else if (tx_kind == "transfer") { tx_result = await this._transfer(params, fee_params);}
-	else if (this._isPosManagerKind(tx_kind)) { tx_result = await this._pmTx(params, fee_params);}
+	else if (this._isPosManagerKind(tx_kind)) { tx_result = await this._pmTx(params, fee_params, tx_kind);} // особый тип параметров
 	else if (tx_kind == "swap") { tx_result = await this._swap(params, fee_params);}
 	else {log("TxWorkerObj WARNING: invalid TX kind - ", tx_kind); return -104;}
 
@@ -290,78 +291,19 @@ class TxWorkerObj
         catch(e) {log("ERROR:", e); }
 	return -119;
     }
-
-
-/*
-    async _pmTx(params, fee_params)
+    async _pmTx(params, fee_params, tx_kind)
     {
-	const operation_name = params.tx_kind;
-        const pm_contract = m_base.getPosManagerContract(this.wallet.pv);
-        const pm_conn = pm_contract.connect(this.wallet.signer);
-	delete params.tx_kind;
+        let tx_reply = undefined;
+	const pmtx = new PmTxObj(this.wallet.signer);
+	pmtx.setFeeParams(fee_params);
+	params.is_simulate = this.isSimulate;
 
-        let tx_reply = {};
-        if (operation_name == "mint")
-        {
-            try { tx_reply = await pm_conn.mint(params, fee_params); }
-            catch(e) {log("ERROR:", e); return -115;}         
-        }
-        else if (operation_name == "increase")
-        {
-            try { tx_reply = await pm_conn.increaseLiquidity(params, fee_params); }
-            catch(e) {log("ERROR:", e); return -116;}         
-        }
-        else if (operation_name == "decrease")
-        {
-            try { tx_reply = await pm_conn.decreaseLiquidity(params, fee_params); }
-            catch(e) {log("ERROR:", e); return -117;}         
-        }
-        else if (operation_name == "collect")
-        {
-            try { tx_reply = await pm_conn.collect(params, fee_params); }
-            catch(e) {log("ERROR:", e); return -118;}         
-        }
-        else if (operation_name == "burn")
-        {
-            try { tx_reply = await pm_conn.burn(params.tokenId, fee_params); }
-            catch(e) {log("ERROR:", e); return -119;}         
-        }
-        else {log("ERROR: invalid operation_name ", operation_name); return -99;}
+        if (tx_kind == "burn") tx_reply = await pmtx.tryBurn(params);
+        else {log("ERROR: invalid tx_name ", tx_kind); tx_reply = -99;}
 
 	return tx_reply;
     }
-    async _swap(params, fee_params)
-    {
-        const router_contract = m_base.getRouterContract(this.wallet.pv); //swap router contract object
-	const router_conn = router_contract.connect(this.wallet.signer);
-	delete params.tx_kind;
-
-        try
-        {
-            const tx_reply = await router_conn.exactInputSingle(params, fee_params);
-	    return tx_reply;
-        }
-        catch(e) {log("ERROR:", e); }
-	return -119;
-    }
     
-
-    //PROTECTED METOD
-    _saveTXListToFile()
-    {
-	log("try save TX list to log_file .......");
-	if (this.txEmpty()) {log("TX list is empty!"); return;}
-
-	const n = this.txCount();
-	for (var i=0; i<n; i++)
-	{
-	    const fline = this.tx_list[i].toFileLine() + '\n';
-	    if (i == 0) fs.writeFileSync("1.txt", fline);
-            else fs.appendFileSync("1.txt", fline);
-	}
-	log(`done, writed ${n} TX records!`);
-    }
-*/
 
 };
 

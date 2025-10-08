@@ -4,7 +4,7 @@ const {space, log, curTime, hasField, jsonFromFile, jsonKeys, fileExist, isJson}
 // список валидных значений команд на чтение  (порядок элементов важен)
 const REQ_NAME_LIST = ["balance", "tx_count", "approved", "gas_price", "chain_id", "tx_status", "pool_state", "positions", "pos_state"];
 // список валидных значений команд на запись  (порядок элементов важен)
-const TX_REQ_NAME_LIST = ["wrap", "unwrap", "transfer", "approve", "swap"];
+const TX_REQ_NAME_LIST = ["wrap", "unwrap", "transfer", "approve", "swap", "burn"];
 
 //класс для чтения и обработки входного json-файла параметров для скрипта
 class ParamParser 
@@ -93,6 +93,7 @@ class ParamParser
 	isTransferTxReq() {return (!this.invalid() && (this.reqName() == TX_REQ_NAME_LIST[2]));}
 	isApproveTxReq() {return (!this.invalid() && (this.reqName() == TX_REQ_NAME_LIST[3]));}
 	isSwapTxReq() {return (!this.invalid() && (this.reqName() == TX_REQ_NAME_LIST[4]));}
+	isBurnPosTxReq() {return (!this.invalid() && (this.reqName() == TX_REQ_NAME_LIST[5]));}
 
 	
 	//проверка набора полей(НЕ ЗНАЧЕНИЙ) на соответствие типу запроса
@@ -153,6 +154,11 @@ class ParamParser
 		if (!this.keys.includes("token0_address")) return false;
 		if (!this.keys.includes("token1_address")) return false;
 		if (!this.keys.includes("fee")) return false;
+		return true;
+	    }
+	    if (this.isBurnPosTxReq()) 
+	    {
+		if (!this.keys.includes("pid_arr")) return false;
 		return true;
 	    }
 	    return false;

@@ -67,6 +67,10 @@ class TxGasObj
 	{
 	    this.gas_limit *= 2;
 	}
+	else if (tx_kind == "burn")
+	{
+	    this.gas_limit = Math.floor(2.7*this.gas_limit);
+	}
 
     }
 

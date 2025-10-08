@@ -12,6 +12,7 @@ const { TxWorkerObj } = require("./txworker_class.js");
 const { JSBIWorker } = require("./calc_class.js");
 const { ChainObj } = require("./chain_class.js");
 const { ContractObj } = require("./contract_class.js");
+const { PosManagerObj } = require("./posmanager_class.js");
 
 
 // init script result var
@@ -163,6 +164,21 @@ function makeTxSwapParams()
     req_result.pool_address = p_parser.params["pool_address"];
 
 }
+function makeTxBurnPosParams()
+{
+    log("[TX_CMD/BURN_POSITIONS]");
+//    let pm_obj = new PosManagerObj(w_obj);
+//    pm_obj.pid_list = p_parser.params.pid_arr;
+    log("burning positions: ", p_parser.params.pid_arr.length);
+    if (p_parser.params.pid_arr.length <= 0) {log(`WARNING: pid_arr is empty`); return;}    
+    else log("PIDs: ", p_parser.params.pid_arr);
+
+    tx_params.tx_kind = p_parser.reqName();
+    if (p_parser.params.pid_arr.length > 1) tx_params.pid_arr = p_parser.params.pid_arr;
+    else tx_params.pid = p_parser.params.pid_arr[0];
+
+    req_result.pid_arr = p_parser.params.pid_arr;
+}
 
 
 
@@ -216,6 +232,7 @@ async function main()
     else if (p_parser.isTransferTxReq()) makeTxTransferParams();
     else if (p_parser.isApproveTxReq()) makeTxApproveParams();
     else if (p_parser.isSwapTxReq()) makeTxSwapParams();
+    else if (p_parser.isBurnPosTxReq()) makeTxBurnPosParams();
 
 //    log("TX_PARAMS:", tx_params);
     space();

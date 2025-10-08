@@ -136,12 +136,9 @@ async function getWalletPositions()
 async function getPosState()
 {
     log("[CMD/POS_STATE]");
-//    const pids = p_parser.params.pid_arr;
-//    log("pid arr size: ", pids.length);
     let pm_obj = new PosManagerObj(w_obj);
     pm_obj.pid_list = p_parser.params.pid_arr;
     let data = await pm_obj.getPosState(p_parser.params.pool_addresses);
-//    log("result:", data);
 
     if (data.code == 0)
     {

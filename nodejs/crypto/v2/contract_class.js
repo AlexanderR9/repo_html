@@ -88,6 +88,11 @@ class ContractObj
     {
 	return ContractObj.getContract(ContractObj.posManagerAddress(), POS_MANAGER_ABI, provider);			
     }
+    //  ----------------- TX encoder iface ------------------------
+    static posManagerEncodeIface()
+    {
+	return new ethers.utils.Interface(POS_MANAGER_ABI);
+    }
 
 }
 

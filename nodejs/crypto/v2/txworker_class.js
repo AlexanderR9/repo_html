@@ -117,7 +117,7 @@ class TxWorkerObj
     {
 	removeField(params, "deadline");
 	const txk = params.tx_kind;
-	if (txk === "swap" || txk === "burn")
+	if (txk === "swap" || this._isPosManagerKind(txk))
 	    params.deadline = Math.floor(Date.now()/1000) + this.deadline;
     }
     
@@ -294,11 +294,12 @@ class TxWorkerObj
     async _pmTx(params, fee_params, tx_kind)
     {
         let tx_reply = undefined;
-	const pmtx = new PmTxObj(this.wallet.signer);
+	const pmtx = new PmTxObj(this.wallet);
 	pmtx.setFeeParams(fee_params);
 	params.is_simulate = this.isSimulate;
 
         if (tx_kind == "burn") tx_reply = await pmtx.tryBurn(params);
+        if (tx_kind == "collect") tx_reply = await pmtx.tryCollect(params);
         else {log("ERROR: invalid tx_name ", tx_kind); tx_reply = -99;}
 
 	return tx_reply;

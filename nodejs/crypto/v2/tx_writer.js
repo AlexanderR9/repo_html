@@ -167,8 +167,6 @@ function makeTxSwapParams()
 function makeTxBurnPosParams()
 {
     log("[TX_CMD/BURN_POSITIONS]");
-//    let pm_obj = new PosManagerObj(w_obj);
-//    pm_obj.pid_list = p_parser.params.pid_arr;
     log("burning positions: ", p_parser.params.pid_arr.length);
     if (p_parser.params.pid_arr.length <= 0) {log(`WARNING: pid_arr is empty`); return;}    
     else log("PIDs: ", p_parser.params.pid_arr);
@@ -178,6 +176,14 @@ function makeTxBurnPosParams()
     else tx_params.pid = p_parser.params.pid_arr[0];
 
     req_result.pid_arr = p_parser.params.pid_arr;
+}
+function makeTxCollectRewardPosParams()
+{
+    log("[TX_CMD/COLLECT_REWARDS]");
+    log("PID of position: ", p_parser.params.pid);
+    tx_params.tx_kind = p_parser.reqName();
+    tx_params.pid = p_parser.params.pid;
+    req_result.pid = p_parser.params.pid;
 }
 
 
@@ -233,6 +239,7 @@ async function main()
     else if (p_parser.isApproveTxReq()) makeTxApproveParams();
     else if (p_parser.isSwapTxReq()) makeTxSwapParams();
     else if (p_parser.isBurnPosTxReq()) makeTxBurnPosParams();
+    else if (p_parser.isCollectRewardPosTxReq()) makeTxCollectRewardPosParams();
 
 //    log("TX_PARAMS:", tx_params);
     space();

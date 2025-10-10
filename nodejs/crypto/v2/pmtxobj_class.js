@@ -13,13 +13,9 @@ const { JSBIWorker } = require("./calc_class.js");
         
 //including
 //const ethers = require("ethers");
-    
-    
-const fs = require("fs");
-const F_LOG = "tx.log";
 */        
         
-        
+const MAX_BIG128 = "1000000000000000000000000000";        
      
 //класс для совершения транзакций связанных с позициями пулов (burn; mint; increase; decrease; collect; take_away;).
 //предварительно требуется создать объект, передав в конструктор object Signer.
@@ -28,13 +24,43 @@ const F_LOG = "tx.log";
 //параметры должны содержать обязательные поля: deadline и is_simulate (true/false).
 class PmTxObj
 {
-    constructor(wallet_signer_obj)
+    constructor(wallet_obj)
     {
 	this.encoder = ContractObj.posManagerEncodeIface(); // инициализируем интерфейс для кодирования функций PosManager
-	this.pm_contract = ContractObj.getPosManagerContract(wallet_signer_obj); // инициализируем объект для отправки транзакций в сеть
+	this.pm_contract = ContractObj.getPosManagerContract(wallet_obj.signer); // инициализируем объект для отправки транзакций в сеть
+	this.recipient = wallet_obj.address;
 	this.fee_params = {};
     }
     setFeeParams(fp) {this.fee_params = fp;}
+
+    // сжигание одной или несколько позиций (без ликвидности)
+    async tryCollect(params)
+    {
+        log("PmTxObj executing: TX_KIND = collect");
+	log(params);
+
+        //prepare ehters collect params                
+        let collect_params = {tokenId: params.pid, deadline: params.deadline};
+        collect_params.recipient = this.recipient;
+        collect_params.amount0Max = MAX_BIG128;
+        collect_params.amount1Max = MAX_BIG128;
+        log("COLLECT_PARAMS:", collect_params);
+        space();
+
+	//send simple TX
+        try 
+	{ 
+    	    let tx_reply = null;
+    	    if (params.is_simulate) tx_reply = await this.pm_contract.estimateGas.collect(collect_params);
+    	    else tx_reply = await this.pm_contract.collect(collect_params, this.fee_params);
+    	    return tx_reply;
+
+	    //pm_conn.collect(params, fee_params);
+	}
+        catch(e) {log("ERROR:", e); return -188;}
+
+	return -189;
+    }
 
 
     // сжигание одной или несколько позиций (без ликвидности)

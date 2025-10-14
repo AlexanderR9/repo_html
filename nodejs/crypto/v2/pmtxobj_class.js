@@ -33,7 +33,74 @@ class PmTxObj
     }
     setFeeParams(fp) {this.fee_params = fp;}
 
-    // сжигание одной или несколько позиций (без ликвидности)
+    // полный забор ликвидности и rewards у выбранной позиции на кошелек
+    async tryTakeaway(params)
+    {
+	//space();space();space();space();space();
+        log("PmTxObj executing: TX_KIND = take_away");
+	log("INPUT+PARAMS:", params); space();
+        //prepare ehters decrease params                
+        let decrease_params = {tokenId: params.pid, liquidity: params.liq, deadline: params.deadline};
+	decrease_params.amount0Min = 0;
+	decrease_params.amount1Min = 0;
+        log("DECREASE_PARAMS:", decrease_params);
+        space();
+        //prepare ehters collect params                
+        let collect_params = {tokenId: params.pid, deadline: params.deadline};
+        collect_params.recipient = this.recipient;
+        collect_params.amount0Max = MAX_BIG128;
+        collect_params.amount1Max = MAX_BIG128;
+        log("COLLECT_PARAMS:", collect_params);
+        space();
+	//  prepare multi_data
+	const multi_data = [];
+	multi_data.push(this.encoder.encodeFunctionData("decreaseLiquidity", [decrease_params]));
+	multi_data.push(this.encoder.encodeFunctionData("collect", [collect_params]));
+	log("multicall_data: ", multi_data);	    
+	space();
+
+	//send multicast TX
+        try 
+	{ 
+    	    let tx_reply = null;
+    	    if (params.is_simulate) tx_reply = await this.pm_contract.estimateGas.multicall(multi_data);
+    	    else tx_reply = await this.pm_contract.multicall(multi_data, this.fee_params);
+    	    return tx_reply;
+	}
+        catch(e) {log("ERROR:", e); return -161;}
+
+	return -163;
+    }
+
+
+    // удаление ликвидности у выбранной позиции (перенос в зону reward)
+    async tryDecrease(params)
+    {
+        log("PmTxObj executing: TX_KIND = decrease");
+	log(params);
+
+        //prepare ehters decrease params                
+        let decrease_params = {tokenId: params.pid, liquidity: params.liq, deadline: params.deadline};
+	decrease_params.amount0Min = 0;
+	decrease_params.amount1Min = 0;
+        log("DECREASE_PARAMS:", decrease_params);
+        space();
+
+	//send simple TX
+        try 
+	{ 
+    	    let tx_reply = null;
+    	    if (params.is_simulate) tx_reply = await this.pm_contract.estimateGas.decreaseLiquidity(decrease_params);
+    	    else tx_reply = await this.pm_contract.decreaseLiquidity(decrease_params, this.fee_params);
+    	    return tx_reply;
+	}
+        catch(e) {log("ERROR:", e); return -168;}
+
+	return -169;
+    }
+
+
+    // сбор комиссий у выбранной позиции
     async tryCollect(params)
     {
         log("PmTxObj executing: TX_KIND = collect");
@@ -54,8 +121,6 @@ class PmTxObj
     	    if (params.is_simulate) tx_reply = await this.pm_contract.estimateGas.collect(collect_params);
     	    else tx_reply = await this.pm_contract.collect(collect_params, this.fee_params);
     	    return tx_reply;
-
-	    //pm_conn.collect(params, fee_params);
 	}
         catch(e) {log("ERROR:", e); return -188;}
 
@@ -69,7 +134,7 @@ class PmTxObj
         log("PmTxObj executing: TX_KIND = burn");
 	if (hasField(params, "pid_arr")) // need multicast
 	{
-	    log("detect filed, pid_arr:", params.pid_arr); 
+	    log("detect field - pid_arr:", params.pid_arr); 
 	    //  prepare multi_data
 	    const multi_data = [];
 	    for (const pid of params.pid_arr) 

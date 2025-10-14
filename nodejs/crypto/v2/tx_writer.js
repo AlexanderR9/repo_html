@@ -185,10 +185,28 @@ function makeTxCollectRewardPosParams()
     tx_params.pid = p_parser.params.pid;
     req_result.pid = p_parser.params.pid;
 }
+function makeTxDecreaseLiqPosParams()
+{
+    log("[TX_CMD/DECREASE_LIQUIDITY]");
+    log("PID of position: ", p_parser.params.pid);
+    tx_params.tx_kind = p_parser.reqName();
+    tx_params.pid = p_parser.params.pid;
+    tx_params.liq = p_parser.params.liq;
 
+    req_result.pid = p_parser.params.pid;
+    req_result.liq = p_parser.params.liq;
+}
+function makeTxTakeAwayLiqPosParams()
+{
+    log("[TX_CMD/TAKE_AWAY_LIQUIDITY]");
+    log("PID of position: ", p_parser.params.pid);
+    tx_params.tx_kind = p_parser.reqName();
+    tx_params.pid = p_parser.params.pid;
+    tx_params.liq = p_parser.params.liq;
 
-
-
+    req_result.pid = p_parser.params.pid;
+    req_result.liq = p_parser.params.liq;
+}
 
 
 
@@ -240,6 +258,8 @@ async function main()
     else if (p_parser.isSwapTxReq()) makeTxSwapParams();
     else if (p_parser.isBurnPosTxReq()) makeTxBurnPosParams();
     else if (p_parser.isCollectRewardPosTxReq()) makeTxCollectRewardPosParams();
+    else if (p_parser.isDecreaseLiqPosTxReq()) makeTxDecreaseLiqPosParams();
+    else if (p_parser.isTakeAwayLiqPosTxReq()) makeTxTakeAwayLiqPosParams();
 
 //    log("TX_PARAMS:", tx_params);
     space();

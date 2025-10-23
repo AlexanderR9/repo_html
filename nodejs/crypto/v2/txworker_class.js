@@ -302,6 +302,7 @@ class TxWorkerObj
 
         if (tx_kind == "burn") tx_reply = await pmtx.tryBurn(params);
         else if (tx_kind == "collect") tx_reply = await pmtx.tryCollect(params);
+        else if (tx_kind == "mint") tx_reply = await pmtx.tryMint(params);
         else if (tx_kind == "decrease") tx_reply = await pmtx.tryDecrease(params);
         else if (tx_kind == "take_away") tx_reply = await pmtx.tryTakeaway(params);
         else {log("ERROR: invalid tx_name ", tx_kind); tx_reply = -99;}

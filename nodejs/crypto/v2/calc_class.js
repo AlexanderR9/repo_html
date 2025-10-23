@@ -1,5 +1,5 @@
 const JSBI= require("jsbi");
-const {space, log, isInt, isFloat, isStr, hasField, decimalFactor } = require("./../utils.js");
+const {space, log, isInt, isFloat, isStr, hasField, decimalFactor, uLog } = require("./../utils.js");
 
 
 const JSBI_ERR = JSBI.BigInt(-9999);
@@ -24,6 +24,8 @@ class JSBIWorker
 {
     // признак того что параметр является JSBI
     static isBI(a) {return ((a instanceof JSBI) === true);}
+    static biZero() {return JSBI_ZERO;}
+
 
     // признак того что параметр является ethers.BigNumber
     static isEthersBI(a) 
@@ -194,7 +196,7 @@ class JSBIWorker
     }
 
 
-    // значение цены в пуле вида sqrtPriceQ96, т.е. то значение, в которых идут расчеты в пуле
+    // значение цены в пуле вида sqrtPriceQ96, т.е. то значение, в которых идут расчеты в пуле по заданному тику
     // вернет значение типа BigInt
     static sqrtPriceQ96ByTick(tick)
     {
@@ -252,13 +254,42 @@ class JSBIWorker
 	const p_user = (p/scale).toFixed(READABLE_FORM_LEN);
 	return Number.parseFloat(p_user);
     }
+    // переводит обычную цену float (привычное для пользователя) в номер тика
+    static poolPriceToTick(user_price, decimal0, decimal1) 
+    {
+	const scale = decimalFactor(decimal0, decimal1);   // поправка на decimals
+	const p_scale = user_price*scale;
+	const tick = Math.floor(uLog(TICK_QUANTUM, p_scale));
+	return tick;
+    }
+    // вернет ближайший тик к заданному согласно tick_spacing пула
+    static nearTickBySpacing(tick, tick_spacing)
+    {
+	if (tick_spacing <= 0) return 0;
+	if (tick_spacing == 1) return tick;
+
+	const dr = tick%tick_spacing;
+	if (dr == 0) return tick;
+
+	var t_low = tick;
+	var t_high = tick;
+	while (2 > 1)
+	{
+	    t_low--;
+	    t_high++;
+	    if (t_low%tick_spacing == 0) return t_low;
+	    if (t_high%tick_spacing == 0) return t_high;	    
+	}		
+	return -9999;
+    }
+    
 
 
     
     ///////////////////////////////РАСЧЕТ ДОЛЕЙ АКТИВОВ В ДИАПАЗОНЕ ПОЗИЦИИ////////////////////////////////////////
 
     
-    // вспомогательные функции для определения долей 0 и 1
+    // вспомогательные функции для определения долей  token0 и token1
     static _amount0Mint(jsbi_p1, jsbi_p2, jsbi_liq)
     {
         const d_price = JSBI.subtract(jsbi_p2, jsbi_p1);
@@ -309,6 +340,67 @@ class JSBIWorker
 	    result.amount1 = JSBIWorker._amount1Mint(jsbi_p1, jsbi_p, jsbi_liq)
 	}
 	return result;
+    }
+
+    
+    //посчитать ликвидность позиции по одному объему amount0, где amount0 объем токена_0 в нормальных пользовательских единицах.
+    //входные параметры: poolSqrtPriceQ96 - текущая цена пула вида sqrtQ96 взятая из slot0, tick_range -тиковый диапазон позы (объект {tick1: a, tick2: b})
+    //подразумевается что текущая цена внутри диапазона
+    //вернет значение предполагаемой ликвидности позы типа JSBI
+    static calcLiqByAmount0(poolSqrtPriceQ96, tick_range, amount0, decimal0)
+    {
+	const liq0 = JSBIWorker.floatToWeis(amount0, decimal0);
+	const jsbi_p = JSBIWorker.toBI(poolSqrtPriceQ96); //current price
+	const jsbi_p1 = JSBIWorker.toBI(JSBIWorker.sqrtPriceQ96ByTick(tick_range.tick1).toString());  // range lower price
+	const jsbi_p2 = JSBIWorker.toBI(JSBIWorker.sqrtPriceQ96ByTick(tick_range.tick2).toString()); // range upper price
+
+/*
+	space();
+	log("jsbi_p =", jsbi_p.toString());
+	log("jsbi_p1 =", jsbi_p1.toString());
+	log("jsbi_p2 =", jsbi_p2.toString());
+	log("LIQ of TOKEN0: ", liq0.toString());
+*/
+
+
+	// try calc LIQ of minting, formula:  L = amount0 * (p*sb)/(sb - p)
+        const d_price = JSBIWorker.biDiff(jsbi_p2, jsbi_p); 
+	const mul_price = JSBIWorker.biMul(jsbi_p, jsbi_p2);    // Q96*Q96 = Q192 (оставляем как есть)
+	const a = JSBIWorker.biMul(liq0, mul_price);        	// amount0 * (p*sb)
+	const a96 = JSBIWorker.biDiv(a, JSBI_Q96);        	// amount0 * (p*sb) / Q96  (массштабируем порядок)
+
+/*	
+	log("d_price:", d_price.toString());
+	log("mul_price:", mul_price.toString());
+	log("a:", a.toString());
+	log("a96:", a96.toString());
+*/
+
+	const L = JSBIWorker.biDiv(a96, d_price);
+	return L;
+    }
+    static calcLiqByAmount1(poolSqrtPriceQ96, tick_range, amount1, decimal1) // аналогична фунции calcLiqByAmount0, но для amount1
+    {
+	const liq1 = JSBIWorker.floatToWeis(amount1, decimal1);
+	const jsbi_p = JSBIWorker.toBI(poolSqrtPriceQ96); //current price
+	const jsbi_p1 = JSBIWorker.toBI(JSBIWorker.sqrtPriceQ96ByTick(tick_range.tick1).toString());  // range lower price
+	const jsbi_p2 = JSBIWorker.toBI(JSBIWorker.sqrtPriceQ96ByTick(tick_range.tick2).toString()); // range upper price
+/*
+
+	space();
+	log("jsbi_p =", jsbi_p.toString());
+	log("jsbi_p1 =", jsbi_p1.toString());
+	log("jsbi_p2 =", jsbi_p2.toString());
+	log("LIQ of TOKEN1: ", liq1.toString());
+*/
+
+	// try calc LIQ of minting, formula:  L = amount1 * Q96 / (p - sa)
+        const d_price = JSBIWorker.biDiff(jsbi_p, jsbi_p1); 
+	const a96 = JSBIWorker.biMul(liq1, JSBI_Q96);        	// amount1 * Q96  (массштабируем порядок)
+	log("d_price:", d_price.toString());
+	log("a96:", a96.toString());
+	const L = JSBIWorker.biDiv(a96, d_price);
+	return L;
     }
 
 

@@ -4,7 +4,7 @@ const {space, log, curTime, hasField, jsonFromFile, jsonKeys, fileExist, isJson}
 // список валидных значений команд на чтение  (порядок элементов важен)
 const REQ_NAME_LIST = ["balance", "tx_count", "approved", "gas_price", "chain_id", "tx_status", "pool_state", "positions", "pos_state"];
 // список валидных значений команд на запись  (порядок элементов важен)
-const TX_REQ_NAME_LIST = ["wrap", "unwrap", "transfer", "approve", "swap", "burn", "collect", "decrease", "take_away"];
+const TX_REQ_NAME_LIST = ["wrap", "unwrap", "transfer", "approve", "swap", "burn", "collect", "decrease", "take_away", "mint"];
 
 //класс для чтения и обработки входного json-файла параметров для скрипта
 class ParamParser 
@@ -97,6 +97,7 @@ class ParamParser
 	isCollectRewardPosTxReq() {return (!this.invalid() && (this.reqName() == TX_REQ_NAME_LIST[6]));}
 	isDecreaseLiqPosTxReq() {return (!this.invalid() && (this.reqName() == TX_REQ_NAME_LIST[7]));}
 	isTakeAwayLiqPosTxReq() {return (!this.invalid() && (this.reqName() == TX_REQ_NAME_LIST[8]));}
+	isMintPosTxReq() {return (!this.invalid() && (this.reqName() == TX_REQ_NAME_LIST[9]));}
 
 	
 	//проверка набора полей(НЕ ЗНАЧЕНИЙ) на соответствие типу запроса
@@ -179,6 +180,18 @@ class ParamParser
 	    {
 		if (!this.keys.includes("pid")) return false;
 		if (!this.keys.includes("liq")) return false;
+		return true;
+	    }
+	    if (this.isMintPosTxReq()) 
+	    {
+		if (!this.keys.includes("p1")) return false;
+		if (!this.keys.includes("p2")) return false;
+		if (!this.keys.includes("pool_address")) return false;
+		if (!this.keys.includes("token0_address")) return false;
+		if (!this.keys.includes("token1_address")) return false;
+		if (!this.keys.includes("fee")) return false;
+		if (!this.keys.includes("token0_amount")) return false;
+		if (!this.keys.includes("token1_amount")) return false;
 		return true;
 	    }
 	    return false;

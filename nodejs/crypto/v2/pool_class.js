@@ -6,9 +6,6 @@ const { ContractObj } = require("./contract_class.js");
 const { JSBIWorker } = require("./calc_class.js");
 const { WalletAsset } = require("./wallet_class.js");
 
-//const JSBI= require("jsbi");
-
-
 const PRICE0_PRECISION = 10;
 
 
@@ -50,11 +47,19 @@ class PoolObj
 	{
 	    const p_user = JSBIWorker.priceBySqrtPriceQ96(this.state.sqrtPrice, this.token0.decimal, this.token1.decimal);
 	    this.state.price0 = p_user.toFixed(PRICE0_PRECISION);
-	    //const p96 = Number(this.state.sqrtPrice);
-	    //if (p96 == 0) return;
-	    //let p = ((p96 / (2 ** 96)) ** 2);		
-	    //p /= this._decimalScaleFactor();
-	    //this.state.price0 = p.toFixed(PRICE0_PRECISION);
+	}
+	// шаг тиков для текущей fee пула
+	_tickSpacing()
+	{
+	    switch (Number.parseInt(this.fee))
+	    {
+		case 100: return 1;
+		case 500: return 10;
+		case 3000: return 60;
+		case 10000: return 200;
+		default: break;
+	    }
+	    return 0;
 	}
 
 
@@ -82,11 +87,6 @@ class PoolObj
 	    const sqrtPriceQ96 = JSBIWorker.sqrtPriceQ96ByTick(tick);
 	    const p_user = JSBIWorker.priceBySqrtPriceQ96(sqrtPriceQ96, this.token0.decimal, this.token1.decimal);
     	    return p_user.toFixed(PRICE0_PRECISION);
-
-
-    	    //const a = ContractObj.tickQuantum() ** tick;
-    	    //const real_price = a/this._decimalScaleFactor();
-    	    //return  real_price.toFixed(PRICE0_PRECISION);
 	}
 	//обновить поля token0
 	updateToken0(data)
@@ -101,37 +101,6 @@ class PoolObj
 	    this.token1.name = data.ticker;
 	    this.token1.address = data.address;
 	    this.token1.decimal = data.decimal;
-	}
-	// diag debug
-	out()
-	{
-    	    log("PoolObj: ", this.address, "   fee =", this.fee);
-	    log("Token 0:");
-	    this.token0.out();
-	    log("Token 1:");
-	    this.token1.out();
-	}
-	outShort()
-	{
-    	    log("Pool info: ", this.address);
-	    log(`TOKEN_PAIR: ${this.token0.name}/${this.token1.name},  FEE = ${this.floatFee()}%`);
-	}
-	outState()
-	{
-	    space();
-    	    log("Pool_State: ");
-	    log("tick: ", this.state.tick);
-	    log("sqrt_price: ", this.state.sqrtPrice.toString());
-	    log("liquidity: ", this.state.liq.toString());
-	    log("price0: ", this.state.price0);
-	    log("price1: ", (1/this.state.price0).toFixed(PRICE0_PRECISION));
-/*
-	    log("///////////////JSBI////////////////")
-	    const sqrtPriceQ96 = JSBIWorker.sqrtPriceQ96ByTick(this.state.tick);
-	    log("sqrt_price", sqrtPriceQ96.toString());
-	    const p_user = JSBIWorker.priceBySqrtPriceQ96(sqrtPriceQ96, this.token0.decimal, this.token1.decimal);
-	    log("p_user: ", p_user);
-*/
 	}
 	//  запросить в сети текущее состояние пула, обновить объект this.state
 	async updateState()
@@ -166,97 +135,65 @@ class PoolObj
 	    log("done!");
 	}
 
-/*
-	//вернет цену одного из токенов пула(более привычную для пользователя), какую - зависит от типов токенов.
-	//если один из токен стайбл, то вернет цену НЕ стейбла.
-	//если пул состоит из обоих стейблов и при этом один из них USDT, то вернет цену другого токена.
-	//в остальных случаях всегда возвращает цену первого токена из пары.
-	userPrice()
-	{
-	    if (this.invalidPoolData()) return -1;
 
-	    if (!this.T0.isStable() && this.T1.isStable()) return this.T0.price;		
-	    if (this.T0.isStable() && !this.T1.isStable()) return this.T1.price;		
-	    if (this.isStable())
-	    {
-		if (this.T0.ticker == "USDT") return this.T1.price;
-		if (this.T1.ticker == "USDT") return this.T0.price;
-	    }
-	    return this.T0.price;
-	}
-
-	
-
-
-    //возвращает предполагаемую сумму обмена выходного токена при заданных входных параметрах.
-    //функция только проводит предварительный расчет, никаких изменений не вносит.      
-    //перед расчетом функция выполнит updateState(); 
-    //sum_in - сумма выделенная на обмен входного токена.
-    //t_in - индекс входного токена в паре пула, может принимать значения 0 и 1, поумолчанию 0 .
-    async tokenSizeBySwapping(sum_in, t_in = 0, need_update_state = true) //getting out_sum(t1) by in_sum(t0) from object quotesContract
-    {
-        log("Try calc out token by swap ...");
-        if (!varNumber(sum_in))  {log("WARNING: input SUM is not number_value, sum: ", sum_in); return -1;}
-        if (sum_in < 0.01 || sum_in > 100000)  {log("WARNING: input SUM is not correct, sum:", sum_in); return -1;}
-
-	if (this.invalidPoolData())
-	{
-	    await this.updateData();
-	    //this.out();
-	}
-	else if (need_update_state) { await this.updateState(); }
-
-	let s = "TOKEN_IN: " + ((t_in == 0) ? this.T0.ticker : this.T1.ticker) + ";";
-	s += "  SUM_IN = " + sum_in;
-	log("Swap conditionals: ", s);
-	
-	this.recalcPrices();
-	const price =  ((t_in == 0) ? this.T1.price : this.T0.price);
-        if (price < 0.00000001)  {log("WARNING: out_token price is not correct, price:", price); return -1;}
-	s = "TOKEN_OUT: " + ((t_in == 0) ? this.T1.ticker : this.T0.ticker) + ";";
-	s += "  QUOTE = " + ((t_in == 0) ? this.T1.strPrice() : this.T0.strPrice());
-	log("Waiting result: ", s);
-	
-	const p_factor = (100-this.floatFee())/100;
-	log("Percent factor:", p_factor);
-	const result = (sum_in*p_factor)/price;
-	log("Result: ", result.toFixed(4));
-	return result;
-    }
-
-    //получить номера тиков для открытия позы по реальным значениям цен (внимательно: цена указывается для токена0 в ед. токена1).
-    //вернет объект с двумя полями tick1, tick2 (c учетом tickSpacing, причем значения будут притянуты к нижним границам интервалов tickSpacing).
+    //получить номера тиков для открытия позы по реальным значениям цен (внимательно: цены p1, p2 указывается для токена0 в ед. токена1).
+    //вернет объект с двумя полями tick1, tick2 уже c учетом tickSpacing, причем значения будут притянуты к ближайшим границам интервалов tickSpacing).
     //предварительно должна быть вызвана функция update.
-    calcTickRange(p1, p2)
+    //результат можно записывать в структуру MintParams
+    calcTickRangeByPrices(p1, p2)
     {
         log("try get ticks range ......");
         let result = {};
-        let f_dec = decimalFactor(this.T0.decimal, this.T1.decimal);
-
-	//log("prices: p1 =", p1, "  p2 =", p2);
 	
-        p1 *= f_dec;
-        p2 *= f_dec;
-
-	const qp = m_base.TICK_QUANTUM;
-        result.tick1 = Math.floor(uLog(qp, p1));
-        result.tick2 = Math.floor(uLog(qp, p2));
-	//log("raw_result:", result);    	
+	const t1 = JSBIWorker.poolPriceToTick(p1, this.token0.decimal, this.token1.decimal);
+	const t2 = JSBIWorker.poolPriceToTick(p2, this.token0.decimal, this.token1.decimal);
+	log("p1=",p1, "  tick: ", t1);
+	log("p2=",p2, "  tick: ", t2);
 	
-	
-	const t_space = m_base.tickSpacingByFee(this.fee);
-	//find ticks nearest tickSpacing
-	let mod = result.tick1 % t_space;
-	if (mod < 0) {mod += t_space; result.tick1 -= mod;}
-	else if (mod > 0) result.tick1 -= mod;
-
-	mod = result.tick2 % t_space;
-	if (mod < 0) {mod += t_space; result.tick2 -= mod;}
-	else if (mod > 0) result.tick2 -= mod;
-
+	const ts = this._tickSpacing();
+	result.tick1 = JSBIWorker.nearTickBySpacing(t1, ts);
+	result.tick2 = JSBIWorker.nearTickBySpacing(t2, ts);
         return result;
     }
+    //получить значения объемов токенов вида JSBI по указанному тиковому диапазону.
+    //предварительно должна быть вызвана функция update.	
+    //парметр amounts должен содержать поля size0 и size1 в нормальных пользовательских еденицах, но одно из них должно быть -1, т.е.
+    //мы сами задаем один из объемов а 2-й должен посчитаться.
+    //парметр tick_range должен содержать поля tick1 и tick2.
+    //подразумевается что все входные данные корректны, т.е. были проверены заранее.
+    //вернет объект с двумя полями amount0, amount1 вида JSBI.
+    //результат можно записывать в структуру MintParams    
+    calcMintAmountsByTickRange(amounts, tick_range)
+    {
+	log("---------------calcMintAmountsByTickRange-------------");
+	log("user_sizes:", amounts);
+	log("tick_range:", tick_range);
+	let result = {amount0: JSBIWorker.biZero(), amount1: JSBIWorker.biZero()};
+	if (this.state.tick < tick_range.tick1)  //текущая цена ниже всего диапазона
+	{
+	    log("PRICE IS OUT OF RANGE on LEFT");
+	    result.amount0 = JSBIWorker.floatToWeis(amounts.size0, this.token0.decimal);
+	    return result;
+	}
+	if (this.state.tick >= tick_range.tick2)  //текущая цена выше всего диапазона
+	{
+	    log("PRICE IS OUT OF RANGE on RIGHT");
+	    result.amount1 = JSBIWorker.floatToWeis(amounts.size1, this.token1.decimal);
+	    return result;
+	}
 
+        log("PRICE IS WHITIN RANGE");
+	//цена где-то внутри диапазона
+	var L = JSBIWorker.biZero();
+	if (amounts.size0 > 0) L = JSBIWorker.calcLiqByAmount0(this.state.sqrtPrice, tick_range, amounts.size0, this.token0.decimal);
+	else L = JSBIWorker.calcLiqByAmount1(this.state.sqrtPrice, tick_range, amounts.size1, this.token1.decimal);
+	log("L: ", L.toString());
+
+	return JSBIWorker.recalcAssetsPosition(this.state.sqrtPrice, L, tick_range);	    	
+    }
+
+
+/*
     //получить цену вида Q96 но номеру тика (внимательно: цена указывается для токена0 в ед. токена1).
     //предварительно должна быть вызвана update, возвращает BigInt
     priceQ96ByTick(tick)
@@ -340,6 +277,41 @@ class PoolObj
     }
 
 */
+
+
+    //////////////// DEBUG FUNCS ///////////////////	
+	out()
+	{
+    	    log("PoolObj: ", this.address, "   fee =", this.fee);
+	    log("Token 0:");
+	    this.token0.out();
+	    log("Token 1:");
+	    this.token1.out();
+	}
+	outShort()
+	{
+    	    log("Pool info: ", this.address);
+	    log(`TOKEN_PAIR: ${this.token0.name}/${this.token1.name},  FEE = ${this.floatFee()}%`);
+	}
+	outState()
+	{
+	    space();
+    	    log("Pool_State: ");
+	    log("tick: ", this.state.tick);
+	    log("tick_spacing: ", this._tickSpacing());
+	    log("sqrt_price: ", this.state.sqrtPrice.toString());
+	    log("liquidity: ", this.state.liq.toString());
+	    log("price0: ", this.state.price0);
+	    log("price1: ", (1/this.state.price0).toFixed(PRICE0_PRECISION));
+/*
+	    log("///////////////JSBI////////////////")
+	    const sqrtPriceQ96 = JSBIWorker.sqrtPriceQ96ByTick(this.state.tick);
+	    log("sqrt_price", sqrtPriceQ96.toString());
+	    const p_user = JSBIWorker.priceBySqrtPriceQ96(sqrtPriceQ96, this.token0.decimal, this.token1.decimal);
+	    log("p_user: ", p_user);
+*/
+	}
+
 
 };
 

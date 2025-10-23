@@ -5,7 +5,7 @@
 
 
 //include
-const {space, log, curTime, delay, hasField, isFloat} = require("./../utils.js");
+const {space, log, curTime, delay, hasField, isFloat, mergeJson, removeField} = require("./../utils.js");
 const { ParamParser } = require("./paramparser_class.js");
 const { WalletObj } = require("./wallet_class.js");
 const { TxWorkerObj } = require("./txworker_class.js");
@@ -207,6 +207,19 @@ function makeTxTakeAwayLiqPosParams()
     req_result.pid = p_parser.params.pid;
     req_result.liq = p_parser.params.liq;
 }
+function makeTxMintPosParams()
+{
+    log("[TX_CMD/MINT_POS]");
+    log("pool: ", p_parser.params.pool_address);
+    mergeJson(tx_params, p_parser.params);
+    tx_params.tx_kind = p_parser.reqName();
+    removeField(tx_params, "req_name");
+
+
+    req_result.pid = p_parser.params.pool_address;
+    req_result.p1 = p_parser.params.p1;
+    req_result.p2 = p_parser.params.p2;
+}
 
 
 
@@ -260,6 +273,7 @@ async function main()
     else if (p_parser.isCollectRewardPosTxReq()) makeTxCollectRewardPosParams();
     else if (p_parser.isDecreaseLiqPosTxReq()) makeTxDecreaseLiqPosParams();
     else if (p_parser.isTakeAwayLiqPosTxReq()) makeTxTakeAwayLiqPosParams();
+    else if (p_parser.isMintPosTxReq()) makeTxMintPosParams();
 
 //    log("TX_PARAMS:", tx_params);
     space();

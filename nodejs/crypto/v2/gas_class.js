@@ -71,6 +71,10 @@ class TxGasObj
 	{
 	    this.gas_limit = Math.floor(4.7*this.gas_limit);
 	}
+	else if (tx_kind == "mint")
+	{
+	    this.gas_limit = Math.floor(8.5*this.gas_limit);
+	}
 	else if (tx_kind == "collect" || tx_kind == "decrease")
 	{
 	    this.gas_limit = Math.floor(3.5*this.gas_limit);

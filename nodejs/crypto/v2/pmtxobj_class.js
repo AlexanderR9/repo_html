@@ -2,6 +2,8 @@
 const {space, log, isInt, mergeJson, isJson, hasField, fileExist, charRepeat, removeField} = require("./../utils.js");
     
 const { ContractObj } = require("./contract_class.js");
+const { PoolObj } = require("./pool_class.js");
+const { JSBIWorker } = require("./calc_class.js");
 
 
 /*
@@ -9,7 +11,6 @@ const { DateTimeObj } = require("./../obj_dt.js");
 const { TxGasObj } = require("./gas_class.js");
 const { ChainObj } = require("./chain_class.js");
 const { WalletObj } = require("./wallet_class.js");
-const { JSBIWorker } = require("./calc_class.js");
         
 //including
 //const ethers = require("ethers");
@@ -30,8 +31,89 @@ class PmTxObj
 	this.pm_contract = ContractObj.getPosManagerContract(wallet_obj.signer); // инициализируем объект для отправки транзакций в сеть
 	this.recipient = wallet_obj.address;
 	this.fee_params = {};
+	this.wallet = wallet_obj;
     }
     setFeeParams(fp) {this.fee_params = fp;}
+
+
+    // mint new position, parameters:
+    /*    
+	struct MintParams {
+    	    address token0;
+    	    address token1;
+    	    uint24 fee;
+    	    int24 tickLower;
+    	    int24 tickUpper;
+    	    uint256 amount0Desired;
+    	    uint256 amount1Desired;
+    	    uint256 amount0Min;
+    	    uint256 amount1Min;
+    	    address recipient;  // my wallet.address
+    	    uint256 deadline; }
+    */
+    async tryMint(params)
+    {
+	space();space();space();space();space();
+        log("PmTxObj executing: TX_KIND = mint");
+	log("PARAMS:", params); space();
+
+	//STAGE_1: update pool state
+	let pool_obj = new PoolObj(params.pool_address);
+	pool_obj.fee = params.fee;
+	pool_obj.updateToken0(this.wallet.findAsset(params.token0_address));
+	pool_obj.updateToken1(this.wallet.findAsset(params.token1_address));
+	pool_obj.outShort();
+	if (pool_obj.invalid()) {req_result.error="invalid pool object"; return -157;}
+	space();
+	await pool_obj.updateState();
+	pool_obj.outState();
+	if (pool_obj.invalidState()) {req_result.error="invalid state pool object"; return -158;}
+        space();
+
+	//STAGE_2: calculation params
+	//calc tick range
+	const p1 = Number.parseFloat(params.p1);
+	const p2 = Number.parseFloat(params.p2);
+	const tick_range = pool_obj.calcTickRangeByPrices(p1, p2);
+	log("tick_range: ", tick_range);
+	//calc assets amounts of liq pos
+	const user_sizes = {size0: Number.parseFloat(params.token0_amount), size1: Number.parseFloat(params.token1_amount)};
+	const amounts = pool_obj.calcMintAmountsByTickRange(user_sizes, tick_range);
+	log("amount0: ", amounts.amount0.toString());
+	log("amount1: ", amounts.amount1.toString());
+	// calc min assets amounts
+	const f = 0.9985;
+	var amount0_min = JSBIWorker.biZero();
+	if (amounts.amount0 != JSBIWorker.biZero()) amount0_min = JSBIWorker.biMulFloat(amounts.amount0, f);
+	var amount1_min = JSBIWorker.biZero();
+	if (amounts.amount1 != JSBIWorker.biZero()) amount1_min = JSBIWorker.biMulFloat(amounts.amount1, f);
+
+        //STAGE_3: prepare ehters mint params                
+        let mint_params = {token0: params.token0_address, token1: params.token1_address};
+	mint_params.fee = Number.parseInt(params.fee);
+	mint_params.tickLower = tick_range.tick1;
+	mint_params.tickUpper = tick_range.tick2;
+	mint_params.amount0Desired = amounts.amount0.toString();
+	mint_params.amount1Desired = amounts.amount1.toString();
+	mint_params.amount0Min = amount0_min.toString();
+	mint_params.amount1Min = amount1_min.toString();
+        mint_params.recipient = this.recipient;
+        mint_params.deadline = params.deadline;
+	log("MINT_PARAMS:", mint_params);
+
+        //STAGE_4: send MINT TX                
+        try 
+	{ 
+    	    let tx_reply = null;
+    	    if (params.is_simulate) tx_reply = await this.pm_contract.estimateGas.mint(mint_params);
+    	    else tx_reply = await this.pm_contract.mint(mint_params, this.fee_params);
+    	    return tx_reply;
+	}
+        catch(e) {log("ERROR:", e); return -155;}
+		
+	return -159;
+    }
+    
 
     // полный забор ликвидности и rewards у выбранной позиции на кошелек
     async tryTakeaway(params)

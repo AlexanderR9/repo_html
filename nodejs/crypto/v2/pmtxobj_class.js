@@ -36,6 +36,26 @@ class PmTxObj
     setFeeParams(fp) {this.fee_params = fp;}
 
 
+    // increase liq to position
+    /*
+	struct IncreaseLiquidityParams {
+    	    uint256 PID;
+    	    uint256 amount0Desired;
+    	    uint256 amount1Desired;
+    	    uint256 amount0Min;
+    	    uint256 amount1Min;
+    	    uint256 deadline; }
+    */
+    async tryIncrease(params)
+    {
+        log("PmTxObj executing: TX_KIND = increase");
+	log(params);
+
+	return -151;
+    }
+
+
+
     // mint new position, parameters:
     /*    
 	struct MintParams {
@@ -101,12 +121,29 @@ class PmTxObj
         mint_params.deadline = params.deadline;
 	log("MINT_PARAMS:", mint_params);
 
-        //STAGE_4: send MINT TX                
+	//STAGE_4 prepare result
+	let tx_reply = {tick1: tick_range.tick1.toString(), tick2: tick_range.tick2.toString()};
+	tx_reply.p1 = pool_obj.priceByTick(tick_range.tick1).toString();
+	tx_reply.p2 = pool_obj.priceByTick(tick_range.tick2).toString();
+	tx_reply.amount0 = JSBIWorker.weisToFloat(amounts.amount0, pool_obj.token0.decimal).toString();
+	tx_reply.amount1 = JSBIWorker.weisToFloat(amounts.amount1, pool_obj.token1.decimal).toString();
+	tx_reply.pool_tick = pool_obj.state.tick.toString();
+	tx_reply.pool_price = pool_obj.state.price0.toString();
+
+
+        //STAGE_5: send MINT TX                
         try 
 	{ 
-    	    let tx_reply = null;
-    	    if (params.is_simulate) tx_reply = await this.pm_contract.estimateGas.mint(mint_params);
-    	    else tx_reply = await this.pm_contract.mint(mint_params, this.fee_params);
+    	    if (params.is_simulate) 
+	    {
+		const estimated_gas = await this.pm_contract.estimateGas.mint(mint_params);		
+		tx_reply.estimated_gas = estimated_gas.toString();
+	    }
+    	    else 
+	    {
+		const tx_reply_chain = await this.pm_contract.mint(mint_params, this.fee_params);
+		tx_reply.hash = tx_reply_chain.hash;
+	    }
     	    return tx_reply;
 	}
         catch(e) {log("ERROR:", e); return -155;}
@@ -156,6 +193,14 @@ class PmTxObj
 
 
     // удаление ликвидности у выбранной позиции (перенос в зону reward)
+    /*
+    struct DecreaseLiquidityParams {
+        uint256 PID;
+        uint128 liquidity;
+        uint256 amount0Min;
+        uint256 amount1Min;
+        uint256 deadline;  }
+    */
     async tryDecrease(params)
     {
         log("PmTxObj executing: TX_KIND = decrease");
@@ -183,6 +228,13 @@ class PmTxObj
 
 
     // сбор комиссий у выбранной позиции
+    /*
+     struct CollectParams {
+        uint256 PID;
+        address recipient;
+        uint128 amount0Max;
+        uint128 amount1Max;  }
+    */
     async tryCollect(params)
     {
         log("PmTxObj executing: TX_KIND = collect");

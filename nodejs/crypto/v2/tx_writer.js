@@ -48,7 +48,7 @@ function validFloatSum(field_name)
     var sum = p_parser.params[field_name];
     sum = Number.parseFloat(sum);    
     if (!isFloat(sum)) {log(`WARNING: sum value(${field_name}) is not float`, p_parser.params[field_name]); return false;}
-    if (sum < 0.01 || sum > 10000) {log(`WARNING: sum value(${field_name}) is not normal(small or big)`, sum); return false;}
+    if (sum < 0.01 || sum > 50000) {log(`WARNING: sum value(${field_name}) is not normal(small or big)`, sum); return false;}
     return true;
 }
 
@@ -216,9 +216,20 @@ function makeTxMintPosParams()
     removeField(tx_params, "req_name");
 
 
-    req_result.pid = p_parser.params.pool_address;
+    req_result.pool_address = p_parser.params.pool_address;
     req_result.p1 = p_parser.params.p1;
     req_result.p2 = p_parser.params.p2;
+}
+function makeTxResultMintParams(tx_result) // извлечь доп параметры из результата в req_result после выполнения 'mint'
+{
+    req_result.tick1 = tx_result.tick1;
+    req_result.tick2 = tx_result.tick2;
+    req_result.p1 = tx_result.p1;
+    req_result.p2 = tx_result.p2;
+    req_result.amount0 = tx_result.amount0;
+    req_result.amount1 = tx_result.amount1;
+    req_result.pool_tick = tx_result.pool_tick;
+    req_result.pool_price = tx_result.pool_price;
 }
 
 
@@ -248,6 +259,11 @@ async function tryWriteTx() // проверить параметры и отпр
 
     /// finished OK
     req_result.code = 0; 
+    
+    ///////////other params, only mint TX/////////////
+    makeTxResultMintParams(tx_result);
+    //----------------------------------------------
+
     if (tx_worker.isSimulate) 
     {
 	req_result.estimated_gas = tx_result.estimated_gas;

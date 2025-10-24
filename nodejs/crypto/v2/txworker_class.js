@@ -101,7 +101,7 @@ class TxWorkerObj
 	{
 	    log("TXWorker: Simulate mode was ativated!!!");
 	    checked_res.result = "SIMULATE";
-	    if (tx_kind == "swap") mergeJson(checked_res, tx_result);
+	    if (tx_kind == "swap" || tx_kind == "mint") mergeJson(checked_res, tx_result);
 	    else checked_res.estimated_gas = tx_result.toString();	
 	    return checked_res;	    
 	}
@@ -111,6 +111,11 @@ class TxWorkerObj
 	this._addTxLog(tx_result, tx_kind); //add log record
         checked_res.result = "OK";
         checked_res.tx_hash = tx_result.hash;
+	if (tx_kind == "mint") 
+	{
+	    mergeJson(checked_res, tx_result); 
+	    removeField(checked_res, "hash");
+	}
 	return checked_res;
     }
     // добавить в структуру параметров транзакции поле deadline.
@@ -304,8 +309,12 @@ class TxWorkerObj
         else if (tx_kind == "collect") tx_reply = await pmtx.tryCollect(params);
         else if (tx_kind == "mint") tx_reply = await pmtx.tryMint(params);
         else if (tx_kind == "decrease") tx_reply = await pmtx.tryDecrease(params);
+        else if (tx_kind == "increase") tx_reply = await pmtx.tryIncrease(params);
         else if (tx_kind == "take_away") tx_reply = await pmtx.tryTakeaway(params);
         else {log("ERROR: invalid tx_name ", tx_kind); tx_reply = -99;}
+
+//	log("async _pmTx ");
+//	log("RESULT: ", tx_reply);
 
 	return tx_reply;
     }

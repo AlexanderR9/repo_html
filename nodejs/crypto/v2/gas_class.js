@@ -65,7 +65,7 @@ class TxGasObj
 	this.reset();
 	if (tx_kind == "swap")
 	{
-	    this.gas_limit *= 2;
+	    this.gas_limit = Math.floor(2.8*this.gas_limit);
 	}
 	else if (tx_kind == "burn")
 	{
@@ -79,7 +79,7 @@ class TxGasObj
 	{
 	    this.gas_limit = Math.floor(3.5*this.gas_limit);
 	}
-	else if (tx_kind == "take_away")
+	else if (tx_kind == "take_away" || tx_kind == "increase")
 	{
 	    this.gas_limit = Math.floor(7.2*this.gas_limit);
 	}

@@ -26,8 +26,8 @@ if (n_arg != 1) {sendErrResult(`invalid args count(${n_arg}), must be 1 arg`); r
 const p_parser = new ParamParser(process.argv[2]);
 if (p_parser.invalid()) {sendErrResult(p_parser.err); return -2;} // поле req_name либо отсутствует либо у него некорректное значение
 if (!p_parser.isWritingReq()) {sendErrResult("req is not TX"); return -3;} // поле req_name не является для записи транзакции
-if (!p_parser.writeFieldsKidOk()) {sendErrResult("invalid req fields kid"); log("JSON_FIELDS:", p_parser.keys); return -4;} // набор полей для текущего запроса некорректен
-else {space(); log("Fields kid ok!  "); space();}
+if (!p_parser.writeFieldsKitOk()) {sendErrResult("invalid req fields kit"); log("JSON_FIELDS:", p_parser.keys); return -4;} // набор полей для текущего запроса некорректен
+else {space(); log("Fields kit ok!  "); space();}
 
 //init wallet obj
 req_result.req_name = p_parser.reqName();
@@ -207,6 +207,18 @@ function makeTxTakeAwayLiqPosParams()
     req_result.pid = p_parser.params.pid;
     req_result.liq = p_parser.params.liq;
 }
+function makeTxIncreaseLiqPosParams()
+{
+    log("[TX_CMD/INCREASE_LIQUIDITY]");
+    log("PID of position: ", p_parser.params.pid);
+    mergeJson(tx_params, p_parser.params);
+    tx_params.tx_kind = p_parser.reqName();
+    removeField(tx_params, "req_name");
+
+    req_result.pool_address = p_parser.params.pool_address;
+    req_result.pid = p_parser.params.pid;
+}
+
 function makeTxMintPosParams()
 {
     log("[TX_CMD/MINT_POS]");
@@ -215,10 +227,7 @@ function makeTxMintPosParams()
     tx_params.tx_kind = p_parser.reqName();
     removeField(tx_params, "req_name");
 
-
     req_result.pool_address = p_parser.params.pool_address;
-    req_result.p1 = p_parser.params.p1;
-    req_result.p2 = p_parser.params.p2;
 }
 function makeTxResultMintParams(tx_result) // извлечь доп параметры из результата в req_result после выполнения 'mint'
 {
@@ -261,7 +270,8 @@ async function tryWriteTx() // проверить параметры и отпр
     req_result.code = 0; 
     
     ///////////other params, only mint TX/////////////
-    makeTxResultMintParams(tx_result);
+    if (p_parser.isMintPosTxReq() || p_parser.isIncreaseLiqPosTxReq()) 
+	makeTxResultMintParams(tx_result);
     //----------------------------------------------
 
     if (tx_worker.isSimulate) 
@@ -288,8 +298,9 @@ async function main()
     else if (p_parser.isBurnPosTxReq()) makeTxBurnPosParams();
     else if (p_parser.isCollectRewardPosTxReq()) makeTxCollectRewardPosParams();
     else if (p_parser.isDecreaseLiqPosTxReq()) makeTxDecreaseLiqPosParams();
-    else if (p_parser.isTakeAwayLiqPosTxReq()) makeTxTakeAwayLiqPosParams();
+    else if (p_parser.isTakeAwayLiqPosTxReq()) makeTxIncreaseLiqPosParams();
     else if (p_parser.isMintPosTxReq()) makeTxMintPosParams();
+    else if (p_parser.isIncreaseLiqPosTxReq()) makeTxMintPosParams();
 
 //    log("TX_PARAMS:", tx_params);
     space();

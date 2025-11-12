@@ -4,7 +4,7 @@ const {space, log, curTime, hasField, jsonFromFile, jsonKeys, fileExist, isJson}
 // список валидных значений команд на чтение  (порядок элементов важен)
 const REQ_NAME_LIST = ["balance", "tx_count", "approved", "gas_price", "chain_id", "tx_status", "pool_state", "positions", "pos_state"];
 // список валидных значений команд на запись  (порядок элементов важен)
-const TX_REQ_NAME_LIST = ["wrap", "unwrap", "transfer", "approve", "swap", "burn", "collect", "decrease", "take_away", "mint"];
+const TX_REQ_NAME_LIST = ["wrap", "unwrap", "transfer", "approve", "swap", "burn", "collect", "decrease", "take_away", "mint", "increase"];
 
 //класс для чтения и обработки входного json-файла параметров для скрипта
 class ParamParser 
@@ -98,10 +98,11 @@ class ParamParser
 	isDecreaseLiqPosTxReq() {return (!this.invalid() && (this.reqName() == TX_REQ_NAME_LIST[7]));}
 	isTakeAwayLiqPosTxReq() {return (!this.invalid() && (this.reqName() == TX_REQ_NAME_LIST[8]));}
 	isMintPosTxReq() {return (!this.invalid() && (this.reqName() == TX_REQ_NAME_LIST[9]));}
+	isIncreaseLiqPosTxReq() {return (!this.invalid() && (this.reqName() == TX_REQ_NAME_LIST[10]));}
 
 	
 	//проверка набора полей(НЕ ЗНАЧЕНИЙ) на соответствие типу запроса
-	readFieldsKidOk() //for reading req
+	readFieldsKitOk() //for reading req
 	{	    
 	    if (this.invalid()) return false;
 	    if (this.isBalanceReq() || this.isTxCountReq() || this.isGasPriceReq() || this.isChainIdReq() || this.isPositionsReq()) return true;
@@ -129,7 +130,7 @@ class ParamParser
 	    }
 	    return false;
 	}    
-	writeFieldsKidOk() //for TX req
+	writeFieldsKitOk() //for TX req
 	{	    
 	    if (this.invalid()) return false;
 	    if (this.isWrapTxReq() || this.isUnwrapTxReq()) 
@@ -176,6 +177,23 @@ class ParamParser
 		if (!this.keys.includes("liq")) return false;
 		return true;
 	    }
+	    if (this.isIncreaseLiqPosTxReq()) 
+	    {
+		if (!this.keys.includes("pid")) return false;
+		if (!this.keys.includes("liq")) return false;
+
+		if (!this.keys.includes("pool_address")) return false;
+		if (!this.keys.includes("token0_address")) return false;
+		if (!this.keys.includes("token1_address")) return false;
+		if (!this.keys.includes("fee")) return false;
+
+		if (!this.keys.includes("token0_amount")) return false;
+		if (!this.keys.includes("token1_amount")) return false;
+		if (!this.keys.includes("tick1")  ) return false;
+		if (!this.keys.includes("tick2")  ) return false;
+
+		return true;
+	    }
 	    if (this.isTakeAwayLiqPosTxReq()) 
 	    {
 		if (!this.keys.includes("pid")) return false;
@@ -184,14 +202,27 @@ class ParamParser
 	    }
 	    if (this.isMintPosTxReq()) 
 	    {
-		if (!this.keys.includes("p1")) return false;
-		if (!this.keys.includes("p2")) return false;
 		if (!this.keys.includes("pool_address")) return false;
 		if (!this.keys.includes("token0_address")) return false;
 		if (!this.keys.includes("token1_address")) return false;
 		if (!this.keys.includes("fee")) return false;
 		if (!this.keys.includes("token0_amount")) return false;
 		if (!this.keys.includes("token1_amount")) return false;
+
+		// check range fields
+		const is_price_range = (this.keys.includes("p1") && this.keys.includes("p2"));
+		const is_tick_range = (this.keys.includes("tick1") && this.keys.includes("tick2"));
+		if (!is_price_range && !is_tick_range) return false;
+		if (is_price_range)
+		{
+		    if (this.keys.includes("tick1")  ) return false;
+		    if (this.keys.includes("tick2")  ) return false;
+		}
+		else
+		{
+		    if (this.keys.includes("p1")  ) return false;
+		    if (this.keys.includes("p2")  ) return false;
+		}
 		return true;
 	    }
 	    return false;

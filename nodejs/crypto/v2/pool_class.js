@@ -155,6 +155,20 @@ class PoolObj
 	result.tick2 = JSBIWorker.nearTickBySpacing(t2, ts);
         return result;
     }
+    // на вход подается объект - тиковый диапазон, с с двумя полями tick1, tick2.
+    // эта функция при необходимости установит новые значения tick1, tick2, ближайшие к коректным для чеканки позы с учетом tickSpacing.
+    calcNearTicksOfRange(tick_range)
+    {
+	const ts = this._tickSpacing();
+	if (ts <= 1) return;
+
+        const t1 = tick_range.tick1;
+	tick_range.tick1 = JSBIWorker.nearTickBySpacing(t1, ts);
+        const t2 = tick_range.tick2;
+	tick_range.tick2 = JSBIWorker.nearTickBySpacing(t2, ts);
+    }
+    
+
     //получить значения объемов токенов вида JSBI по указанному тиковому диапазону.
     //предварительно должна быть вызвана функция update.	
     //парметр amounts должен содержать поля size0 и size1 в нормальных пользовательских еденицах, но одно из них должно быть -1, т.е.

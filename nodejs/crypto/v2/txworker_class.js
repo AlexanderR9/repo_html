@@ -101,7 +101,7 @@ class TxWorkerObj
 	{
 	    log("TXWorker: Simulate mode was ativated!!!");
 	    checked_res.result = "SIMULATE";
-	    if (tx_kind == "swap" || tx_kind == "mint") mergeJson(checked_res, tx_result);
+	    if (tx_kind == "swap" || tx_kind == "mint" || tx_kind == "increase") mergeJson(checked_res, tx_result);
 	    else checked_res.estimated_gas = tx_result.toString();	
 	    return checked_res;	    
 	}
@@ -111,7 +111,7 @@ class TxWorkerObj
 	this._addTxLog(tx_result, tx_kind); //add log record
         checked_res.result = "OK";
         checked_res.tx_hash = tx_result.hash;
-	if (tx_kind == "mint") 
+	if (tx_kind == "mint" || tx_kind == "increase") 
 	{
 	    mergeJson(checked_res, tx_result); 
 	    removeField(checked_res, "hash");

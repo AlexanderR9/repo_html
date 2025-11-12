@@ -5,8 +5,8 @@ const { JSBIWorker } = require("./calc_class.js");
 
 
 const MIN_GAS_LIMIT = 85000; // единиц газа за транзакцию
-const MIN_FEE_PRIORITY = 45; // пожертвование за приоритет, gwei   
-const MIN_GAS_PRICE = 0.12; // цена одной единицы газа, gweis
+const MIN_FEE_PRIORITY = 65; // пожертвование за приоритет, gwei   
+const MIN_GAS_PRICE = 0.08; // цена одной единицы газа, gweis
 
 
 

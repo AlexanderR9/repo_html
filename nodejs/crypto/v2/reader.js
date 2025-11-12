@@ -23,7 +23,7 @@ if (n_arg != 1) {sendErrResult(`invalid args count(${n_arg}), must be 1 arg`); r
 const p_parser = new ParamParser(process.argv[2]);
 if (p_parser.invalid()) {sendErrResult(p_parser.err); return -2;} // поле req_name либо отсутствует либо у него некорректное значение
 if (!p_parser.isReadingReq()) {sendErrResult("req is not reading"); return -3;} // поле req_name не является на чтение
-if (!p_parser.readFieldsKidOk()) {sendErrResult("invalid req fields kid"); log("JSON_FIELDS:", p_parser.keys); return -4;} // набор полей для текущего запроса некорректен
+if (!p_parser.readFieldsKitOk()) {sendErrResult("invalid req fields kit"); log("JSON_FIELDS:", p_parser.keys); return -4;} // набор полей для текущего запроса некорректен
 
 //init wallet obj
 req_result.req_name = p_parser.reqName();

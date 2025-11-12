@@ -1,5 +1,5 @@
 //include modules
-const {space, log, isInt, mergeJson, isJson, hasField, fileExist, charRepeat, removeField} = require("./../utils.js");
+const {space, log, isInt,isFloat, mergeJson, isJson, hasField, fileExist, charRepeat, removeField} = require("./../utils.js");
     
 const { ContractObj } = require("./contract_class.js");
 const { PoolObj } = require("./pool_class.js");
@@ -51,6 +51,76 @@ class PmTxObj
         log("PmTxObj executing: TX_KIND = increase");
 	log(params);
 
+
+	//STAGE_1: update pool state
+	let pool_obj = new PoolObj(params.pool_address);
+	pool_obj.fee = params.fee;
+	pool_obj.updateToken0(this.wallet.findAsset(params.token0_address));
+	pool_obj.updateToken1(this.wallet.findAsset(params.token1_address));
+	pool_obj.outShort();
+	if (pool_obj.invalid()) {req_result.error="invalid pool object"; return -152;}
+	space();
+	await pool_obj.updateState();
+	pool_obj.outState();
+	if (pool_obj.invalidState()) {req_result.error="invalid state pool object"; return -152;}
+        space();
+
+	//STAGE_2: calculation params
+	let tick_range = {};
+	tick_range.tick1 = Number.parseInt(params.tick1);
+	tick_range.tick2 = Number.parseInt(params.tick2);
+	log("tick_range: ", tick_range);
+
+	//calc assets amounts of liq pos
+	const user_sizes = {size0: Number.parseFloat(params.token0_amount), size1: Number.parseFloat(params.token1_amount)};
+	const amounts = pool_obj.calcMintAmountsByTickRange(user_sizes, tick_range);
+	log("amount0: ", amounts.amount0.toString());
+	log("amount1: ", amounts.amount1.toString());
+	// calc min assets amounts
+	const f = 0.998;
+	var amount0_min = JSBIWorker.biZero();
+	if (amounts.amount0 != JSBIWorker.biZero()) amount0_min = JSBIWorker.biMulFloat(amounts.amount0, f);
+	var amount1_min = JSBIWorker.biZero();
+	if (amounts.amount1 != JSBIWorker.biZero()) amount1_min = JSBIWorker.biMulFloat(amounts.amount1, f);
+
+
+        //STAGE_3: prepare ehters increase params                
+        let increase_params = {tokenId: params.pid, deadline: params.deadline};
+	increase_params.amount0Desired = amounts.amount0.toString();
+	increase_params.amount1Desired = amounts.amount1.toString();
+	increase_params.amount0Min = amount0_min.toString();
+	increase_params.amount1Min = amount1_min.toString();
+	log("INCREASE_PARAMS:", increase_params);
+
+	//STAGE_4 prepare result
+	let tx_reply = {tick1: tick_range.tick1.toString(), tick2: tick_range.tick2.toString()};
+	tx_reply.p1 = pool_obj.priceByTick(tick_range.tick1).toString();
+	tx_reply.p2 = pool_obj.priceByTick(tick_range.tick2).toString();
+	tx_reply.amount0 = JSBIWorker.weisToFloat(amounts.amount0, pool_obj.token0.decimal).toString();
+	tx_reply.amount1 = JSBIWorker.weisToFloat(amounts.amount1, pool_obj.token1.decimal).toString();
+	tx_reply.pool_tick = pool_obj.state.tick.toString();
+	tx_reply.pool_price = pool_obj.state.price0.toString();
+
+
+        //STAGE_5: send INCREASE TX                
+        try 
+	{ 
+    	    if (params.is_simulate) 
+	    {
+		const estimated_gas = await this.pm_contract.estimateGas.increaseLiquidity(increase_params);		
+		space();
+		log("estimated_gas of increase TX:", estimated_gas);
+		tx_reply.estimated_gas = estimated_gas.toString();
+	    }
+    	    else 
+	    {
+		const tx_reply_chain = await this.pm_contract.increaseLiquidity(increase_params, this.fee_params);
+		tx_reply.hash = tx_reply_chain.hash;
+	    }
+    	    return tx_reply;
+	}
+        catch(e) {log("ERROR:", e); return -153;}
+
 	return -151;
     }
 
@@ -91,11 +161,25 @@ class PmTxObj
         space();
 
 	//STAGE_2: calculation params
+
 	//calc tick range
-	const p1 = Number.parseFloat(params.p1);
-	const p2 = Number.parseFloat(params.p2);
-	const tick_range = pool_obj.calcTickRangeByPrices(p1, p2);
+	let tick_range = {};
+	if (hasField(params, "tick1") && hasField(params, "tick2"))
+	{
+	    tick_range.tick1 = Number.parseInt(params.tick1);
+	    tick_range.tick2 = Number.parseInt(params.tick2);
+	    pool_obj.calcNearTicksOfRange(tick_range)
+	}
+	else
+	{
+	    const p1 = Number.parseFloat(params.p1);
+	    const p2 = Number.parseFloat(params.p2);
+	    if (!isFloat(p1)) {log("invalid P1 value " , p1.toString()); return -156;}
+	    if (!isFloat(p2)) {log("invalid P2 value " , p2.toString()); return -156;}
+	    tick_range = pool_obj.calcTickRangeByPrices(p1, p2);
+	}
 	log("tick_range: ", tick_range);
+
 	//calc assets amounts of liq pos
 	const user_sizes = {size0: Number.parseFloat(params.token0_amount), size1: Number.parseFloat(params.token1_amount)};
 	const amounts = pool_obj.calcMintAmountsByTickRange(user_sizes, tick_range);

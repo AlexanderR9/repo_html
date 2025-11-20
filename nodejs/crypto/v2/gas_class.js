@@ -5,8 +5,8 @@ const { JSBIWorker } = require("./calc_class.js");
 
 
 const MIN_GAS_LIMIT = 85000; // единиц газа за транзакцию
-const MIN_FEE_PRIORITY = 65; // пожертвование за приоритет, gwei   
-const MIN_GAS_PRICE = 0.08; // цена одной единицы газа, gweis
+const MIN_FEE_PRIORITY = 80; // пожертвование за приоритет, gwei   
+const MIN_GAS_PRICE = 0.07; // цена одной единицы газа, gweis
 
 
 
@@ -81,7 +81,7 @@ class TxGasObj
 	}
 	else if (tx_kind == "take_away" || tx_kind == "increase")
 	{
-	    this.gas_limit = Math.floor(7.2*this.gas_limit);
+	    this.gas_limit = Math.floor(5.8*this.gas_limit);
 	}
 
     }

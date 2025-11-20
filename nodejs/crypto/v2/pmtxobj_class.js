@@ -107,10 +107,9 @@ class PmTxObj
 	{ 
     	    if (params.is_simulate) 
 	    {
-		const estimated_gas = await this.pm_contract.estimateGas.increaseLiquidity(increase_params);		
-		space();
-		log("estimated_gas of increase TX:", estimated_gas);
-		tx_reply.estimated_gas = estimated_gas.toString();
+		//const estimated_gas = await this.pm_contract.estimateGas.increaseLiquidity(increase_params, this.fee_params);		
+		//tx_reply.estimated_gas = estimated_gas.toString();
+		tx_reply.estimated_gas = "-1";
 	    }
     	    else 
 	    {
@@ -220,8 +219,9 @@ class PmTxObj
 	{ 
     	    if (params.is_simulate) 
 	    {
-		const estimated_gas = await this.pm_contract.estimateGas.mint(mint_params);		
-		tx_reply.estimated_gas = estimated_gas.toString();
+		//const estimated_gas = await this.pm_contract.estimateGas.mint(mint_params, this.fee_params);	
+		//tx_reply.estimated_gas = estimated_gas.toString();
+		tx_reply.estimated_gas = "-1";
 	    }
     	    else 
 	    {

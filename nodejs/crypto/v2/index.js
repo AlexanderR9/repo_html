@@ -52,7 +52,7 @@ space();
 let w_obj = new WalletObj(process.env.WA2, process.env.WKEY);
 
 
-
+/*
 
 //return 1;
 let s = "8723280330653418920";
@@ -69,6 +69,7 @@ log(json);
 removeField(json, "age");
 log("after remove:", json);
 
+*/
 
 //log(JSBIWorker.isBI(a), "  / ", JSBIWorker.isBI(bi));
 //log("types a/bi : ", JSBIWorker.isBI(a), " / ", JSBIWorker.isBI(bi))
@@ -83,7 +84,7 @@ log("mul_float ", bi4)
 
 //log("bi: ", bi, "   bi2:", bi2);
 
-return 1;
+//return 1;
 async function main()
 {
     space();

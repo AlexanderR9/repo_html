@@ -5,16 +5,6 @@ const { ContractObj } = require("./contract_class.js");
 const { PoolObj } = require("./pool_class.js");
 const { JSBIWorker } = require("./calc_class.js");
 
-
-/*
-const { DateTimeObj } = require("./../obj_dt.js");
-const { TxGasObj } = require("./gas_class.js");
-const { ChainObj } = require("./chain_class.js");
-const { WalletObj } = require("./wallet_class.js");
-        
-//including
-//const ethers = require("ethers");
-*/        
         
 const MAX_BIG128 = "1000000000000000000000000000";        
      

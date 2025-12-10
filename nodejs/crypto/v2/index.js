@@ -89,26 +89,29 @@ async function main()
 {
     space();
     log("exe main");
-//    w_obj.out();
-    w_obj.outAssets();
-//    w_obj.showBalances();
+    w_obj.out();
+//    w_obj.outAssets();
 
-//    const v = await w_obj.balance(3);
-//    log("balance: ", v, " / ", v.toString());
     space();
-//    await w_obj.updateBalances();
-//    w_obj.showBalances();
 
-//    const ntx = await w_obj.txCount();
-//    log("tx count: ", ntx);
+    //////////// блок кода для запроса балансов токенов и вывода их в консоль/////////////////////
+/*
+    await w_obj.updateBalances();
+    w_obj.showBalances();
+*/
 
-//    const apr = await w_obj.checkApproved(1, '0xE592427A0AEce92De3Edee1F18E0157C05861564');
-//    log("approved: ", apr);
+    // запрос количества транзакций совершенных этим кошельком в этой сети
+    //const ntx = await w_obj.txCount();
+    //log("tx count: ", ntx);
 
+
+    //////////// блок кода для оценки газа/////////////////////
+/*
     const gp = await w_obj.currentGasPrice();
     log("Gas: ", gp);
     const cid = await w_obj.chainId();
     log("Chain ID: ", cid);
+*/
 
 }
 

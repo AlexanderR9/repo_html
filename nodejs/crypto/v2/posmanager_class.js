@@ -156,6 +156,7 @@ class PosManagerObj
 	    {
 		const n = await this.contract.balanceOf(this.wallet.address);
 		n_pos = Number.parseInt(n);
+		log("N positions: ", n_pos);
 		log("done!");
 	    }
 	    catch(err) {log("CATCH_ERR:", err);}

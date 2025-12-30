@@ -63,7 +63,8 @@ class TxGasObj
         {
 	    this.max_fee =  MAX_FEE_ARBITRUM;
 	    txp.maxFeePerGas = JSBIWorker.floatToWeis(this.max_fee, 9).toString();
-	    txp.maxPriorityFeePerGas = JSBIWorker.floatToWeis((this.max_fee/2), 9).toString();
+	    //txp.maxPriorityFeePerGas = JSBIWorker.floatToWeis((this.max_fee/2), 9).toString();
+	    txp.maxPriorityFeePerGas = "0";
         }
         else if (ChainObj.isOptimismChain())
         {

@@ -209,9 +209,9 @@ class PmTxObj
 	{ 
     	    if (params.is_simulate) 
 	    {
-		//const estimated_gas = await this.pm_contract.estimateGas.mint(mint_params, this.fee_params);	
-		//tx_reply.estimated_gas = estimated_gas.toString();
-		tx_reply.estimated_gas = "-1";
+		const estimated_gas = await this.pm_contract.estimateGas.mint(mint_params, this.fee_params);	
+		tx_reply.estimated_gas = estimated_gas.toString();
+		//tx_reply.estimated_gas = "-1";
 	    }
     	    else 
 	    {

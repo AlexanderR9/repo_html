@@ -133,6 +133,9 @@ class ParamParser
 	writeFieldsKitOk() //for TX req
 	{	    
 	    if (this.invalid()) return false;
+	    if (!this.keys.includes("gas_unit_price")) return false;
+
+
 	    if (this.isWrapTxReq() || this.isUnwrapTxReq()) 
 	    {
 		return (this.keys.includes("amount"))

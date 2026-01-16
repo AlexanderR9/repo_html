@@ -1,16 +1,16 @@
 
-const {space, log, jsonFromFile, hasField} = require("./../utils.js");
+const {space, log, isFloat, jsonFromFile, hasField, varNumber} = require("./../utils.js");
 const { ChainObj } = require("./chain_class.js");
 const { JSBIWorker } = require("./calc_class.js");
 
 
 // define user const
 const MIN_GAS_LIMIT = 85000; // единиц газа за транзакцию
-const MIN_FEE_PRIORITY = 50; // пожертвование за приоритет, gwei   
+const MIN_FEE_PRIORITY = 130; // пожертвование за приоритет, gwei   
 const MIN_GAS_PRICE = 0.07; // цена одной единицы газа, gweis
 
-// for layer 2 chains
-const MAX_FEE_ARBITRUM = 0.012; // max цена одной единицы газа для сети arbitrum, gwei   
+// for layer-2 chains
+const MAX_FEE_ARBITRUM = 0.022; // max цена одной единицы газа для сети arbitrum, gwei   
 const MAX_FEE_OPTIMISM = 0.00002; // max цена одной единицы газа для сети optimism, gwei   
 
 
@@ -31,23 +31,26 @@ class TxGasObj
         
         //дополнительное поле, используется при сети BNB в паре с gas_limit
         this.gas_price = MIN_GAS_PRICE; // цена единицы газа, gweis
+
+	// универсальный паарметр для всех сетей, получаемы из файла входных параметров транзакции (json)
+	this.gas_price_external = -1; // цена единицы газа, gweis 
+    }
+    setPriceExternal(egp)
+    {
+	if (varNumber(egp))
+	{    
+    	    this.gas_price_external = Number.parseFloat(egp);
+	    log("was set up PriceExternal, ", this.gas_price_external.toString());
+	}
+	else log("WARNING PriceExternal is not float");
     }
 
-/*
-    // чтобы задать принудительные значения каждого из полей
-    update(g, m, p = -1, gp = -1)
-    {
-        this.gas_limit = g;
-        this.max_fee = m;
-        if (p > 0) this.priority = p;
-        if (gp > 0) this.gas_price = gp;
-    }
-*/
 
     //установить в объект транзакции текущие значения комиссий
     setFeeParams(txp)
     {
         txp.gasLimit = this.gas_limit;   // этот параметр участвует для всех сетей
+	if (this.gas_price_external > 0) {this._setFeeParamsByExternal(txp); return;}
               
         if (ChainObj.isPolygonChain())
         {
@@ -63,7 +66,6 @@ class TxGasObj
         {
 	    this.max_fee =  MAX_FEE_ARBITRUM;
 	    txp.maxFeePerGas = JSBIWorker.floatToWeis(this.max_fee, 9).toString();
-	    //txp.maxPriorityFeePerGas = JSBIWorker.floatToWeis((this.max_fee/2), 9).toString();
 	    txp.maxPriorityFeePerGas = "0";
         }
         else if (ChainObj.isOptimismChain())
@@ -73,6 +75,31 @@ class TxGasObj
 	    txp.maxPriorityFeePerGas = JSBIWorker.floatToWeis((this.max_fee/2), 9).toString();
         }
     }
+    _setFeeParamsByExternal(txp)
+    {
+	log("GAS_OBJ: execute _setFeeParamsByExternal(),  gas_price_external =", this.gas_price_external.toString());
+        if (ChainObj.isPolygonChain())
+        {
+            txp.maxFeePerGas = JSBIWorker.floatToWeis(this.gas_price_external, 9).toString();
+            txp.maxPriorityFeePerGas = JSBIWorker.floatToWeis(this.gas_price_external*0.2, 9).toString();
+        }
+        else if (ChainObj.isBnbChain())
+        {
+            txp.gasPrice = JSBIWorker.floatToWeis(this.gas_price_external, 9).toString();
+        }
+        else if (ChainObj.isArbitrumChain())
+        {
+	    txp.maxFeePerGas = JSBIWorker.floatToWeis(this.gas_price_external, 9).toString();
+	    txp.maxPriorityFeePerGas = "0";
+        }
+        else if (ChainObj.isOptimismChain())
+        {
+	    txp.maxFeePerGas = JSBIWorker.floatToWeis(this.gas_price_external, 9).toString();
+	    txp.maxPriorityFeePerGas = JSBIWorker.floatToWeis((this.gas_price_external/2), 9).toString();
+        }
+    }
+    
+
     // сброс всех полей в дефолтное состояние
     reset()
     {

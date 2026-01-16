@@ -23,10 +23,6 @@ const POS_MANAGER_BNB_ADDRESS='0x7b8A01B39D58278b5DE7e48c8449c9f4F5170613';
 const QUOTER_CONTRACT_ADDRESS='0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6';
 const QUOTER_CONTRACT_BNB_ADDRESS='0x78D78E420Da98ad378D7799bE8f4AF69033EB077';
 
-//вещественный размер одного дискретного тика
-//const TICK_QUANTUM = 1.0001;
-
-
 // статический класс, содержит методы для выдачи адресов основных контрактов с которыми предполагается взаимодействие
 // а так же создает типовые объекты контрактов библиотеки ethers
 class ContractObj
@@ -49,8 +45,6 @@ class ContractObj
 	return QUOTER_CONTRACT_ADDRESS;
     }
 
-
-//    static tickQuantum() {return TICK_QUANTUM;}
 
     //standard ethers.providers funcs
     static getProvider() //: ethers.providers.Provide, get provider by user INFURA key (rpc_url) and chain

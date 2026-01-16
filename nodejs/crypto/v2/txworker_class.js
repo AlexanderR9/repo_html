@@ -176,13 +176,15 @@ class TxWorkerObj
 	const tx_kind = params.tx_kind;
 	removeField(params, "tx_kind");	
 
-        //prepare fee params
+        //prepare fee params	
 	this.fee_gas.setKindFactor(tx_kind);
-
+	this.fee_gas.setPriceExternal(params.gas_price);		
         let fee_params = {};
         this.fee_gas.setFeeParams(fee_params);	
         log("fee_params:", fee_params, '\n');
 	space();space();space();
+	removeField(params, "gas_price");	
+
 
         log("try send transaction .................................................");
 	let tx_result = null;

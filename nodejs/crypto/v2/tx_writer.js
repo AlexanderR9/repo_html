@@ -249,6 +249,7 @@ function makeTxResultMintParams(tx_result) // извлечь доп параме
 async function tryWriteTx() // проверить параметры и отправить транзакцию в сеть
 {
     if (!hasField(tx_params, "tx_kind")) {req_result.error = "invalid tx_params"; return;}   
+    tx_params.gas_price = p_parser.params.gas_unit_price;
 
     tx_worker.isSimulate = p_parser.simulateMode();
     const tx_result = await tx_worker.sendTx(tx_params);

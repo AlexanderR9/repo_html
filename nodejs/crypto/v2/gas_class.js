@@ -81,7 +81,8 @@ class TxGasObj
         if (ChainObj.isPolygonChain())
         {
             txp.maxFeePerGas = JSBIWorker.floatToWeis(this.gas_price_external, 9).toString();
-            txp.maxPriorityFeePerGas = JSBIWorker.floatToWeis(this.gas_price_external*0.2, 9).toString();
+            //txp.maxPriorityFeePerGas = JSBIWorker.floatToWeis(this.gas_price_external*0.2, 9).toString();
+            txp.maxPriorityFeePerGas = JSBIWorker.floatToWeis(38.0, 9).toString();
         }
         else if (ChainObj.isBnbChain())
         {

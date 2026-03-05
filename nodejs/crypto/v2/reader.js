@@ -151,6 +151,45 @@ async function getPosState()
 	log("Request FAULT!");	
     }
 }
+async function getPosRange()
+{
+    log("[CMD/CALC_POS_RANGE]");
+
+    // stage_1: get pool state
+    let pool_obj = new PoolObj(p_parser.params.pool_address);
+    pool_obj.fee = p_parser.params.fee;
+    pool_obj.updateToken0(w_obj.findAsset(p_parser.params.token0_address));
+    pool_obj.updateToken1(w_obj.findAsset(p_parser.params.token1_address));
+    pool_obj.out();
+
+    if (pool_obj.invalid()) {req_result.error="invalid pool object"; return;}
+    space();
+
+    await pool_obj.updateState();
+    pool_obj.outState();
+    if (pool_obj.invalidState()) {req_result.error="invalid state pool object"; return;}
+    space();
+    
+    //await pool_obj.updateTVL();
+    //space();
+    //pool_obj.token0.out();
+    //pool_obj.token1.out();
+
+    //prepare finaly script result
+    req_result.pool_address = p_parser.params.pool_address;
+    req_result.tick = pool_obj.state.tick.toString();
+    //req_result.tvl0 = pool_obj.token0.balance.toString();
+    //req_result.tvl1 = pool_obj.token1.balance.toString();
+    req_result.price0 = pool_obj.state.price0.toString();
+    req_result.price1 = ((1/pool_obj.state.price0).toFixed(8)).toString();
+
+    // calc range
+    const params = {amount0: p_parser.params.amount0, amount1: p_parser.params.amount1, range_width: p_parser.params.range_width, price_index: p_parser.params.price_index};
+    const range_data = pool_obj.calcRangeByAmounts(params);
+    log("range_data: ", range_data);
+
+}
+
 
 // --------- try request for getting chain data ------------------
 async function main()
@@ -165,6 +204,7 @@ async function main()
     else if (p_parser.isApprovedReq()) await getApprovedTokenAmounts();
     else if (p_parser.isPoolStateReq()) await getPoolState();
     else if (p_parser.isPosStateReq()) await getPosState();
+    else if (p_parser.isPosRangeReq()) await getPosRange();
     else if (p_parser.isPositionsReq()) await getWalletPositions();
     else 
     {

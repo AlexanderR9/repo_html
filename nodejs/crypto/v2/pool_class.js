@@ -1,4 +1,4 @@
-const { space, log, jsonFromFile, hasField, jsonKeys, isInt, decimalFactor } = require("./../utils.js");
+const { space, log, jsonFromFile, hasField, jsonKeys, isInt, isFloat, decimalFactor } = require("./../utils.js");
 
 // my class objects
 const { ChainObj } = require("./chain_class.js");
@@ -171,7 +171,7 @@ class PoolObj
 
     //получить значения объемов токенов вида JSBI по указанному тиковому диапазону.
     //предварительно должна быть вызвана функция update.	
-    //парметр amounts должен содержать поля size0 и size1 в нормальных пользовательских еденицах, но одно из них должно быть -1, т.е.
+    //парметр amounts должен содержать поля size0 и size1 в нормальных пользовательских единицах, но одно из них должно быть -1, т.е.
     //мы сами задаем один из объемов а 2-й должен посчитаться.
     //парметр tick_range должен содержать поля tick1 и tick2.
     //подразумевается что все входные данные корректны, т.е. были проверены заранее.
@@ -204,6 +204,39 @@ class PoolObj
 	log("L: ", L.toString());
 
 	return JSBIWorker.recalcAssetsPosition(this.state.sqrtPrice, L, tick_range);	    	
+    }
+
+    //получить ценовой диапазон для открытия позы по заданным объемам пары токенов и шириной ценового диапазона.
+    //на вход подается  объект с полями range_width, price_index, amount0, amount1, где все параметры указаны в нормальных пользовательских единицах.
+    //  range_width: p2-p1 // разница между ценами, задается для приоритетного токена
+    // price_index: prior_index // индекс токена из пары для которого указано значение range_width
+     //вернет объект с полями tick1, tick2 уже c учетом tickSpacing, причем значения будут притянуты к ближайшим границам интервалов tickSpacing).
+    // а так же в результате будут поля p1, p2 указанные для токена_0.
+    // в случае ошибки вернет объект с одним полем: 'error' с описанием ошибки
+    calcRangeByAmounts(params)
+    {
+	log("---------------calcRangeByAmounts-------------");
+	let result = {error: "test"};
+	log("user_params:", params);
+	const a0 = Number.parseFloat(params.amount0);
+	const a1 = Number.parseFloat(params.amount1);
+	const dprice = Number.parseFloat(params.range_width);
+	const prior_i = Number.parseInt(params.price_index);
+	if (!isFloat(a0) || !isFloat(a1)) {result.error = "invalid amounts"; return result;} 
+	if (!isFloat(dprice) || !isInt(prior_i)) {result.error = "invalid range params"; return result;} 
+	if (dprice <= 0) {result.error = "invalid range_width, less 0"; return result;} 
+	if (a0 <= 0) {result.error = "invalid amount0, less 0"; return result;} 
+	if (a1 <= 0) {result.error = "invalid amount1, less 0"; return result;} 
+
+
+	// PARAMS OK
+	log("INPUT PARAMS OK!!!");
+	
+
+	//const amount0 = 
+
+
+	return result;		
     }
 
 

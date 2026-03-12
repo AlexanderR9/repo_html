@@ -206,17 +206,38 @@ class PoolObj
 	return JSBIWorker.recalcAssetsPosition(this.state.sqrtPrice, L, tick_range);	    	
     }
 
-    //получить ценовой диапазон для открытия позы по заданным объемам пары токенов и шириной ценового диапазона.
-    //на вход подается  объект с полями range_width, price_index, amount0, amount1, где все параметры указаны в нормальных пользовательских единицах.
+    //получить значения объема токена_1 по указанному тиковому диапазону и объему токена_0.
+    //предварительно должна быть вызвана функция update.	
+    //входные параметры amount0(float) и tick_range(object) должен содержать поля tick1 и tick2.
+    //подразумевается что все входные данные корректны, т.е. были проверены заранее.
+    //вернет float - amount1  в нормальных пользовательских единицах.
+    _calcMintAmount1ByAmount0(amount0, tick_range)
+    {
+        const amounts_jsbi = this.calcMintAmountsByTickRange( { size0: amount0, size1: -1 }, tick_range); 
+	log("calced amounts_jsbi: ", amounts_jsbi.amount0.toString(), " / ", amounts_jsbi.amount1.toString());
+	const calcA0 = Number.parseFloat(JSBIWorker.weisToFloat(amounts_jsbi.amount0, this.token0.decimal, 8));            	
+	const calcA1 = Number.parseFloat(JSBIWorker.weisToFloat(amounts_jsbi.amount1, this.token1.decimal, 8));            	
+	log("calced amounts_real: ", calcA0.toString(), " / ", calcA1.toString());
+	return calcA1;
+    }
+
+
+    // получить ценовой диапазон для открытия позы по заданным объемам пары токенов и шириной ценового диапазона.
+    // на вход подается  объект с полями range_width, price_index, amount0, amount1, где все параметры указаны в нормальных пользовательских единицах.
     //  range_width: p2-p1 // разница между ценами, задается для приоритетного токена
     // price_index: prior_index // индекс токена из пары для которого указано значение range_width
-     //вернет объект с полями tick1, tick2 уже c учетом tickSpacing, причем значения будут притянуты к ближайшим границам интервалов tickSpacing).
+    // вернет объект с полями tick1, tick2 уже c учетом tickSpacing, 
     // а так же в результате будут поля p1, p2 указанные для токена_0.
+    // а так же в результате будут поля amount0, amount1 рассчитанные для выбранного диапазона, т.к. нельзя подобрать тики так что бы объемы точно совпадали с входными,
+    // поэтому расчет ведется так что amount0 == input_amount0, но amount1 чуть меньше чем входной но максимально близкий к нему, эту дельту можно дальше учитывать в расчетах.
     // в случае ошибки вернет объект с одним полем: 'error' с описанием ошибки
+    // RESULT: {tick1, tick2, p1, p2, amount0, amount1}
     calcRangeByAmounts(params)
     {
+
+	// проверяем корректность входных параметров
 	log("---------------calcRangeByAmounts-------------");
-	let result = {error: "test"};
+	let result = { };
 	log("user_params:", params);
 	const a0 = Number.parseFloat(params.amount0);
 	const a1 = Number.parseFloat(params.amount1);
@@ -227,13 +248,73 @@ class PoolObj
 	if (dprice <= 0) {result.error = "invalid range_width, less 0"; return result;} 
 	if (a0 <= 0) {result.error = "invalid amount0, less 0"; return result;} 
 	if (a1 <= 0) {result.error = "invalid amount1, less 0"; return result;} 
-
-
 	// PARAMS OK
 	log("INPUT PARAMS OK!!!");
+	const ts = Number(this._tickSpacing());
+
 	
 
-	//const amount0 = 
+	// находим стартовый тиковый диапазон по входному значению  range_width (с учетом tickSpacing), 
+	// примерно так что бы текущий тик пула был по середине
+	const pCur = Number(this.state.price0);
+	const a0_factor = a0*pCur/(a0*pCur + a1);
+	log("a0_factor = ", a0_factor);
+
+
+	let p_left = pCur - dprice*(1-a0_factor);
+	let p_right = pCur + dprice*a0_factor;
+	log("START RANGE: p_left=", p_left, "  p_right=", p_right);      	
+	const start_tick_range = this.calcTickRangeByPrices(p_left, p_right);
+	log("START TICKS RANGE: ", start_tick_range, "  ts=", ts);
+	const dticks = start_tick_range.tick2 - start_tick_range.tick1;
+	log("DELTA TICKS: ", dticks); // разница между тиками
+	
+
+	// находим amount_1 для этого стартового диапазона
+	let calcA1 = this._calcMintAmount1ByAmount0(a0, start_tick_range);            	
+	let err1 = a1 - calcA1;
+	let deviation1 = 100*err1/a1;
+	log(` amount1 deviation: ${err1.toString()} / ${deviation1.toString()} % `);
+    
+	// определяем направление куда ползти по цене с шагом tickSpacing, для получения максимально близкого значения calcA1 к input_A1 (но не выше него).
+	// если deviation1 < 0 то значит что расчетная величина больше чем мы выделяем на эту позу.
+	const to_up = (deviation1 < 0);
+	log("to_up:", to_up);
+	result.tick1 = start_tick_range.tick1.toString();
+	result.tick2 = start_tick_range.tick2.toString();
+	result.amount0 = a0.toString();
+    
+
+
+
+	log("\n\n\n");
+	log("-----------crawle by price-------------");
+	
+
+	for (var i=1; i<100; i++)	
+	{
+	    log("ITERATION ", i);
+	    const sign = (to_up ? 1 : -1);
+	    const tick_range = {tick1: (start_tick_range.tick1 + sign*i*ts), tick2: (start_tick_range.tick2 + sign*i*ts)}; // next ticks range
+
+	    calcA1 = this._calcMintAmount1ByAmount0(a0, tick_range);            	
+	    err1 = a1 - calcA1;
+	    deviation1 = 100*err1/a1;
+	    log(` amount1 deviation: ${err1.toString()} / ${deviation1.toString()} % `);
+	    
+	    if (deviation1 >= 0) 
+	    {
+		result.tick1 = tick_range.tick1.toString();
+		result.tick2 = tick_range.tick2.toString();
+		result.amount1 = calcA1.toFixed(8);
+	    }
+
+	    if (to_up && (deviation1 >= 0)) break;
+	    if (!to_up && (deviation1 <= 0)) break;
+	}
+	
+	result.p1 = this.priceByTick(result.tick1);
+	result.p2 = this.priceByTick(result.tick2);
 
 
 	return result;		

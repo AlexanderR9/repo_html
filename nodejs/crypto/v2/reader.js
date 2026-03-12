@@ -180,13 +180,14 @@ async function getPosRange()
     req_result.tick = pool_obj.state.tick.toString();
     //req_result.tvl0 = pool_obj.token0.balance.toString();
     //req_result.tvl1 = pool_obj.token1.balance.toString();
-    req_result.price0 = pool_obj.state.price0.toString();
-    req_result.price1 = ((1/pool_obj.state.price0).toFixed(8)).toString();
+    //req_result.price0 = pool_obj.state.price0.toString();
+    //req_result.price1 = ((1/pool_obj.state.price0).toFixed(8)).toString();
 
     // calc range
     const params = {amount0: p_parser.params.amount0, amount1: p_parser.params.amount1, range_width: p_parser.params.range_width, price_index: p_parser.params.price_index};
     const range_data = pool_obj.calcRangeByAmounts(params);
     log("range_data: ", range_data);
+    mergeJson(req_result, range_data);        
 
 }
 

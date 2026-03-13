@@ -251,23 +251,42 @@ class PoolObj
 	// PARAMS OK
 	log("INPUT PARAMS OK!!!");
 	const ts = Number(this._tickSpacing());
+	const need_invert = (prior_i == 1);
 
 	
 
 	// находим стартовый тиковый диапазон по входному значению  range_width (с учетом tickSpacing), 
 	// примерно так что бы текущий тик пула был по середине
-	const pCur = Number(this.state.price0);
+	var pCur = Number(this.state.price0);
 	const a0_factor = a0*pCur/(a0*pCur + a1);
 	log("a0_factor = ", a0_factor);
 
-
 	let p_left = pCur - dprice*(1-a0_factor);
 	let p_right = pCur + dprice*a0_factor;
-	log("START RANGE: p_left=", p_left, "  p_right=", p_right);      	
+	if (need_invert) 
+	{
+	    pCur = 1/pCur; // переводим цену в привычную (для приоритетного токена)
+	    p_left = pCur - dprice*(a0_factor);
+	    p_right = pCur + dprice*(1-a0_factor);
+	}
+
+
+	log("START RANGE: p_left=", p_left, "  p_right=", p_right); // в привычных ценах      	
+	if (need_invert) // требуется привести к price0
+	{
+	    var p_left0 = 1/p_right;
+	    p_right = 1/p_left;
+	    p_left = p_left0;
+	    log("START RANGE(inverted): p_left=", p_left, "  p_right=", p_right); // в привычных ценах      	
+	}
+	
 	const start_tick_range = this.calcTickRangeByPrices(p_left, p_right);
 	log("START TICKS RANGE: ", start_tick_range, "  ts=", ts);
 	const dticks = start_tick_range.tick2 - start_tick_range.tick1;
 	log("DELTA TICKS: ", dticks); // разница между тиками
+	log("dt_left: ", this.state.tick-start_tick_range.tick1, "  dt_right: ", start_tick_range.tick2-this.state.tick);
+
+//	return result;		
 	
 
 	// находим amount_1 для этого стартового диапазона
@@ -283,9 +302,10 @@ class PoolObj
 	result.tick1 = start_tick_range.tick1.toString();
 	result.tick2 = start_tick_range.tick2.toString();
 	result.amount0 = a0.toString();
+	result.amount1 = calcA1.toString();
     
 
-
+//	return result;		
 
 	log("\n\n\n");
 	log("-----------crawle by price-------------");

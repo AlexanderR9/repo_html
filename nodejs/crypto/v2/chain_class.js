@@ -19,7 +19,10 @@ const CUR_CHAIN_FILE = "current_chain.json";
 //список всех RPC_URL для разных сетей
 const RPC_URLS = {
     polygon: "https://polygon-mainnet.infura.io/v3",
-    bnb: "https://bsc-mainnet.infura.io/v3",
+//    bnb: "https://bsc-mainnet.infura.io/v3",
+    bnb: "https://bsc-dataseed.binance.org",
+
+
     arbitrum: "https://arbitrum-mainnet.infura.io/v3",
     optimism: "https://optimism-mainnet.infura.io/v3"    
 };

@@ -11,6 +11,8 @@ const { WalletObj } = require("./wallet_class.js");
 const { PosManagerObj } = require("./posmanager_class.js");
 const { TxWorkerObj } = require("./txworker_class.js");
 const { PoolObj } = require("./pool_class.js");
+const { ChainObj } = require("./chain_class.js");
+
 
 // init script result var
 let req_result = {req_name: "none"};
@@ -24,6 +26,9 @@ const p_parser = new ParamParser(process.argv[2]);
 if (p_parser.invalid()) {sendErrResult(p_parser.err); return -2;} // поле req_name либо отсутствует либо у него некорректное значение
 if (!p_parser.isReadingReq()) {sendErrResult("req is not reading"); return -3;} // поле req_name не является на чтение
 if (!p_parser.readFieldsKitOk()) {sendErrResult("invalid req fields kit"); log("JSON_FIELDS:", p_parser.keys); return -4;} // набор полей для текущего запроса некорректен
+
+
+log("RPC_URL:", ChainObj.rpcUrl());
 
 //init wallet obj
 req_result.req_name = p_parser.reqName();
